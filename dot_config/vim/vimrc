@@ -133,6 +133,18 @@
     " Abilita il rilevamento del tipo di file, il caricamento dei plugin specifici e le regole di indentazione
     filetype plugin indent on
     syntax on
+    " Set python path
+    if WINDOWS()
+        if executable('python')
+            let g:python3_host_prog = exepath('python')
+        endif
+    else
+        if executable('python3')
+            let g:python3_host_prog = exepath('python3')
+        elseif executable('python')
+            let g:python3_host_prog = exepath('python')
+        endif
+    endif
     " Controlla se la versione di Vim/Neovim in uso e il terminale supportano i true colors (colori a 24-bit)
     if has('termguicolors')
         set termguicolors
@@ -204,7 +216,7 @@
 
         echom "Vimrc salvato!"
     endfunction  " }}}
-    
+
 " }}} Helper functions
 
 " Stratup Vim-Plug {{{
@@ -242,7 +254,7 @@
             Plug 'othree/es.next.syntax.vim',               {'for': 'javascript'}
             Plug '4513ECHO/vim-snipewin',                   {'on': ['<Plug>(snipewin)'] }
             Plug '4513ECHO/vim-snipewin',                   {'on': ['<Plug>(snipewin)'] }
-            Plug 'prabirshrestha/vim-lsp',                  {'on': []} 
+            Plug 'prabirshrestha/vim-lsp',                  {'on': []}
             " Plug 'prabirshrestha/asyncomplete.vim'
             " Plug 'prabirshrestha/asyncomplete-lsp.vim'
             " Plug 'mattn/vim-lsp-settings'
@@ -297,7 +309,7 @@
         call timer_start(500, 'utility#defer#utility1')
         " Delay load: vim-qf | indentLine | FastFold | neoformat | rainbow | vim-sayonara | MarkLines | vimade | lexima.vim | vim-pasta
         call timer_start(550, 'utility#defer#utility2')
-        " Delay load: animate.vim | lens.vim |vim-pasta | vim-matchup |  NrrwRgn | vim-endwise 
+        " Delay load: animate.vim | lens.vim |vim-pasta | vim-matchup |  NrrwRgn | vim-endwise
         call timer_start(600, 'utility#defer#utility3')
         " Load only for gui
         " if g:is_gui_running
@@ -463,13 +475,13 @@
             let g:fastfold_skip_filetypes = [ 'taglist', 'vista', 'nerdtree' ]
         " }}}  Config
 
-    " }}} FastFold 
+    " }}} FastFold
 
     " Fzf {{{
         " Function {{{
             function! Fzf_files_with_dev_icons(command) " {{{
                 " mi apre fzf con affianco al nome del file l'icona, e mi mostra la preview
-                " del file nelle mie variabili d'ambiente ho impostato 
+                " del file nelle mie variabili d'ambiente ho impostato
                 " FZF_DEFAULT_OPTS=--bind page-down:preview-down,page-up:preview-up
                 " in questo modo posso usare page-up e page-down per scorrere l'anteprima
                 " per ottimizzarlo ho usato un plugin https://github.com/coreyja/devicon-lookup
@@ -504,10 +516,10 @@
             " E con il tasto CTRL+P mi mostra e nasconde la preview
 
 
-            let $FZF_DEFAULT_OPTS="--ansi --color 
-                                 \ fg:#616161,fg+:#EBCB8B,hl:#81A1C1,hl+:#81A1C1,border:#4B4C53 
+            let $FZF_DEFAULT_OPTS="--ansi --color
+                                 \ fg:#616161,fg+:#EBCB8B,hl:#81A1C1,hl+:#81A1C1,border:#4B4C53
                                  \ --bind \"ctrl-p:toggle-preview,page-down:preview-down,page-up:preview-up\""
-            
+
             let $BAT_THEME="base16-256"
 
             " Initialize configuration dictionary
@@ -519,7 +531,7 @@
             let g:fzf_vim.buffers_jump = 1
 
             " [[B]Commits] Customize the options used by 'git log':
-             let g:fzf_vim.commits_log_options = '--graph --color=always 
+             let g:fzf_vim.commits_log_options = '--graph --color=always
                                                 \ --format="%C(auto)%h%d %s %C(black)%C(bold)%cr"'
 
             " [Tags] Command to generate tags file
@@ -586,7 +598,7 @@
                     \ call fzf#vim#grep(
                     \ RgRunner(<f-args>).shellescape(""), 1,
                     \ fzf#vim#with_preview({'options': '--delimiter : --nth 4.. -e --highlight-line'}, 'right:50%:hidden', 'ctrl-p'))
-            
+
 
             command! -bang -nargs=* Ugrep
                 \ call fzf#vim#grep(
@@ -607,9 +619,9 @@
         " }}} Command
 
         " Map {{{
-            " nelle mie Helper functions (vedere sopra) ho creato la funzione 
+            " nelle mie Helper functions (vedere sopra) ho creato la funzione
             " Fzf_files_with_dev_icons()
-            " mi apre fzf con affianco al nome del file l'icona, e mi mostra 
+            " mi apre fzf con affianco al nome del file l'icona, e mi mostra
             " la preview del file nelle mie variabili d'ambinte
             " ho impostato FZF_DEFAULT_OPTS=--bind page-down:preview-down,page-up:preview-up
             " in questo modo posso usare page-up e page-down per scorrere l'anteprima
@@ -753,7 +765,7 @@
 
     " Lsp {{{
         function! s:configure_lsp() abort " {{{
-            
+
             " Config {{{
                 let g:lsp_use_lua =  has('lua') && has('patch-8.2.0775')
                 let g:lsp_use_native_client = 1
@@ -900,7 +912,7 @@
                 " Shift-Tab: naviga indietro nel menu
                 inoremap <silent><expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
 
-                let g:UltiSnipsExpandTrigger="<c-e>" 
+                let g:UltiSnipsExpandTrigger="<c-e>"
                 let g:UltiSnipsJumpForwardTrigger="<c-j>"
                 let g:UltiSnipsJumpBackwardTrigger="<c-k>"
 
@@ -935,13 +947,13 @@
         function! s:load_and_start_lsp() abort  " {{{
             " Carica i plugin
             call plug#load('vim-lsp')
-            
+
             " Configura LSP (metti qui tutta la tua configurazione)
             call s:configure_lsp()
-            
+
             " Abilita LSP
             call lsp#enable()
-            
+
             echo "LSP started!"
         endfunction " }}}
 
@@ -990,8 +1002,8 @@
             " Ho settato con un autocmd che mi evidengia gia DEFAULT|TODO|OK|FIX|PERF|BUG
             "
             " <leader>bb   evidenzio il testo sotto il cursore, o selezione
-            " N<leader>b   posso passargli un numero per evidenziarlo con una categoria specifica 
-            " 
+            " N<leader>b   posso passargli un numero per evidenziarlo con una categoria specifica
+            "
             " Per vedere la lista delle caterogie, e i mark associati
             " :Marks oppure <Leader>bl
             "
@@ -1001,7 +1013,7 @@
             " :MarkClear          - Cancella tutti i mark (permanente)
             " :Marks              - Mostra tutti i mark attivi
             " :MarkSave           - Salva i mark correnti
-            " :MarkLoad           - Carica i mark salvati       
+            " :MarkLoad           - Carica i mark salvati
         " }}} Note
 
         " Config {{{
@@ -1016,7 +1028,7 @@
             silent! 3MarkName OK
             silent! 4MarkName BUG
         " }}} Config
-            
+
         " Function {{{
             function! ConfigureMarkNames()
               " Pulisce eventuali nomi preesistenti
@@ -1026,17 +1038,17 @@
               silent! 1MarkName DEFAULT
               silent! 2MarkName TODO
               silent! 3MarkName OK
-              silent! 4MarkName FIX 
+              silent! 4MarkName FIX
               silent! 5MarkName PERF
               silent! 6MarkName BUG
 
-              " Evidenzia gia di default queste categorie 
+              " Evidenzia gia di default queste categorie
               silent! 2Mark /TODO:/
               silent! 3Mark /OK:/
               silent! 4Mark /FIX:/
               silent! 5Mark /PERF:/
               silent! 6Mark /BUG:/
-              
+
               " Colori personalizzati per evidenziare le categorie
               " DEFAULT
               highlight  MarkWord1 ctermfg=0 ctermbg=11 guifg=Black guibg=#8CCBEA
@@ -1065,7 +1077,7 @@
 
         " Map {{{
             " Marca/smarca la parola sotto il cursore o la selezione visuale
-            " Uso <Leader>bb perche cosi se non gli passo nessun gruppo usa quello 
+            " Uso <Leader>bb perche cosi se non gli passo nessun gruppo usa quello
             " di default che e 1, altrimenti 1<Leader>b  2<Leader>b ecc...
             " [b]:{Mark}
             nmap <unique> <Leader>bb :exe '1Mark /\V'..escape(substitute('<c-r><c-w>', "'", "''", 'g'), '/\')..'/'<cr>
@@ -1111,7 +1123,7 @@
             silent! nunmap <Leader>bt
             nmap <unique> <Leader>bt <Plug>MarkToggle
 
-            " Mostar tutti i mark settati e la rispettiva categoria 
+            " Mostar tutti i mark settati e la rispettiva categoria
             " [b]:{Mark} [l]:{list}
             silent! nunmap <Leader>bl
             nmap <unique> <Leader>bl :Marks<CR>
@@ -1137,13 +1149,13 @@
             nmap <Leader>B8 <Plug>MarkSearchGroup8Prev
             nmap <Leader>b9 <Plug>MarkSearchGroup9Next
             nmap <Leader>B9 <Plug>MarkSearchGroup9Prev
-        " }}} Map  
+        " }}} Map
     " }}} Marks
 
     " NrrwRgn {{{
         " Nota {{{
             " Questo plugin mi permette di selezionare del codice
-            " e aprirlo in un nuovo buffer e modificarlo in cambiamenti si rifleteranno 
+            " e aprirlo in un nuovo buffer e modificarlo in cambiamenti si rifleteranno
             " anche nel buffer di origine
             " Inoltre posso serezionare piu parti di codice da modificare
             " Operativita:
@@ -1167,7 +1179,7 @@
             " let g:nrrw_rgn_update_orig_win = 1
             let g:nrrw_rgn_nomap_nr = 1
             let g:nrrw_rgn_nomap_Nr = 1
-        " " }}} Config 
+        " " }}} Config
 
         " Map {{{
             " Invio la selezione al buffer temporaneo [split]
@@ -1184,23 +1196,23 @@
             " [n]:{Narrow} [w]:{window}
             silent! nunmap <Leader>nc
             nnoremap <unique> <Leader>nc :w<CR>:WR!<CR>
-           
+
             " Aggiunto codice in modalita multi per modficarlo
-            " [n]:{Narrow}  [a]:{Add} 
+            " [n]:{Narrow}  [a]:{Add}
             silent! vunmap <Leader>na
             vnoremap <unique> <Leader>na :<C-U>'<,'>NRP<CR>
 
             " Apro la modalita multi per modficare il codice [split]
-            " [n]:{Narrow}  [m]:{Multi} 
+            " [n]:{Narrow}  [m]:{Multi}
             silent! nunmap <Leader>nm
             nnoremap <unique> <Leader>nm :NRM<CR>
 
             " Apro la modalita multi per modficare il codice [current window]
-            " [n]:{Narrow} [M]:{Multi} [c]:{Current}  
+            " [n]:{Narrow} [M]:{Multi} [c]:{Current}
             silent! nunmap <Leader>nmc
             nnoremap <unique> <Leader>nmc :NRM!<CR>
 
-        " }}} Map  
+        " }}} Map
     " }}} NrrwRgn
 
     " NeoFormat {{{
@@ -1472,7 +1484,7 @@
                 let g:sneak#use_ic_scs = 1
                 let g:sneak#absolute_dir = 1
             " }}} Config
-            
+
             " Map {{{
                 " IMPORTANTE: per tornare dove ero prima del salto premere ''(due apici)
                 " Ritorno dove ero ultima occorenza trovata
@@ -1481,14 +1493,14 @@
                 map <A-;> <Plug>Sneak_,
             " }}}
         endif
-    " }}} Sneak 
+    " }}} Sneak
 
     " Snipewin {{{
         "  Map {{{
             silent! nunmap ww
             nnoremap <unique> ww <Plug>(snipewin)
         "  }}} Map
-    " }}} Snipewin 
+    " }}} Snipewin
 
     " Tabular {{{
         " Map {{{
@@ -2154,7 +2166,7 @@
         set laststatus=2
         " set cursor behavior
         set guicursor+=a:blinkon0
-        
+
         " Cambio il cursore del terminale
         if !g:is_gui_running
             " sequenze xterm per la forma del cursore
@@ -2284,33 +2296,33 @@
         " }}}Global
 
         " Folding {{{
-            " close current fold 
+            " close current fold
             silent! unmap z<Left>
             silent! unmap zh
             nmap <unique><silent> z<Left> zc
             nmap <unique><silent> zh zc
-            
-            " close current fold ricorsivo 
+
+            " close current fold ricorsivo
             silent! unmap zH
             nmap <unique><silent> zH zC
 
-            " open current fold 
+            " open current fold
             silent! unmap z<Right>
             silent! unmap zl
             nmap <unique><silent> z<Right> zo
             nmap <unique><silent> zl zo
-            
-            " open current fold ricorsivo 
+
+            " open current fold ricorsivo
             silent! unmap zL
             nmap <unique><silent> zL zO
 
-            " Sposto al fold successivo 
+            " Sposto al fold successivo
             silent! nunmap zj
             silent! xunmap zj
             nnoremap <silent><expr><unique> zj ':<c-u>FastFoldUpdate<CR>'.v:count.'zj'
             xnoremap <silent><expr><unique> zj ':<c-u>FastFoldUpdate<CR>gv'.v:count.'zj'
 
-            " Sposto al fold precedente 
+            " Sposto al fold precedente
             silent! nunmap zk
             silent! xunmap zk
             nnoremap <silent><expr><unique> zk ':<c-u>FastFoldUpdate<CR>'.v:count.'zk'
@@ -2368,8 +2380,8 @@
             noremap 8 :call cursor(0, virtcol('$')/2)<CR>
             " go go start line
             noremap 0 ^
-            
-            " Scroll Up/Down 
+
+            " Scroll Up/Down
             silent! nunmap <A-k>
             silent! nunmap <A-j>
             silent! nunmap <A-Up>
@@ -2499,7 +2511,7 @@
             vnoremap <unique><silent> <leader>d "_d
 
             " Copia il testo con indentazione corretta
-            nnoremap <leader>p "+p'[='] 
+            nnoremap <leader>p "+p'[=']
         " }}} Editing
 
         " Visualization {{{
@@ -2554,7 +2566,7 @@
 
             " Clear search highlight
             map <silent> <leader>c :let @/=""<CR>:echo "Cleared search register."<cr>
-            
+
             " Modifico il comportamento di ricerca con *
             " - Non si sposta alla prima occorrenza
             " - Setta il mark s per poi ritornarci, lo usa come segnaposto
@@ -2680,16 +2692,16 @@
         call system('ripper-tags ' . "-R -f " . shellescape(tags_file) . " --exclude=test --exclude=config --exclude=.rblcl --exclude=doc  --exclude=.yardoc --exclude=.git")
     endfunction
     command! -range=% Ciao :call GenTagRuby()
-	
+
 	" keep cursor in the same column (if possible) when moving cursor
-	set nostartofline                         
+	set nostartofline
 
 
     packadd! hlyank
     let g:hlyank_hlgroup = 'IncSearch'
     let g:hlyank_duration = 1000
     let g:hlyank_invisual = v:true
-	
+
 " }}} In Prove
 
 " TODO {{{
@@ -3066,7 +3078,7 @@
         "         vmap <silent> <unique> <leader>bl :MarkLinesOn<CR>
         "         vmap <silent> <unique> <leader>bt :MarkLinesToggle<CR>
         "         vmap <silent> <unique> <leader>be :MarkLinesToggle ErrorMsg<CR>
-        "     " }}} Map  
+        "     " }}} Map
         " }}} MarkLines
 
         " MakeHeader {{{
