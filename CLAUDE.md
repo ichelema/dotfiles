@@ -6,6 +6,32 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A [chezmoi](https://www.chezmoi.io/) dotfiles repository for user `sphynx79`. It manages configurations for both **Windows** (primary host) and **Linux** (Hyprland/Wayland desktop), with an external neovim config tracked in a separate repo.
 
+## Local chezmoi Documentation (authoritative reference)
+
+A full offline copy of the chezmoi documentation lives at `support_files/chezmoi-docs/`. This is the **authoritative reference** for chezmoi behavior — prefer it over training-data recall whenever the user asks about a chezmoi command, template function, special file, or config option.
+
+Layout:
+
+| Folder | Use for |
+| --- | --- |
+| `reference/commands/` | Exact flags and behavior of each `chezmoi <command>` |
+| `reference/special-files/` | `.chezmoiignore`, `.chezmoiexternal`, `.chezmoidata`, `.chezmoiscripts`, etc. |
+| `reference/special-directories/` | `.chezmoitemplates/`, `.chezmoiscripts/`, etc. |
+| `reference/templates/` | Template functions (incl. `bitwarden`, `onepassword`, ...) and variables |
+| `reference/configuration-file/` | Options for `~/.config/chezmoi/chezmoi.toml` |
+| `reference/source-state-attributes.md` | Naming prefixes (`dot_`, `private_`, `executable_`, `run_*`, ...) |
+| `reference/application-order.md` | Order in which chezmoi applies entries |
+| `user-guide/` | Higher-level how-tos (templating, scripts, encryption, password managers, machine differences) |
+| `developer-guide/` | Internals — only relevant for hacking on chezmoi itself |
+
+Workflow when answering a chezmoi question:
+
+1. `Grep` inside `support_files/chezmoi-docs/` for the command/flag/function name.
+2. `Read` the matching file(s) before answering.
+3. Cite the doc path in the reply (e.g. `support_files/chezmoi-docs/reference/commands/apply.md`) so the user can verify.
+
+The folder is excluded from chezmoi deployment (per the existing rule "the `support_files/` directory is always ignored by chezmoi"), so nothing here ever lands in the home directory.
+
 ## Common chezmoi Commands
 
 ```bash
