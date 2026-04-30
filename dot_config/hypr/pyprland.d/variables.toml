@@ -1,5 +1,0 @@
-# using variables for demonstration purposes (not needed)
-[pyprland.variables]
-term = "kitty"
-term_classed = "kitty --class"
-alacritty_classed = "alacritty --class"

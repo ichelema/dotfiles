@@ -1,9 +1,0 @@
-[pyprland]
-
-include = [
-    "~/.config/hypr/pyprland.d/",
-]
-
-# plugins = [
-# 	"toggle_special",
-# ]

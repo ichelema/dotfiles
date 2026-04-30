@@ -1,0 +1,28 @@
+#!/bin/bash
+set -euo pipefail
+
+
+ALACRITTY_CONFIG="$HOME/.config/alacritty/alacritty.toml"
+if [[ -f "$ALACRITTY_CONFIG" ]]; then
+  touch "$ALACRITTY_CONFIG"
+fi
+
+if pgrep -x kitty >/dev/null; then
+  KITTY_THEME="$HOME/.config/hypr/themes/current/theme/kitty.conf"
+  if [[ -f "$KITTY_THEME" ]]; then
+    # Applica i colori a tutte le istanze di kitty tramite i socket
+    for sock in /tmp/kitty-*; do
+      if [[ -S "$sock" ]]; then
+        kitten @ --to "unix:$sock" set-colors --all "$KITTY_THEME" 2>/dev/null || true
+      fi
+    done
+  fi
+  # Ricarica anche la config generale
+  pkill -SIGUSR1 -x kitty
+fi
+
+if pgrep -x ghostty >/dev/null; then
+  pkill -SIGUSR2 -x ghostty
+fi
+
+exit 0

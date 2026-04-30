@@ -1,0 +1,22 @@
+#!/bin/bash
+set -euo pipefail
+
+# Percorso del file di configurazione
+CURRENT_THEME_DIR="$HOME/.config/hypr/themes/current/theme"
+CONFIG_FILE="$CURRENT_THEME_DIR/gnome.theme"
+
+if [[ -f "$CONFIG_FILE" ]]; then
+        # shellcheck disable=SC1090
+        source "$CONFIG_FILE"
+fi
+
+gtk_theme="${GTK_THEME:-Adwaita-dark}"
+icon_theme="${ICON_THEME:-Papirus-Dark}"
+color_scheme="${COLOR_SCHEME:-prefer-dark}"
+cursor_theme="${CURSOR_THEME:-Adwaita}"
+
+gsettings set org.gnome.desktop.interface gtk-theme "$gtk_theme"       || true
+gsettings set org.gnome.desktop.interface color-scheme "$color_scheme" || true
+gsettings set org.gnome.desktop.interface icon-theme "$icon_theme"     || true
+gsettings set org.gnome.desktop.interface cursor-theme "$cursor_theme" || true
+

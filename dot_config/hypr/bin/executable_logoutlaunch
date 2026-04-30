@@ -1,84 +1,57 @@
 #!/bin/bash
 
-#// Check if wlogout is already running
-
+# 1. Chiudi wlogout se è già in esecuzione
 if pgrep -x "wlogout" >/dev/null; then
     pkill -x "wlogout"
     exit 0
 fi
 
-wlogoutStyle="${1:-1}"
-BtnCol="${2:-black}"
-confDir="${confDir:-$HOME/.config}"
-wLayout="${confDir}/wlogout/layout_${wlogoutStyle}"
-wlTmplt="${confDir}/wlogout/style_${wlogoutStyle}.css"
+# 2. Definizione dei percorsi
+layout=~/.config/wlogout/layout
+template=~/.config/wlogout/style.css
 
-if [ ! -f "${wLayout}" ] || [ ! -f "${wlTmplt}" ]; then
-    # 1. Notifica di Warning (Livello: Normal)
-    # Informa l'utente del fallback senza allarmarlo troppo
-    notify-send -u normal -i dialog-warning -t 5000 \
-        "Wlogout Style Warning" \
-        "Config '${wlogoutStyle}' not found.\nSwitching to default style (1)."
-
-    # Imposta il fallback
-    wlogoutStyle=1
-    wLayout="${confDir}/wlogout/layout_${wlogoutStyle}"
-    wlTmplt="${confDir}/wlogout/style_${wlogoutStyle}.css"
-
-    # 2. Verifica del Fallback
-    if [ ! -f "${wLayout}" ] || [ ! -f "${wlTmplt}" ]; then
-        # 3. Notifica di Errore Fatale (Livello: Critical)
-        # Questa notifica solitamente rimane a schermo finché non viene chiusa (dipende dal daemon)
-        notify-send -u critical -i dialog-error \
-            "Wlogout Broken" \
-            "CRITICAL ERROR: Default files missing!\nCannot launch wlogout.\n\nMissing:\n${wLayout}\n${wlTmplt}"
-
-        # Uscita con errore
-        exit 1
-    fi
+# Controllo esistenza file
+if [ ! -f "$layout" ] || [ ! -f "$template" ]; then
+    notify-send -u critical "Wlogout Error" "Layout o CSS mancante in ~/.config/wlogout/"
+    exit 1
 fi
 
-#// detect monitor res
+# ---------------------------------------------------------
+# 3. Rilevamento Tema (Dark/Light)
+# ---------------------------------------------------------
+# Ottiene lo schema corrente e rimuove gli apici singoli (es. 'prefer-dark' -> prefer-dark)
+current_scheme=$(gsettings get org.gnome.desktop.interface color-scheme | tr -d "'")
 
-x_mon=$(hyprctl -j monitors | jq '.[] | select(.focused==true) | .width')
-y_mon=$(hyprctl -j monitors | jq '.[] | select(.focused==true) | .height')
-hypr_scale=$(hyprctl -j monitors | jq '.[] | select (.focused == true) | .scale' | sed 's/\.//')
-#// scale config layout and style
-
-case "${wlogoutStyle}" in
-1)
-    wlColms=6
-    export mgn=$((y_mon * 28 / hypr_scale))
-    export hvr=$((y_mon * 23 / hypr_scale))
-    ;;
-2)
-    wlColms=2
-    export x_mgn=$((x_mon * 35 / hypr_scale))
-    export y_mgn=$((y_mon * 25 / hypr_scale))
-    export x_hvr=$((x_mon * 32 / hypr_scale))
-    export y_hvr=$((y_mon * 20 / hypr_scale))
-    ;;
-esac
-
-#// scale font size
-
-export fntSize=$((y_mon * 2 / 100))
-
-if [ "$2" == "black" ]; then
+if [[ "$current_scheme" == *"dark"* ]]; then
+    # Se il sistema è Dark, le icone devono essere chiare
     export BtnCol="white"
 else
+    # Se il sistema è Light (o default), le icone devono essere scure
     export BtnCol="black"
 fi
 
-#// eval hypr border radius
+# ---------------------------------------------------------
+# 4. Rilevamento Monitor e Scaling
+# ---------------------------------------------------------
+x_mon=$(hyprctl -j monitors | jq '.[] | select(.focused==true) | .width')
+y_mon=$(hyprctl -j monitors | jq '.[] | select(.focused==true) | .height')
+hypr_scale=$(hyprctl -j monitors | jq '.[] | select (.focused == true) | .scale' | sed 's/\.//')
 
+# 5. Calcolo dimensioni e margini
+export x_mgn=$((x_mon * 35 / hypr_scale))
+export y_mgn=$((y_mon * 25 / hypr_scale))
+export x_hvr=$((x_mon * 32 / hypr_scale))
+export y_hvr=$((y_mon * 20 / hypr_scale))
+
+# Calcolo font e raggio bordi
+export fntSize=$((y_mon * 2 / 100))
 hypr_border="${hypr_border:-10}"
 export active_rad=$((hypr_border * 5))
 export button_rad=$((hypr_border * 8))
 
-#// eval config files
-wlStyle="$(envsubst <"${wlTmplt}")"
+# 6. Generazione CSS dinamico
+# envsubst sostituirà ${BtnCol} con "white" o "black" nel tuo CSS (anche dentro gli SVG)
+wlStyle="$(envsubst < "$template")"
 
-#// launch wlogout
-
-wlogout -b "${wlColms}" -c 0 -r 0 -m 0 --layout "${wLayout}" --css <(echo "${wlStyle}") --protocol layer-shell
+# 7. Avvio wlogout
+wlogout -b 2 -c 0 -r 0 -m 0 --layout "$layout" --css <(echo "$wlStyle") --protocol layer-shell

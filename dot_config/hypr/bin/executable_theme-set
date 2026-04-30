@@ -1,0 +1,91 @@
+#!/bin/bash
+set -euo pipefail
+
+# === Configuration ===
+THEMES_DIR="$HOME/.config/hypr/themes"
+CURRENT_THEME_DIR="$THEMES_DIR/current/theme"
+DEBUG="${DEBUG:-0}"
+
+# === Functions ===
+die() {
+  echo "Error: $1" >&2
+  exit "${2:-1}"
+}
+
+debug_log() {
+  [[ "$DEBUG" == "1" ]] && notify-send -t 5000 "Debug Script" "$1"
+  return 0
+}
+
+list_themes() {
+  echo "Available themes:" >&2
+  find "$THEMES_DIR" -mindepth 1 -maxdepth 1 -type d ! -name 'current' -printf '%f\n' 2>/dev/null \
+    | sort \
+    | sed 's/^/  - /' >&2
+}
+
+# === Argument validation ===
+if [[ -z "${1:-}" ]]; then
+  echo "Usage: $(basename "$0") <theme-name>" >&2
+  list_themes
+  exit 1
+fi
+
+# === Input sanitization ===
+clean_input="${1//[<>\"\']/}"      # Rimuove <>"'
+clean_input="${clean_input//\//}"  # Rimuove /
+clean_input="${clean_input//../}"  # Rimuove ..
+
+declare -l THEME_NAME="${clean_input// /-}"
+
+[[ -z "$THEME_NAME" ]] && die "Invalid theme name after sanitization"
+
+# Block 'current' as theme name
+[[ "$THEME_NAME" == "current" ]] && die "'current' is a reserved name"
+
+# === Verify theme existence ===
+THEME_PATH="$THEMES_DIR/$THEME_NAME"
+
+debug_log "Il percorso è: $THEME_PATH"
+
+# === Verifica esistenza tema ===
+if [[ ! -d "$THEME_PATH" ]]; then
+  echo "Error: Theme '$THEME_NAME' not found." >&2
+  list_themes
+  exit 1
+fi
+
+# === Verify/create current directory ===
+CURRENT_DIR="$THEMES_DIR/current"
+[[ ! -d "$CURRENT_DIR" ]] && mkdir -p "$CURRENT_DIR"
+
+# === Update symlink ===
+ln -snf "$THEME_PATH" "$CURRENT_THEME_DIR"
+
+# Change background with theme
+theme-bg-next
+
+# Reload components to apply new theme
+reload-app waybar
+
+restart-terminal
+hyprctl reload
+
+reload-app btop
+
+
+# makoctl reload
+swaync-client -R && swaync-client -rs
+
+theme-set-gnome
+
+# theme-set-browser
+theme-set-obsidian
+
+# Set Neovim colorscheme
+theme-set-neovim "$THEME_PATH"
+
+restart-app dolphin
+restart-app krusader
+# Call hook on theme set
+# hook theme-set "$THEME_NAME"

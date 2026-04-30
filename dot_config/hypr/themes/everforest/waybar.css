@@ -1,2 +1,24 @@
 @define-color foreground #d3c6aa;
 @define-color background #2d353b;
+@define-color arch-logo #1793d1;
+
+@define-color bar-bg rgba(45, 53, 59, 0.4);
+@define-color main-bg #2d353b;
+@define-color main-fg rgba(211, 198, 170, 0.8);
+
+@define-color wb-act-bg #3d484d;
+@define-color wb-act-fg #a7c080;
+@define-color wb-hvr-bg #343f44;
+@define-color wb-hvr-fg #83c092;
+
+@define-color accent #a7c080;
+@define-color accent-alt #83c092;
+@define-color warning #dbbc7f;
+@define-color error #e67e80;
+@define-color success #a7c080;
+
+@define-color warp-active #a7c080;
+@define-color warp-inactive #4f585e;
+@define-color warp-failed #e67e80;
+
+@define-color separator rgba(125, 132, 120, 0.6);

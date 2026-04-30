@@ -1,0 +1,57 @@
+#!/bin/bash
+set -euo pipefail
+
+# === Configuration ===
+THEMES_DIR="$HOME/.config/hypr/themes"
+CURRENT_THEME_DIR="$THEMES_DIR/current/theme"
+NVIM_CONFIG="$HOME/.config/nvim/lua/sphynx/core/0-config.lua"
+DEBUG="${DEBUG:-0}"
+
+# === Functions ===
+debug_log() {
+  [[ "$DEBUG" == "1" ]] && notify-send -t 5000 "Debug Neovim Theme" "$1"
+  return 0
+}
+
+# === Get theme path ===
+# Se passato un argomento, usa quello come path del tema
+# Altrimenti usa il tema corrente dal symlink
+if [[ -n "${1:-}" ]]; then
+  THEME_PATH="$1"
+else
+  THEME_PATH=$(readlink -f "$CURRENT_THEME_DIR" 2>/dev/null || echo "")
+fi
+
+if [[ -z "$THEME_PATH" || ! -d "$THEME_PATH" ]]; then
+  echo "Error: No valid theme path" >&2
+  exit 1
+fi
+
+# === Read colorscheme from theme ===
+nvim_theme_file="$THEME_PATH/nvim-colorscheme"
+
+if [[ ! -f "$nvim_theme_file" ]]; then
+  debug_log "No nvim-colorscheme file found, skipping Neovim theme"
+  exit 0
+fi
+
+# Leggi il colorscheme dal file (prima riga, trimmed)
+colorscheme=$(head -n1 "$nvim_theme_file" | tr -d '[:space:]')
+
+if [[ -z "$colorscheme" ]]; then
+  debug_log "Empty nvim-colorscheme file, skipping"
+  exit 0
+fi
+
+# === Update 0-config.lua ===
+if [[ -f "$NVIM_CONFIG" ]]; then
+  sed -i "s/colorscheme = \"[^\"]*\"/colorscheme = \"$colorscheme\"/" "$NVIM_CONFIG"
+  debug_log "Neovim colorscheme set to: $colorscheme"
+fi
+
+# === Reload running Neovim instances ===
+if command -v nvr &>/dev/null; then
+  for sock in /run/user/"$(id -u)"/nvim.*.0 /tmp/nvim.*/0; do
+    [[ -S "$sock" ]] && nvr --servername "$sock" --remote-send ":lua require('sphynx.colors').reload('$colorscheme')<CR>" 2>/dev/null || true
+  done
+fi

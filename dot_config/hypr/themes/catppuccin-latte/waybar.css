@@ -2,3 +2,24 @@
 @define-color background #eff1f5; /* base */
 @define-color border     #dce0e8; /* crust */
 @define-color accent     #1e66f5; /* blue */
+@define-color arch-logo #1793d1;
+
+@define-color bar-bg rgba(239, 241, 245, 0.4);
+@define-color main-bg #eff1f5;
+@define-color main-fg rgba(76, 79, 105, 0.8);
+
+@define-color wb-act-bg #ccd0da; /* surface0 */
+@define-color wb-act-fg #1e66f5; /* blue */
+@define-color wb-hvr-bg #e6e9ef; /* mantle */
+@define-color wb-hvr-fg #7287fd; /* lavender */
+
+@define-color accent-alt #7287fd; /* lavender */
+@define-color warning #df8e1d; /* yellow */
+@define-color error #d20f39; /* red */
+@define-color success #40a02b; /* green */
+
+@define-color warp-active #1e66f5; /* blue */
+@define-color warp-inactive #9ca0b0; /* overlay0 */
+@define-color warp-failed #d20f39; /* red */
+
+@define-color separator rgba(108, 111, 133, 0.6); /* subtext0 */

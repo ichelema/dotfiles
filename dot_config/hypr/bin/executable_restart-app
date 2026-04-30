@@ -1,4 +1,30 @@
 #!/bin/bash
+set -euo pipefail
 
-pkill -x $1
-setsid app2unit.sh -t service $1 >/dev/null 2>&1 &
+[[ -z "${1:-}" ]] && exit 1
+
+PROCESS_NAME="$1"
+
+if ! pgrep -x "$PROCESS_NAME" >/dev/null; then
+  exit 0
+fi
+
+mapfile -t PIDS < <(pgrep -x "$PROCESS_NAME")
+
+# Termina tutti i processi con quel nome
+pkill -x "$PROCESS_NAME" || true
+
+# Attendi che tutti i PID spariscano (max 2 secondi)
+deadline=$((SECONDS + 2))
+for pid in "${PIDS[@]}"; do
+  while kill -0 "$pid" 2>/dev/null; do
+    if (( SECONDS >= deadline )); then
+      echo "Warning: PID $pid still alive after 2s; continuing."
+      break
+    fi
+    sleep 0.05
+  done
+done
+
+# === Start via app2unit ===
+setsid app2unit.sh -t service "$PROCESS_NAME" >/dev/null 2>&1 &
