@@ -57,6 +57,9 @@
 " }}} Default Setting
 
 " Identify platform {{{
+    silent function! MSYS2()
+        return has('win32unix')
+    endfunction
     silent function! OSX()
         return has('macunix')
     endfunction
@@ -71,15 +74,15 @@
     if OSX()
         let g:vim_config_dir = expand('~/.vim')
     elseif LINUX()
-    if !empty($XDG_CONFIG_HOME)
-        let g:vim_config_dir = expand($XDG_CONFIG_HOME . '/vim')
-    else
-        let g:vim_config_dir = expand('~/.config/vim')
-    endif
+        let g:vim_config_dir = !empty($XDG_CONFIG_HOME)
+            \ ? expand($XDG_CONFIG_HOME . '/vim')
+            \ : expand('~/.config/vim')
+    elseif MSYS2()
+        let g:vim_config_dir = expand('~/.vim')
     elseif WINDOWS()
         let g:vim_config_dir = expand($USERPROFILE . '\\vimfiles')
     else
-        let g:vim_config_dir = fnamemodify($MYVIMRC, ':h')  " fallback
+        let g:vim_config_dir = fnamemodify(resolve(expand('<sfile>:p')), ':h')
     endif
 
     let g:is_gui_running = has("gui_running")
@@ -1900,7 +1903,7 @@
         endif
 
         " Use both Unix and DOS file formats, but favor the Unix one for new files.
-        if WINDOWS()
+        if WINDOWS() || MSYS2()
             set fileformats=unix,dos
         endif
 
