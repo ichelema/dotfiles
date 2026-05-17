@@ -258,8 +258,8 @@
             Plug '4513ECHO/vim-snipewin',                   {'on': ['<Plug>(snipewin)'] }
             Plug '4513ECHO/vim-snipewin',                   {'on': ['<Plug>(snipewin)'] }
             Plug 'prabirshrestha/vim-lsp',                  {'on': []}
-            " Plug 'prabirshrestha/asyncomplete.vim'
-            " Plug 'prabirshrestha/asyncomplete-lsp.vim'
+            Plug 'prabirshrestha/asyncomplete.vim',         {'on': []}
+            Plug 'prabirshrestha/asyncomplete-lsp.vim',     {'on': []}
             " Plug 'mattn/vim-lsp-settings'
             " Plug 'SirVer/ultisnips'
             " Plug 'honza/vim-snippets'
@@ -477,7 +477,6 @@
             let g:fastfold_fold_movement_commands = []
             let g:fastfold_skip_filetypes = [ 'taglist', 'vista', 'nerdtree' ]
         " }}}  Config
-
     " }}} FastFold
 
     " Fzf {{{
@@ -782,6 +781,7 @@
                 let g:lsp_hover_conceal = 0
                 let g:lsp_hover_ui = 'float'
                 let g:lsp_async_completion = 1
+                let g:lsp_tagfunc_source_methods = ['definition']
 
                 let g:lsp_diagnostics_signs_error = {'text': '✗'}
                 let g:lsp_diagnostics_signs_warning = {'text': '⚠'}
@@ -860,7 +860,7 @@
                 " }}} Debug
             "}}} Config
 
-            " Functin {{{
+            " Function {{{
                 function! s:lsp_tab_complete() abort " {{{
                   if pumvisible()
                     return "\<C-n>"
@@ -873,38 +873,12 @@
                     endif
                   endif
                 endfunction " }}}
-
-                function! s:on_lsp_buffer_enabled() abort " {{{
-                    setlocal omnifunc=lsp#complete
-                    setlocal signcolumn=yes
-                    setlocal tagfunc=lsp#tagfunc
-
-                    " Mappature locali per il buffer
-                    nmap <buffer> <leader>lgd <plug>(lsp-definition)
-                    nmap <buffer> <leader>lgs <plug>(lsp-document-symbol-search)
-                    nmap <buffer> <leader>lgS <plug>(lsp-workspace-symbol-search)
-                    nmap <buffer> <leader>lgr <plug>(lsp-references)
-                    nmap <buffer> <leader>lgi <plug>(lsp-implementation)
-                    nmap <buffer> <leader>lgt <plug>(lsp-type-definition)
-                    nmap <buffer> <leader>ldk <plug>(lsp-previous-diagnostic)
-                    nmap <buffer> <leader>ldj <plug>(lsp-next-diagnostic)
-                    nmap <buffer> <leader>lk <plug>(lsp-hover-float)
-
-                    " Diagnostica
-                    nmap <buffer> <leader>ld <plug>(lsp-document-diagnostics)
-                    nmap <buffer> <leader>lf :LspDocumentDiagnostics --buffers=*<CR>
-
-                    " Preview definition
-                    nmap <buffer> <leader>lpd <plug>(lsp-peek-definition)
-
-                    " Status
-                    nmap <buffer> <leader>ls :LspStatus<CR>
-                endfunction " }}}
             " }}} Function
 
             " Map {{{
-                " Mappature globali per i diagnostici (errori/warning)
-                " cd => lsp diagnostics: apre la lista degli errori nella location-list
+                " --- Globali: impostati una volta sola al LspStart ---
+
+                " cd => apre la lista degli errori nella location-list
                 nnoremap <silent> <leader>cd :LspDocumentDiagnostics<CR>:lopen<CR>
                 " Spostati tra gli errori nella location-list
                 nnoremap <silent> [l :lprevious<CR>
@@ -919,42 +893,73 @@
                 let g:UltiSnipsJumpForwardTrigger="<c-j>"
                 let g:UltiSnipsJumpBackwardTrigger="<c-k>"
 
+                " Enter: accetta selezione o inserisci newline
+                inoremap <expr> <CR> pumvisible() ? asyncomplete#close_popup() : "\<CR>"
+                " Esc: chiudi popup
+                inoremap <expr> <Esc> pumvisible() ? asyncomplete#cancel_popup() : "\<Esc>"
+                " Ctrl-Space: forza apertura menu
+                imap <C-Space> <Plug>(asyncomplete_force_refresh)
+                " Ctrl-E: chiude il popup
+                inoremap <expr> <C-e> pumvisible() ? asyncomplete#cancel_popup() : "\<End>"
 
+                " --- Buffer-local: impostati per ogni buffer via autocmd ---
+                function! s:lsp_buffer_maps() abort " {{{
+                    setlocal omnifunc=lsp#complete
+                    setlocal signcolumn=yes
+                    setlocal tagfunc=lsp#tagfunc
 
-                " " Enter: accetta selezione o inserisci newline
-                " inoremap <expr> <CR> pumvisible() ? asyncomplete#close_popup() : "\<CR>"
+                    " Go to
+                    nmap <buffer> <leader>lgd <plug>(lsp-definition)
+                    nmap <buffer> <leader>lgs <plug>(lsp-document-symbol-search)
+                    nmap <buffer> <leader>lgS <plug>(lsp-workspace-symbol-search)
+                    nmap <buffer> <leader>lgr <plug>(lsp-references)
+                    nmap <buffer> <leader>lgi <plug>(lsp-implementation)
+                    nmap <buffer> <leader>lgt <plug>(lsp-type-definition)
 
-                " " Esc: chiudi popup
-                " inoremap <expr> <Esc> pumvisible() ? asyncomplete#cancel_popup() : "\<Esc>"
+                    " Diagnostica
+                    nmap <buffer> <leader>ldk <plug>(lsp-previous-diagnostic)
+                    nmap <buffer> <leader>ldj <plug>(lsp-next-diagnostic)
+                    nmap <buffer> <leader>ld  <plug>(lsp-document-diagnostics)
+                    nmap <buffer> <leader>lf  :LspDocumentDiagnostics --buffers=*<CR>
 
-                " " Ctrl-Space: forza apertura menu (alternativa)
-                " imap <C-Space> <Plug>(asyncomplete_force_refresh)
+                    " Hover / Preview
+                    nmap <buffer> <leader>lk  <plug>(lsp-hover-float)
+                    nmap <buffer> <leader>lpd <plug>(lsp-peek-definition)
 
-                " " Ctrl-N/P per navigare senza attivare il completamento
-                " inoremap <expr> <C-n> pumvisible() ? "\<C-n>" : "\<C-n>"
-                " inoremap <expr> <C-p> pumvisible() ? "\<C-p>" : "\<C-p>"
+                    " Override tp con peek mode (popup) quando LSP è attaccato.
+                    " Fuori da buffer LSP, tp resta <C-W>} (preview window classica via ctags).
+                    nmap <buffer> tp <plug>(lsp-peek-definition)
 
-                " " Ctrl-E per chiudere il popup
-                " inoremap <expr> <C-e> pumvisible() ? asyncomplete#cancel_popup() : "\<End>"
-
+                    " Status
+                    nmap <buffer> <leader>ls :LspStatus<CR>
+                endfunction " }}}
             " }}} Map
 
             " Autocmd {{{
                 augroup lsp_install
                     autocmd!
-                    autocmd User lsp_buffer_enabled call s:on_lsp_buffer_enabled()
+                    autocmd User lsp_buffer_enabled call s:lsp_buffer_maps()
                 augroup END
             " }}} Autocmd
         endfunction " }}}
 
+        let s:lsp_loaded = 0
         function! s:load_and_start_lsp() abort  " {{{
+            if s:lsp_loaded
+                return
+            endif
+            let s:lsp_loaded = 1
+
             " Carica i plugin
             call plug#load('vim-lsp')
+            call plug#load('asyncomplete.vim')
+            call plug#load('asyncomplete-lsp.vim')
 
-            " Configura LSP (metti qui tutta la tua configurazione)
+            " Configura LSP (registra i server)
             call s:configure_lsp()
 
-            " Abilita LSP
+            " Abilita LSP — asyncomplete-lsp.vim si auto-registra
+            " come source via autocmd User lsp_server_init
             call lsp#enable()
 
             echo "LSP started!"
@@ -2584,24 +2589,21 @@
             silent! unmap t<left>
             map <unique><silent> t<left> <C-T>
 
-            " alternative to <C-]>
-            " place your cursor on an id or class and hit <leader>]
-            " to jump to the definition
+            " jump al tag sotto il cursore (usa tagfunc con flag 'c' → LSP definition position-based)
             silent! unmap t<Right>
-            map <unique><silent> t<Right> :tjump /<c-r>=expand('<cword>')<cr><cr>
-            " map <silent>t<Right> :tag /<c-r>=expand('<cword>')<cr><cr>
+            map <unique><silent> t<Right> <C-]>
 
-            " va al tag sotto il cursore in vertial split window
+            " va al tag sotto il cursore in vertical split window
             silent! unmap tv
-            map <unique><silent> tv :vsp <CR>:exec("tjump ".expand("<cword>"))<CR>
-            " va al tag sotto il cursore in split window
+            map <unique><silent> tv :vsp<CR><C-]>
+            " va al tag sotto il cursore in split window orizzontale
             silent! unmap ts
-            map <unique><silent> ts :sp <CR>:exec("tjump ".expand("<cword>"))<CR>
+            map <unique><silent> ts <C-W>]
 
             " mi apre il tag in preview window, senza spostare il cursore nel buffer corrente
             " dopo per chiudere la preview window C-w-z
             silent! unmap tp
-            map <unique><silent> tp <Esc>:exe "ptjump " . expand("<cword>")<Esc><C-Down><Right>z<Right>
+            map <unique><silent> tp <C-W>}
 
             " mi apre il tags stack
             silent! unmap tts
@@ -2718,30 +2720,21 @@
 
     " Stratup Vim-Plug {{{
         " call plug#begin($HOME.'/vimfiles/plugged')
-            " Plug 'ayu-theme/ayu-vim'
             " Plug 'vim-ctrlspace/vim-ctrlspace'
-            " Plug 'junegunn/vim-peekaboo'
             " Plug 'majutsushi/tagbar',                       {'on': 'TagbarToggle'}
-            " Plug 'Shougo/defx.nvim'
-            " Plug 'kristijanhusak/defx-icons'
             " Plug 'mhinz/vim-grepper', { 'on': ['Grepper', '<plug>(GrepperOperator)'] }
             " Plug 'dyng/ctrlsf.vim'
-            " Plug 'fatih/vim-go', {'for': ['go'] }
             " Plug 'SirVer/ultisnips'
             " Plug 'kassio/neoterm',                          {'on': ['T', 'TREPLSendSelection', 'TREPLSendLine', 'Topen']}
             " Plug 'w0rp/ale'
             " Plug 'zhaocai/GoldenView.Vim'
             " Plug 'tpope/vim-rails'
             " Plug 'ternjs/tern_for_vim', {'for': 'javascript'}
-            " Plug 'hackhowtofaq/vim-solargraph', {'for': 'ruby'}
             " Plug 'dbakker/vim-projectroot', {'for': 'ruby'}
             " Plug 'itchyny/vim-cursorword'
             " Plug 'vim-scripts/MarkLines',
             " Plug 'bounceme/poppy.vim',                      {'on': []}
-            " Plug $VIM.'/vimfiles/plugged/VimProcWin'
-            " Plug $VIM.'/vimfiles/plugged/YouCompleteMe'
             " Plug $VIM.'/vimfiles/plugged/Matchlines'
-            " Plug $VIM.'/vimfiles/plugged/MakeHeader'
         " call plug#end()
     " }}}Stratup Vim-Plug
 
@@ -2848,130 +2841,6 @@
             "" mi mostra i buffer solo del tab in cui mi in modalità fuzzy
             "nnoremap <Leader>tbi :CtrlSpace H<cr>
         " }}} CtrlSpace
-
-        " Defx {{{
-            """""""""""""""""""""""""""""""""""""""""PARAMETRI""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-            "let g:defx_icons_enable_syntax_highlight = 1
-            "au! FileType defx VimadeBufDisable
-
-            "call defx#custom#option('_', {
-            "        \ 'winwidth': 36,
-            "        \ 'split': 'vertical',
-            "        \ 'direction': 'topleft',
-            "        \ 'columns': 'mark:indent:icons:filename:type',
-            "        \ 'toggle': 0,
-            "        \ 'listed': 0,
-            "        \ 'resume': 0,
-           "        \ })
-
-            "call defx#custom#column('filename', {
-            "        \ 'min_width': 23,
-            "        \ 'max_width': 23
-            "        \ })
-
-            "function! Root(path) abort
-            "  return fnamemodify(a:path, ':t') . '/'
-            "endfunction
-            "call defx#custom#source('file', {'root': 'Root'})
-            "autocmd FileType defx call s:defx_my_settings()
-            "function! s:defx_my_settings() abort
-
-            "  "
-            "  " Apertura
-            "  "
-            "  " Se sono in una dir la espande
-            "  " Apre il file al posto del buffer in cui mi trovo
-            "  nnoremap <silent><buffer><expr> o
-            "  \ defx#is_directory() ?
-            "  \ defx#do_action('open_or_close_tree') :
-            "  \ defx#do_action('drop')
-            "  " Se sono in una dir la espande
-            "  " Apre il file al posto del buffer in cui mi trovo
-            "  " Chiude defx
-            "  nnoremap <silent><buffer><expr> O
-            "  \ defx#is_directory() ?
-            "  \ defx#do_action('open_or_close_tree') :
-            "  \ defx#do_action('multi', ['drop', 'quit'])
-            "  " Apre il file e crea una nuova finestra vsplit
-            "  nnoremap <silent><buffer><expr> v
-            "  \ defx#do_action('open', 'vsplit')
-            "  " Apre il file e crea una nuova finestra vsplit
-            "  " Chiude defx
-            "  nnoremap <silent><buffer><expr> V
-            "  \ defx#do_action('multi', [['open', 'vsplit'], 'quit'])
-
-            "  "
-            "  " Navigazione
-            "  "
-            "  " torno su di un livello
-            "  nnoremap <silent><buffer><expr> <Esc>
-            "  \ defx#do_action('cd', ['..'])
-            "  nnoremap <silent><buffer><expr> cw
-            "  \ defx#do_action('change_vim_cwd')
-            "  nnoremap <silent><buffer><expr> cd
-            "  \ defx#do_action('cd', [defx#get_candidate().action__path] )
-
-            "  nnoremap <silent><buffer><expr> q
-            "  \ defx#do_action('quit')
-
-            "  "
-            "  " Selezione
-            "  "
-            "  nnoremap <silent><buffer><expr> <Space>
-            "  \ defx#do_action('toggle_select') . 'j'
-            "  nnoremap <silent><buffer><expr> *
-            "  \ defx#do_action('toggle_select_all')
-
-            "  "
-            "  " Modifica
-            "  "
-            "  nnoremap <silent><buffer><expr> K
-            "  \ defx#do_action('new_directory')
-            "  nnoremap <silent><buffer><expr> N
-            "  \ defx#do_action('new_file')
-            "  nnoremap <silent><buffer><expr> c
-            "  \ defx#do_action('copy')
-            "  nnoremap <silent><buffer><expr> p
-            "  \ defx#do_action('paste')
-            "  nnoremap <silent><buffer><expr> m
-            "  \ defx#do_action('move')
-            "  nnoremap <silent><buffer><expr> r
-            "  \ defx#do_action('rename')
-            "  nnoremap <silent><buffer><expr> d
-            "  \ defx#do_action('remove')
-            "   nnoremap <silent><buffer><expr> yy
-            "  \ defx#do_action('yank_path')
-
-            "  "
-            "  " Visualizzazione
-            "  "
-            "  nnoremap <silent><buffer><expr> .
-            "  \ defx#do_action('toggle_ignored_files')
-            "  nnoremap <silent><buffer><expr> S
-            "  \ defx#do_action('toggle_sort', 'time')
-
-            "  "
-            "  " Eseguo comandi
-            "  "
-            "  nnoremap <silent><buffer><expr> !
-            "  \ defx#do_action('execute_command')
-            "  nnoremap <silent><buffer><expr> x
-            "  \ defx#do_action('execute_system')
-            "endfunction
-            """"""""""""""""""""""""""""""""""""""""""SHORTCUT"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-            "map   <silent> <F4> :Defx -ignored-files="\"\",*.exe,.*,*.bat,*.ico,*.ini,*.key,*.crt,yarn.lock,*.rblcl,*.yardoc,*.git,tags,node_modules_custom,node_modules,\"\""<cr>
-            "vmap  <silent> <F4> <esc>:Defx -ignored-files="\"\",*.exe,.*,*.bat,*.ico,*.ini,*.key,*.crt,yarn.lock,*.rblcl,*.yardoc,*.git,tags,node_modules_custom,node_modules,\"\""<cr>
-            "imap  <silent> <F4> <esc>:Defx -ignored-files="\"\",*.exe,.*,*.bat,*.ico,*.ini,*.key,*.crt,yarn.lock,*.rblcl,*.yardoc,*.git,tags,node_modules_custom,node_modules,\"\""<cr>
-        " }}}Defx
-
-        " Go {{{
-            """""""""""""""""""""""""""""""""""""""""PARAMETRI""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-            " let g:go_highlight_fields = 1
-            " let g:go_highlight_types = 1
-            " let g:go_highlight_functions = 1
-            " let g:go_highlight_operators = 1
-            """""""""""""""""""""""""""""""""""""""""SHORTCUT"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-        " }}} Go
 
         " Grepper {{{
             """"""""""""""""""""""""""""""""""""""""""PARAMETRI"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -3084,12 +2953,6 @@
         "     " }}} Map
         " }}} MarkLines
 
-        " MakeHeader {{{
-            """""""""""""""""""""""""""""""""""""""""PARAMETRI""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-            " let g:header_comment_author="Boscolo Michele"
-            """""""""""""""""""""""""""""""""""""""""SHORTCUT"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-        " }}} MakeHeader
-
         " Poppy {{{
             """""""""""""""""""""""""""""""""""""""""PARAMETRI""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
             " au! cursormoved *.rb,*.js call PoppyInit()
@@ -3137,47 +3000,6 @@
             "" apre il file sotto il cursore
             "map <leader>o :vertical wincmd f<CR>
         " }}} Tern
-
-        " Youcompleteme {{{
-            "set noshowmode shortmess+=c
-            "set completeopt-=preview
-            "set completeopt+=menuone,noinsert,noselect
-
-            "let g:acp_enableAtStartup = 0                     " mi assicuro di disabilitare AutoComplPop
-            "let g:ycm_use_ultisnips_completer = 1             " enable ultisnip integration
-            "let g:ycm_collect_identifiers_from_tags_files = 1 " enable completion from tags
-            "let g:ycm_min_num_of_chars_for_completion = 4
-            "let g:ycm_min_num_identifier_candidate_chars = 0
-            "let g:ycm_max_num_candidates = 10
-            "let g:ycm_show_diagnostics_ui = 0
-            "let g:tern_show_argument_hints = 'on_hold'
-            "let g:ycm_add_preview_to_completeopt = 1
-            "let g:ycm_auto_start_csharp_server = 0
-            "let g:ycm_collect_identifiers_from_comments_and_strings = 1
-            "let g:ycm_autoclose_preview_window_after_completion = 1
-            "let g:ycm_complete_in_comments = 1
-            "let g:ycm_key_invoke_completion = '<C-o>' " devo premere c-x e c-o
-            "" let g:ycm_key_invoke_completion = '<C-Space>'
-            "let g:ycm_autoclose_completion_window_after_selecting = 1
-            "let g:ycm_python_interpreter_path = 'C:\APPL\Python38'
-            "let g:ycm_filetype_blacklist = {
-            "\ 'tagbar' : 1,
-            "\ 'qf'    : 1,
-            "\ 'notes' : 1,
-            "\ 'markdown' : 1,
-            "\ 'unite' : 1,
-            "\ 'text' : 1,
-            "\ 'infolog' : 1,
-            "\ 'nerdtree': 1,
-            "\}
-            "let g:ycm_semantic_triggers =  {
-            "\   'css': [ 're!^\s{4}', 're!:\s+' ],
-            "\   'ruby' : ['re!\.\w\w$', '::'],
-            "\ }
-            """"""""""""""""""""""""""""""""""""""""""SHORTCUT"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-            "inoremap <expr> <Esc>      pumvisible() ? "\<C-y>\<Esc>" : "\<Esc>"
-            "inoremap <expr> <CR>       pumvisible() ? "\<C-y>\<Esc>a" : "\<CR>"
-        " }}} Youcompleteme
 
         " Ultisnip {{{
             """""""""""""""""""""""""""""""""""""""""PARAMETRI""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
