@@ -242,7 +242,7 @@
         " }}} Normal Load
 
         " Lazy Load {{{
-            Plug 'scrooloose/nerdtree',                     {'on': 'NERDTreeToggle'}
+            Plug 'preservim/nerdtree',                      {'on': 'NERDTreeToggle'}
             Plug 'tiagofumo/vim-nerdtree-syntax-highlight', {'on': 'NERDTreeToggle'}
             Plug 'liuchengxu/vista.vim',                    {'on': 'Vista!!'}
             Plug 'rrethy/vim-hexokinase',                   {'for': ['scss', 'css', 'html', 'javascript', 'vim', 'lua']}
