@@ -2746,7 +2746,7 @@
     " Stratup Vim-Plug {{{
         " call plug#begin($HOME.'/vimfiles/plugged')
             " Plug 'vim-ctrlspace/vim-ctrlspace'
-            " Plug 'majutsushi/tagbar',                       {'on': 'TagbarToggle'}
+            " Plug 'preservim/tagbar',                       {'on': 'TagbarToggle'}
             " Plug 'mhinz/vim-grepper', { 'on': ['Grepper', '<plug>(GrepperOperator)'] }
             " Plug 'dyng/ctrlsf.vim'
             " Plug 'SirVer/ultisnips'
