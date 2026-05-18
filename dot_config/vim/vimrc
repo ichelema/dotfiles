@@ -994,11 +994,43 @@
 
     " Markdown {{{
         " Config {{{
+            " Markdown fenced code highlighting
+            let g:markdown_fenced_languages = [
+                \ 'go',
+                \ 'rust',
+                \ 'ruby',
+                \ 'html',
+                \ 'lua',
+                \ 'vim',
+                \ 'json',
+                \ 'python',
+                \ 'javascript',
+                \ 'typescript',
+                \ 'js=javascript',
+                \ 'ts=typescript',
+                \ 'sh',
+                \ 'bash=sh',
+                \ 'shell=sh',
+                \ 'console=sh',
+                \ ]
+
+            " preservim/vim-markdown
             let g:vim_markdown_math = 1
             let g:vim_markdown_frontmatter = 1
-            let g:vim_markdown_conceal = 1
-            let g:vim_markdown_conceal_level = 2
+            let g:vim_markdown_strikethrough = 1
+
+            " Folding
             let g:vim_markdown_folding_style_pythonic = 1
+            let g:vim_markdown_folding_level = 6
+
+            " Conceal
+            let g:vim_markdown_conceal = 1
+            let g:vim_markdown_conceal_code_blocks = 0
+
+            augroup my_markdown
+                autocmd!
+                autocmd FileType markdown setlocal conceallevel=2 concealcursor=n
+            augroup END
         " }}} Config
     " }}} Markdown
 
@@ -2674,12 +2706,6 @@
     " Jump 5 lines when running out of the screen
     set scrolljump=5
 
-    let g:markdown_fenced_languages = ['go', 'rust', 'ruby', 'html']
-    let g:vim_markdown_folding_style_pythonic = 1
-    let g:vim_markdown_conceal_code_blocks = 0
-    let g:vim_markdown_frontmatter = 1
-    let g:vim_markdown_strikethrough = 1
-
     let g:vimsyn_embed = 'l'
 
     " copio current file and line to clipboard
@@ -2700,7 +2726,6 @@
 
 	" keep cursor in the same column (if possible) when moving cursor
 	set nostartofline
-
 
     packadd! hlyank
     let g:hlyank_hlgroup = 'IncSearch'
