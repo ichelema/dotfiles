@@ -465,6 +465,24 @@
         " }}} Map
     " }}} EasyMotion
 
+    " Sneak {{{
+        if s:IsPlugged('vim-sneak')
+            " Config {{{
+                let g:sneak#label = 1
+                let g:sneak#use_ic_scs = 1
+                let g:sneak#absolute_dir = 1
+            " }}} Config
+
+            " Map {{{
+                " IMPORTANTE: per tornare dove ero prima del salto premere ''(due apici)
+                " Ritorno dove ero ultima occorenza trovata
+                map f <Plug>Sneak_s
+                map F <Plug>Sneak_S
+                map <A-;> <Plug>Sneak_,
+            " }}}
+        endif
+    " }}} Sneak
+
     " FastFold {{{
         " Config {{{
             let g:fastfold_force = 1
@@ -563,6 +581,7 @@
             autocmd!
                 autocmd FileType fzf silent! tunmap <buffer> <Esc>
             augroup END
+
         " }}} Autocmd
 
         " Command {{{
@@ -663,6 +682,8 @@
             let g:indentLine_color_gui = '#353D4B'
             let g:indentLine_char = '│'
             let g:indentLine_faster = 1
+            " Evita che indentLine sovrascriva conceallevel impostato altrove (es. per json/jsonc)
+            let g:indentLine_conceallevel = 0
         " }}} Config
 
         " Map {{{
@@ -1021,6 +1042,7 @@
 
             " Folding
             let g:vim_markdown_folding_style_pythonic = 1
+            let g:vim_markdown_override_foldtext = 0
             let g:vim_markdown_folding_level = 6
 
             " Conceal
@@ -1991,6 +2013,13 @@
         set ttyfast
         " Don't redraw while executing macros (good performance config)
         set lazyredraw
+        " Forza un redraw completo dopo lo scroll: con lazyredraw alcuni terminali
+        " (WezTerm) lasciano righe sporche (es. testo dei fold) finché non arriva
+        " un redraw forzato (redraw semplice non basta, serve redraw!)
+        augroup RedrawAfterScroll
+            autocmd!
+            autocmd WinScrolled * redraw!
+        augroup END
         " Only highlight the first 300 columns.
         set synmaxcol=370
     " }}} Increase Perfomance
@@ -2087,10 +2116,11 @@
     " }}} Folding
 
     " Autocmd {{{
-        augroup vim_nvimEx
+        augroup vim_autocmd
             autocmd!
 
-            autocmd FileType json syntax match Comment +\/\/.\+$+ | setlocal conceallevel=0
+            " Disable conceal for json,jsonc
+            autocmd FileType json,jsonc syntax match Comment +\/\/.\+$+ | setlocal conceallevel=0
 
             " Enable omni completion
             autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
@@ -2687,7 +2717,7 @@
     " set inccommand=split
 
     set concealcursor=niv
-    set conceallevel=2
+    " set conceallevel=2
     set virtualedit=block
     set shiftround
     set ttimeout
