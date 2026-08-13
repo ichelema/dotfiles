@@ -465,24 +465,6 @@
         " }}} Map
     " }}} EasyMotion
 
-    " Sneak {{{
-        if s:IsPlugged('vim-sneak')
-            " Config {{{
-                let g:sneak#label = 1
-                let g:sneak#use_ic_scs = 1
-                let g:sneak#absolute_dir = 1
-            " }}} Config
-
-            " Map {{{
-                " IMPORTANTE: per tornare dove ero prima del salto premere ''(due apici)
-                " Ritorno dove ero ultima occorenza trovata
-                map f <Plug>Sneak_s
-                map F <Plug>Sneak_S
-                map <A-;> <Plug>Sneak_,
-            " }}}
-        endif
-    " }}} Sneak
-
     " FastFold {{{
         " Config {{{
             let g:fastfold_force = 1
@@ -1550,8 +1532,13 @@
             " Map {{{
                 " IMPORTANTE: per tornare dove ero prima del salto premere ''(due apici)
                 " Ritorno dove ero ultima occorenza trovata
+                " Per usarlo: f o F + due caratteri
                 map f <Plug>Sneak_s
                 map F <Plug>Sneak_S
+                map t <Plug>Sneak_t
+                " Per usarlo: t o T + un carattere
+                map t <Plug>Sneak_t
+                map T <Plug>Sneak_T
                 map <A-;> <Plug>Sneak_,
             " }}}
         endif
