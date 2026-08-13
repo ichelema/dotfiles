@@ -1533,10 +1533,6 @@
                 " Per usarlo: f o F + due caratteri
                 map f <Plug>Sneak_s
                 map F <Plug>Sneak_S
-                map t <Plug>Sneak_t
-                " Per usarlo: t o T + un carattere
-                map t <Plug>Sneak_t
-                map T <Plug>Sneak_T
                 map <A-;> <Plug>Sneak_,
             " }}}
         endif
