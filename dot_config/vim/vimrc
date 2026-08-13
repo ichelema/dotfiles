@@ -256,7 +256,6 @@
             Plug 'othree/yajs.vim',                         {'for': 'javascript'}
             Plug 'othree/es.next.syntax.vim',               {'for': 'javascript'}
             Plug '4513ECHO/vim-snipewin',                   {'on': ['<Plug>(snipewin)'] }
-            Plug '4513ECHO/vim-snipewin',                   {'on': ['<Plug>(snipewin)'] }
             Plug 'prabirshrestha/vim-lsp',                  {'on': []}
             Plug 'prabirshrestha/asyncomplete.vim',         {'on': []}
             Plug 'prabirshrestha/asyncomplete-lsp.vim',     {'on': []}
@@ -468,8 +467,7 @@
     " FastFold {{{
         " Config {{{
             let g:fastfold_force = 1
-            " Mantieni solo l'aggiornamento al salvataggio
-             let g:fastfold_savehook = 1
+            let g:fastfold_savehook = 0
             " Disabilita tutti gli altri trigger
             let g:fastfold_fdmhook = 0
 
@@ -1450,7 +1448,7 @@
             " aggiungo il supporto ai tag anche per le gemme del progetto
             set tags+=gems.tags
             " i comandi seguenti sono utilizzati per rendere vim piu veloce
-            let ruby_minlines = 400
+            let ruby_minlines = 200
             let ruby_space_errors = 0
             let ruby_no_trail_space_error = 0
         " }}} Config
@@ -1991,22 +1989,14 @@
     " }}} Global
 
     " Increase Perfomance {{{
-        " Quante righe indietreo max per determinare la sinatassi se con minlines non riesce
-        syntax sync maxlines=10000
-        " Quante righe indietreo max per determinare la sinatassi
-        syntax sync minlines=100
         set nocursorcolumn
         " more characters will be sent to the screen for redrawing, instead of using insert/delete line commands
         set ttyfast
         " Don't redraw while executing macros (good performance config)
         set lazyredraw
-        " Forza un redraw completo dopo lo scroll: con lazyredraw alcuni terminali
-        " (WezTerm) lasciano righe sporche (es. testo dei fold) finché non arriva
-        " un redraw forzato (redraw semplice non basta, serve redraw!)
-        augroup RedrawAfterScroll
-            autocmd!
-            autocmd WinScrolled * redraw!
-        augroup END
+        if $TERM_PROGRAM ==# 'WezTerm'
+            set ttyscroll=0
+        endif
         " Only highlight the first 300 columns.
         set synmaxcol=370
     " }}} Increase Perfomance
@@ -2096,10 +2086,6 @@
         " setto il default foldlevel quando apro un file
         " set foldlevel=1
 
-        " abilita il tooltip per vedere cosa c'e dentro il mio fold
-        set balloonexpr=utility#foldballoon#Preview()
-        set ballooneval
-        set balloondelay=1500
     " }}} Folding
 
     " Autocmd {{{
@@ -2124,11 +2110,7 @@
             autocmd FileType scss setlocal foldmethod=indent shiftwidth=2 tabstop=2
             autocmd FileType javascript setlocal ts=4 sts=4 sw=4
 
-            " Salva quando:
-            " - si cambia buffer
-            " - si perde il focus
-            " - si esce dalla modalità insert
-            autocmd FocusLost,BufLeave,InsertLeave * silent! wall
+            autocmd FocusLost,CursorHold * silent! wall
 
             " Automatically reload vimrc when it's saved
             autocmd BufWritePost vimrc ++nested call ReloadVimrc()
@@ -2140,18 +2122,9 @@
             " uso il plugin tpope/vim-obsession
             set viewoptions=cursor,folds,slash,unix
 
-            autocmd bufwinleave *
-                    \   if &ft!=""
-                    \   && &ft!="vim"
-                    \   && (filereadable(expand('%')) == 1)
-                    \ | mkview
-                    \ | endif
-
-            autocmd bufwinenter *
-                    \   if &ft!=""
-                    \   && (filereadable(expand('%')) == 1)
-                    \ | silent! loadview
-                    \ | endif
+            let s:view_fts = ['ruby', 'eruby', 'vim', 'markdown', 'lua']
+            autocmd BufWinLeave * if index(s:view_fts, &ft) >= 0 && filereadable(expand('%')) | silent! mkview | endif
+            autocmd BufWinEnter * if index(s:view_fts, &ft) >= 0 && filereadable(expand('%')) | silent! loadview | endif
 
             " When editing a file, always jump to the last known cursor position.
             " Don't do it when the position is invalid, when inside an event handler
