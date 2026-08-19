@@ -1,5 +1,5 @@
 " Modeline and Notes {{{
-" vim: set sw=4 ts=4 sts=4 et tw=120 foldmarker={{{,}}} foldmethod=marker nospell:
+" vim: set filetype=vim sw=4 ts=4 sts=4 et tw=120 foldmarker={{{,}}} foldmethod=marker nospell:
 
     " Header {{{
     " Maintainer:
@@ -52,8 +52,8 @@
 " }}} Modeline and Notes
 
 " Setting {{{
-    " nocompatible: senza, in compatible mode la continuazione \ ? del
-    " ternario a riga ~78 da' E10 e blocca l'avvio ("Press ENTER")
+    " nocompatible DEVE venire prima del ternario in Identify platform,
+    " altrimenti in compatible mode la continuazione \ ? da' E10 (blocco avvio)
     set nocompatible
 " }}} Default Setting
 
@@ -95,31 +95,6 @@
     endif
 " }}} Identify platform
 
-" Load base vim {{{
-    let loaded_base_vim = 0
-    if loaded_base_vim
-        " Turn on file type detection
-        filetype indent on
-        " Enable filetype plugins
-        filetype plugin on
-        " Enable syntax highlighting
-        syntax enable
-        set nocompatible
-        set mouse=a
-        set clipboard=unnamed,unnamedplus
-        let mapleader = ' '
-        if WINDOWS()
-            call utility#windows#setup()
-        endif
-        call plug#begin()
-            Plug 'arcticicestudio/nord-vim'
-        call plug#end()
-        set background=dark
-        colorscheme nord
-        finish
-    endif
-" }}} Load base vim
-
 " Set before all{{{
     " Impedisce a Vim di caricare i menu predefiniti
     let did_install_default_menus=1
@@ -129,11 +104,8 @@
     let skip_defaults_vim=1
     " Disabilita compatibilità con Vi, abilitando le funzionalità e i comportamenti di Vim
     " Settata prima di qualsiasi altro impostazione, cambiare il senso dei settaggio successivi
-    set nocompatible
-    " Imposta la codifica dei caratteri del file vimrc
+    " (nocompatible è già settato in cima, in "Setting")
     scriptencoding utf-8
-    " Encoding interno di Vim su UTF-8
-    set encoding=utf-8
     " Abilita l'uso del mouse in tutte le modalità (Normale, Visuale, Inserimento, Comando)
     set mouse=a
     " Copiano il testo anche nella clipboard di sistema
@@ -142,18 +114,6 @@
     " Abilita il rilevamento del tipo di file, il caricamento dei plugin specifici e le regole di indentazione
     filetype plugin indent on
     syntax on
-    " Set python path
-    if WINDOWS()
-        if executable('python')
-            let g:python3_host_prog = exepath('python')
-        endif
-    else
-        if executable('python3')
-            let g:python3_host_prog = exepath('python3')
-        elseif executable('python')
-            let g:python3_host_prog = exepath('python')
-        endif
-    endif
     " Controlla se la versione di Vim/Neovim in uso e il terminale supportano i true colors (colori a 24-bit)
     if has('termguicolors')
         " silent!: se il terminale non supporta 24-bit non va in errore
@@ -179,6 +139,10 @@
 
 " Helper functions {{{
 
+    function! s:IsPlugged(plugin) abort " {{{
+        return has_key(g:plugs, a:plugin)
+    endfunction " }}}
+
     " unmap difensivo: solo se la mappatura esiste, altrimenti E31 in v:errmsg
     " (i plugin sono differiti, quindi molte mappature non esistono all'avvio)
     function! s:unmapif(lhs, mode) abort " {{{
@@ -187,107 +151,39 @@
         endif
     endfunction " }}}
 
-    " Stampa un dizionario in forma leggibile
-    " la chiamo con :call PrintDictReadable(dict)
-    function! PrintDictReadable(dict) abort " {{{
-        " Verifica se il parametro passato è effettivamente un dizionario
-        if type(a:dict) != type({})
-            echoerr "L'argomento passato non è un dizionario"
-            return
-        endif
-
-        " Ottieni tutte le chiavi del dizionario, ordinate
-        for key in sort(keys(a:dict))
-            " Stampa la chiave e il corrispondente valore
-            echo key . ': ' . string(a:dict[key])
-        endfor
-    endfunction " }}}
-
-    function! s:IsPlugged(plugin) abort " {{{
-        return has_key(g:plugs, a:plugin)
-    endfunction " }}}
-
-    function! ReloadVimrc() abort " {{{
-        " 1. Cattura lo stato corrente della finestra
-        let l:view = winsaveview()
-
-        " 2. Ricarica il vimrc in silenzio
-        silent! source $MYVIMRC
-
-        " 3. Aggiorna plugin (solo se esistono)
-        if exists(':AirlineRefresh')
-            silent! AirlineRefresh
-        endif
-
-        if exists('*webdevicons#refresh')
-            silent! call webdevicons#refresh()
-        endif
-
-        " 4. Ripristina lo stato salvato
-        call winrestview(l:view)
-
-        echom "Vimrc salvato!"
-    endfunction  " }}}
-
 " }}} Helper functions
 
 " Stratup Vim-Plug {{{
     call plug#begin()
         " Normal Load {{{
             Plug 'arcticicestudio/nord-vim'
-            Plug 'vim-airline/vim-airline'
-            Plug 'jdhao/better-escape.vim'
             Plug 'gelguy/wilder.nvim'
-            Plug 'roxma/nvim-yarp'
-            Plug 'roxma/vim-hug-neovim-rpc'
             Plug 'lambdalisue/vim-glyph-palette'
-            Plug 'inkarkat/vim-mark',
-            Plug 'inkarkat/vim-ingo-library',
             Plug 'justinmk/vim-sneak',
             Plug 'noscript/elevator.vim',
-            " Plug 'itchyny/lightline.vim',
-            " Plug 'mengelbrecht/lightline-bufferline',
-            " Plug 'dhruvasagar/vim-prosession'
-            " Plug 'puremourning/vimspector'
         " }}} Normal Load
 
         " Lazy Load {{{
             Plug 'preservim/nerdtree',                      {'on': 'NERDTreeToggle'}
             Plug 'tiagofumo/vim-nerdtree-syntax-highlight', {'on': 'NERDTreeToggle'}
-            Plug 'liuchengxu/vista.vim',                    {'on': 'Vista!!'}
             Plug 'rrethy/vim-hexokinase',                   {'for': ['scss', 'css', 'html', 'javascript', 'vim', 'lua']}
             Plug 'vim-ruby/vim-ruby',                       {'for': 'ruby'}
             Plug 'p0deje/vim-ruby-interpolation',           {'for': 'ruby'}
             Plug 'preservim/vim-markdown',                  {'for': 'markdown'}
             Plug 'prettier/vim-prettier',                   {'do': 'yarn install','for': ['javascript', 'typescript', 'css', 'less', 'scss', 'json', 'graphql', 'markdown', 'vue', 'yaml', 'html']}
-            Plug 'csscomb/vim-csscomb',                     {'for': ['scss', 'css']}
-            Plug 'othree/html5.vim',                        {'for': 'html'}
-            Plug 'Valloric/MatchTagAlways',                 {'for': 'html'}
-            " Plug 'othree/yajs.vim',                         {'for': 'javascript'}
-            " Plug 'othree/es.next.syntax.vim',               {'for': 'javascript'}
-            Plug '4513ECHO/vim-snipewin',                   {'on': ['<Plug>(snipewin)'] }
-            Plug 'prabirshrestha/vim-lsp',                  {'on': []}
-            Plug 'prabirshrestha/asyncomplete.vim',         {'on': []}
-            Plug 'prabirshrestha/asyncomplete-lsp.vim',     {'on': []}
-            " Plug 'mattn/vim-lsp-settings'
-            " Plug 'SirVer/ultisnips'
-            " Plug 'honza/vim-snippets'
         " }}} Lazy Load
 
         " Delay Load {{{
+            Plug 'vim-airline/vim-airline',                 {'on': []}
             Plug 'ryanoasis/vim-devicons',                  {'on': []}
-            Plug 'ahmadie/workspace.vim',                   {'on': []}
             Plug 'haya14busa/incsearch.vim',                {'on': []}
             Plug 'easymotion/vim-easymotion',               {'on': []}
             Plug 'haya14busa/incsearch-easymotion.vim',     {'on': []}
             Plug 'Yggdroot/indentLine',                     {'on': []}
             Plug 'junegunn/fzf.vim',                        {'on': []}
             Plug 'junegunn/fzf',                            {'on': []}
-            Plug 'godlygeek/tabular',                       {'on': []}
             Plug 'kshenoy/vim-signature',                   {'on': []}
             Plug 'phongnh/ZoomWin',                         {'on': []}
-            Plug 'wesQ3/vim-windowswap',                    {'on': []}
-            Plug 'terryma/vim-smooth-scroll',               {'on': []}
             Plug 'romainl/vim-qf',                          {'on': []}
             Plug 'Konfekt/FastFold',                        {'on': []}
             Plug 'sbdchd/neoformat',                        {'on': []}
@@ -295,23 +191,13 @@
             Plug 'sickill/vim-pasta',                       {'on': []}
             Plug 'mhinz/vim-sayonara',                      {'on': []}
             Plug 'cohama/lexima.vim',                       {'on': []}
-            Plug 'camspiers/animate.vim',                   {'on': []}
-            Plug 'camspiers/lens.vim',                      {'on': []}
             Plug 'andymass/vim-matchup',                    {'on': []}
-            Plug 'chrisbra/NrrwRgn',                        {'on': []}
-            " Plug 'tpope/vim-endwise',
-            " @TODO: Vedere se lasciarlo
-            " if g:is_gui_running
-            "     Plug 'TaDaa/vimade',                        {'on': []}
-            " endif
         " }}} Delay Load
     call plug#end()
 
     " Initialize delay plugin {{{
-        " Delay load: vim-airline (disattivato: workspace.vim dipende da airline)
-        " call timer_start(150, 'utility#defer#airline')
-        " Delay load: workspace
-        call timer_start(350, 'utility#defer#workspace')
+        " Delay load: vim-airline (ok in minimal: workspace.vim non viene mai caricato)
+        call timer_start(150, 'utility#defer#airline')
         " Delay load: incsearch.vim | vim-easymotion | incsearch-easymotion.vim
         call timer_start(400, 'utility#defer#motion')
         " Delay load: fzf | fzf.vim
@@ -322,11 +208,6 @@
         call timer_start(550, 'utility#defer#utility2')
         " Delay load: animate.vim | lens.vim |vim-pasta | vim-matchup |  NrrwRgn | vim-endwise
         call timer_start(600, 'utility#defer#utility3')
-        " Load only for gui
-        " if g:is_gui_running
-        "     "  Delay load: vimade
-        "     call timer_start(750, 'utility#defer#vimade')
-        " endif
     " }}} Initialize delay plugin
 
 " }}} Stratup Vim-Plug
@@ -351,57 +232,11 @@
             let g:airline_section_b = '%{getcwd()}'
             " remove separators for empty sections
             let g:airline_skip_empty_sections = 1
-            " au User AirlineAfterInit  :call airline#add_statusline_func('AirlineWebDevIcons') | AirlineRefresh
-
-            " :AirlineExtensions per vedere le estensioni caricate
-            " let g:airline#extensions#ale#enabled = 1
-            " let g:airline#extensions#windowswap#enabled = 1
-            " let g:airline#extensions#keymap#enabled = 1
-            " let g:airline#extensions#tagbar#enabled = 0
-            " let g:airline#extensions#whitespace#enabled = 0
-            " let g:airline#extensions#xkblayout#enabled = 0
-            " let g:airline#extensions#po#enabled = 0
-
-            " ALE extension
-            " let airline#extensions#ale#error_symbol = 'E:'
-            " let airline#extensions#ale#warning_symbol = 'W:'
-            " let airline#extensions#ale#show_line_numbers = 1
-            " let airline#extensions#ale#open_lnum_symbol = '(L'
-            " let airline#extensions#ale#close_lnum_symbol = ')'
-
-            " QuickFix extension
-            " let g:airline#extensions#quickfix#quickfix_text = 'Quickfix'
-            " let g:airline#extensions#quickfix#location_text = 'Location'
-
-            " Windowswap extension
-            " let g:airline#extensions#windowswap#indicator_text = 'WS'
-
-            " Tabline extension
-            " let g:airline#extensions#tabline#left_sep = ' '
-            " let g:airline#extensions#tabline#left_alt_sep = '|'
-            " let g:airline#extensions#tabline#show_buffers = 1
-            let g:airline#extensions#tabline#buffer_nr_show = 1
-            " visualizza il numero del buffers nella tabline
-            " let g:airline#extensions#tabline#buffer_nr_format = '%s: '
             " cambio il modo in cui viene visualizzato il nome del buffer
             let g:airline#extensions#tabline#formatter = 'unique_tail'
 
-            " Risolve un problema di ritardo quando si lascia modalità inserimento
-            " if !g:is_gui_running
-            "     set ttimeoutlen=11
-            "     au InsertEnter * set timeoutlen=0
-            "     au InsertLeave * set timeoutlen=500
-            " endif
         " }}} Config
     " }}}AirLine
-
-    " Better-escape {{{
-        " Config {{{
-            let g:better_escape_interval = 700
-            " use jj to escape insert mode.
-            let g:better_escape_shortcut = 'ii'
-        " }}}" Config
-    " }}} Better-escape
 
     " Commentary {{{
         " Config {{{
@@ -545,6 +380,7 @@
             " Initialize configuration dictionary
             let g:fzf_vim = {}
             let g:fzf_vim.preview_window = ['hidden,right,50%,<70(up,40%)', 'ctrl-p']
+            " let g:fzf_vim.preview_bash = 'C:\Appl\bin\bash.exe'
 
             " [Buffers] Jump to the existing window if possible
             let g:fzf_vim.buffers_jump = 1
@@ -573,6 +409,9 @@
             let g:fzf_layout = { 'down': '40%' }
 
             let g:fzf_vim.command_prefix = 'Fzf'
+            
+            " Fix for msys in windows
+            let g:fzf_vim.preview_bash = '/usr/bin/bash'
         " }}} Config
 
         " Autocmd {{{
@@ -741,231 +580,12 @@
         endif
     " }}} Incsearch
 
-    " Lens {{{
-        " Config {{{
-            let g:lens#disabled = 1
-            let g:lens#height_resize_max = 60
-            let g:lens#height_resize_min = 20
-            let g:lens#width_resize_max = 120
-            let g:lens#width_resize_min = 14
-            let g:lens#disabled_filetypes = ['nerdtree', 'fzf', 'vista', 'quickfix']
-        " }}} Config
-
-        " Map {{{
-            nnoremap <silent>wm :call lens#toggle()<CR>
-            " let g:lens#height_resize_max = 20
-        " }}} Map
-    " }}} Lens
-
     " Lexima {{{
         " Config {{{
             let g:lexima_accept_pum_with_enter = 1
             let g:lexima_enable_endwise_rules = 1
         " }}} Config
     " }}} Lexima
-
-    " Lsp {{{
-        function! s:configure_lsp() abort " {{{
-
-            " Config {{{
-                let g:lsp_use_lua =  has('lua') && has('patch-8.2.0775')
-                let g:lsp_use_native_client = 1
-                let g:lsp_semantic_enabled = 0
-                let g:lsp_format_sync_timeout = 1000
-                let g:lsp_auto_enable = 0
-                let g:lsp_diagnostics_float_cursor = 1
-                let g:lsp_diagnostics_highlights_insert_mode_enabled = 0
-                let g:lsp_diagnostics_signs_insert_mode_enabled = 0
-                let g:lsp_fold_enabled = 0
-                let g:lsp_hover_conceal = 0
-                let g:lsp_hover_ui = 'float'
-                let g:lsp_async_completion = 1
-                let g:lsp_tagfunc_source_methods = ['definition']
-
-                let g:lsp_diagnostics_signs_error = {'text': '✗'}
-                let g:lsp_diagnostics_signs_warning = {'text': '⚠'}
-                let g:lsp_diagnostics_signs_information = {'text': 'ℹ'}
-                let g:lsp_diagnostics_signs_hint = {'text': '➤'}
-
-                " Server Setting  {{{
-                    if executable('solargraph') " {{{
-                        augroup lsp_solargraph
-                            autocmd!
-                            autocmd User lsp_setup call lsp#register_server({
-                                            \ 'name': 'solargraph',
-                                            \ 'cmd': {server_info->["bundle.bat", "exec", "solargraph", "stdio"]},
-                                            \ 'whitelist': ['ruby', 'eruby'],
-                                            \ 'initialization_options': {
-                                            \   'diagnostics': v:true,
-                                            \   'formatting': v:false,
-                                            \   'autoformat': v:false,
-                                            \   'completion': v:true,
-                                            \   'hover': v:true,
-                                            \   'symbols': v:true,
-                                            \   'definitions': v:true,
-                                            \   'rename': v:false,
-                                            \   'references': v:true,
-                                            \   'documentHighlight': v:false,
-                                            \   'documentSymbol': v:true,
-                                            \   'workspaceSymbol': v:true,
-                                            \   'codeAction': v:false,
-                                            \   'codeLens': v:false,
-                                            \   'folding': v:false,
-                                            \   'logLevel': 'warn'
-                                            \ },
-                                        \ })
-                        augroup END
-                    endif " }}}
-                " }}} Server Setting
-
-                " Highlights {{{
-                    highlight LspErrorText guifg=#f44747 ctermfg=203
-                    highlight LspWarningText guifg=#ff8800 ctermfg=208
-                    highlight LspInformationText guifg=#15aabf ctermfg=38
-                    highlight LspHintText guifg=#4fc1ff ctermfg=75
-
-                    highlight LspErrorHighlight gui=undercurl guisp=#f44747
-                    highlight LspWarningHighlight gui=undercurl guisp=#ff8800
-                    highlight LspInformationHighlight gui=undercurl guisp=#15aabf
-                    highlight LspHintHighlight gui=undercurl guisp=#4fc1ff
-                " }}} Highlights
-
-                " Command {{{
-                    " Start LSP
-                    command! LspEnable :call lsp#enable()
-
-                    " Start LSP
-                    command! LspDisable :call lsp#disable()
-
-                    " Mostra capabilities del server
-                    command! LspSolargraphCapabilities :echo lsp#get_server_capabilities('solargraph')
-                " }}} Comamnd
-
-                " Debug {{{
-                    let g:lsp_log_verbose = 1
-                    let g:lsp_log_file = g:vim_config_dir . '/files/log/vim-lsp.log'
-                    let g:asyncomplete_log_file = g:vim_config_dir . '/files/log/asyncomplete.log'
-
-                    " Funzione per verificare lo stato di LSP
-                    function! LspDebugInfo() abort
-                        echo "LSP Servers:"
-                        echo lsp#get_allowed_servers()
-                        echo "\nCurrent buffer LSP status:"
-                        echo lsp#get_buffer_diagnostics_counts()
-                    endfunction
-
-                    command! LspDebug call LspDebugInfo()
-
-                " }}} Debug
-            "}}} Config
-
-            " Function {{{
-                function! s:lsp_tab_complete() abort " {{{
-                  if pumvisible()
-                    return "\<C-n>"
-                  else
-                    let col = col('.') - 1
-                    if col == 0 || getline('.')[col - 1] =~# '\s'
-                      return "\<Tab>"
-                    else
-                      return "\<C-x>\<C-o>"
-                    endif
-                  endif
-                endfunction " }}}
-            " }}} Function
-
-            " Map {{{
-                " --- Globali: impostati una volta sola al LspStart ---
-
-                " cd => apre la lista degli errori nella location-list
-                nnoremap <silent> <leader>cd :LspDocumentDiagnostics<CR>:lopen<CR>
-                " Spostati tra gli errori nella location-list
-                nnoremap <silent> [l :lprevious<CR>
-                nnoremap <silent> ]l :lnext<CR>
-
-                " Tab: attiva completamento o naviga
-                inoremap <silent><expr> <Tab> <SID>lsp_tab_complete()
-                " Shift-Tab: naviga indietro nel menu
-                inoremap <silent><expr> <S-Tab> pumvisible() ? "\<C-p>" : "\<S-Tab>"
-
-                let g:UltiSnipsExpandTrigger="<c-e>"
-                let g:UltiSnipsJumpForwardTrigger="<c-j>"
-                let g:UltiSnipsJumpBackwardTrigger="<c-k>"
-
-                " Enter: accetta selezione o inserisci newline
-                inoremap <expr> <CR> pumvisible() ? asyncomplete#close_popup() : "\<CR>"
-                " Esc: chiudi popup
-                inoremap <expr> <Esc> pumvisible() ? asyncomplete#cancel_popup() : "\<Esc>"
-                " Ctrl-Space: forza apertura menu
-                imap <C-Space> <Plug>(asyncomplete_force_refresh)
-                " Ctrl-E: chiude il popup
-                inoremap <expr> <C-e> pumvisible() ? asyncomplete#cancel_popup() : "\<End>"
-
-                " --- Buffer-local: impostati per ogni buffer via autocmd ---
-                function! s:lsp_buffer_maps() abort " {{{
-                    setlocal omnifunc=lsp#complete
-                    setlocal signcolumn=yes
-                    setlocal tagfunc=lsp#tagfunc
-
-                    " Go to
-                    nmap <buffer> <leader>lgd <plug>(lsp-definition)
-                    nmap <buffer> <leader>lgs <plug>(lsp-document-symbol-search)
-                    nmap <buffer> <leader>lgS <plug>(lsp-workspace-symbol-search)
-                    nmap <buffer> <leader>lgr <plug>(lsp-references)
-                    nmap <buffer> <leader>lgi <plug>(lsp-implementation)
-                    nmap <buffer> <leader>lgt <plug>(lsp-type-definition)
-
-                    " Diagnostica
-                    nmap <buffer> <leader>ldk <plug>(lsp-previous-diagnostic)
-                    nmap <buffer> <leader>ldj <plug>(lsp-next-diagnostic)
-                    nmap <buffer> <leader>ld  <plug>(lsp-document-diagnostics)
-                    nmap <buffer> <leader>lf  :LspDocumentDiagnostics --buffers=*<CR>
-
-                    " Hover / Preview
-                    nmap <buffer> <leader>lk  <plug>(lsp-hover-float)
-                    nmap <buffer> <leader>lpd <plug>(lsp-peek-definition)
-
-                    " Override tp con peek mode (popup) quando LSP è attaccato.
-                    " Fuori da buffer LSP, tp resta <C-W>} (preview window classica via ctags).
-                    nmap <buffer> tp <plug>(lsp-peek-definition)
-
-                    " Status
-                    nmap <buffer> <leader>ls :LspStatus<CR>
-                endfunction " }}}
-            " }}} Map
-
-            " Autocmd {{{
-                augroup lsp_install
-                    autocmd!
-                    autocmd User lsp_buffer_enabled call s:lsp_buffer_maps()
-                augroup END
-            " }}} Autocmd
-        endfunction " }}}
-
-        let s:lsp_loaded = 0
-        function! s:load_and_start_lsp() abort  " {{{
-            if s:lsp_loaded
-                return
-            endif
-            let s:lsp_loaded = 1
-
-            " Carica i plugin
-            call plug#load('vim-lsp')
-            call plug#load('asyncomplete.vim')
-            call plug#load('asyncomplete-lsp.vim')
-
-            " Configura LSP (registra i server)
-            call s:configure_lsp()
-
-            " Abilita LSP — asyncomplete-lsp.vim si auto-registra
-            " come source via autocmd User lsp_server_init
-            call lsp#enable()
-
-            echo "LSP started!"
-        endfunction " }}}
-
-        command! LspStart call s:load_and_start_lsp()
-    " }}} Lsp
 
     " Matchup {{{
         " Config {{{
@@ -1033,231 +653,6 @@
             augroup END
         " }}} Config
     " }}} Markdown
-
-    " Marks {{{
-
-        " Note {{{
-            " Ottimo plugin per evidenziale il codice
-            " Ho settato colori personallizati per varie categorie
-            " Ho settato con un autocmd che mi evidengia gia DEFAULT|TODO|OK|FIX|PERF|BUG
-            "
-            " <leader>bb   evidenzio il testo sotto il cursore, o selezione
-            " N<leader>b   posso passargli un numero per evidenziarlo con una categoria specifica
-            "
-            " Per vedere la lista delle caterogie, e i mark associati
-            " :Marks oppure <Leader>bl
-            "
-            " ----- COMANDI UTILI -----
-            " :Mark {pattern}     - Marca un pattern specifico
-            " :Mark               - Disabilita tutti i mark (temporaneamente)
-            " :MarkClear          - Cancella tutti i mark (permanente)
-            " :Marks              - Mostra tutti i mark attivi
-            " :MarkSave           - Salva i mark correnti
-            " :MarkLoad           - Carica i mark salvati
-        " }}} Note
-
-        " Config {{{
-          " Disabilita le mappature di default per poterle ridefinire
-            let g:mw_no_mappings = 1
-            let g:mwAutoLoadMarks = 1
-            let g:mwDefaultHighlightingPalette = 'maximum'
-            let g:mwDefaultHighlightingNum = 9
-            " vim-mark si carica dopo questa sezione: i comandi esistono solo in
-            " runtime se il plugin e' caricato (altrimenti E492 in v:errmsg)
-            if exists(':MarkName')
-                silent! MarkName! " Pulisce nomi esistenti
-                silent! 1MarkName TODO
-                silent! 2MarkName FIX
-                silent! 3MarkName OK
-                silent! 4MarkName BUG
-            endif
-        " }}} Config
-
-        " Function {{{
-            function! ConfigureMarkNames()
-              " Pulisce eventuali nomi preesistenti
-              silent! MarkName!
-
-              " Assegna i nomi ai gruppi
-              silent! 1MarkName DEFAULT
-              silent! 2MarkName TODO
-              silent! 3MarkName OK
-              silent! 4MarkName FIX
-              silent! 5MarkName PERF
-              silent! 6MarkName BUG
-
-              " Evidenzia gia di default queste categorie
-              silent! 2Mark /TODO:/
-              silent! 3Mark /OK:/
-              silent! 4Mark /FIX:/
-              silent! 5Mark /PERF:/
-              silent! 6Mark /BUG:/
-
-              " Colori personalizzati per evidenziare le categorie
-              " DEFAULT
-              highlight  MarkWord1 ctermfg=0 ctermbg=11 guifg=Black guibg=#8CCBEA
-              " TODO
-               highlight MarkWord2 ctermfg=0 ctermbg=14 guifg=Black guibg=#FFDB72
-              " OK
-               highlight MarkWord3 ctermfg=0 ctermbg=10 guifg=Black guibg=#A4E57E
-              " FIX
-              highlight MarkWord4 ctermfg=0 ctermbg=13 guifg=Black guibg=#FFB3FF
-              " PERFORMANCE
-              highlight MarkWord5 ctermfg=0 ctermbg=9 guifg=Black guibg=#9999FF
-              " BUG
-               highlight MarkWord6 ctermfg=0 ctermbg=12 guifg=Black guibg=#FF7272
-
-            endfunction
-        " }}} Function
-
-          " Autocmd {{{
-              augroup MarkPluginConfig autocmd!
-                  " Caricare i nomi persozalizzatiei gruppi
-                  " Lo devo fare dopo che vim si e avviato
-                  " altrimenti non funziona
-                  autocmd VimEnter * :call ConfigureMarkNames()
-              augroup END
-          " }}} Autocmd
-
-        " Map {{{
-            " Marca/smarca la parola sotto il cursore o la selezione visuale
-            " Uso <Leader>bb perche cosi se non gli passo nessun gruppo usa quello
-            " di default che e 1, altrimenti 1<Leader>b  2<Leader>b ecc...
-            " [b]:{Mark}
-            nmap <unique> <Leader>bb :exe '1Mark /\V'..escape(substitute('<c-r><c-w>', "'", "''", 'g'), '/\')..'/'<cr>
-            xmap <unique> <silent> <Leader>bb <Esc>gv1<Leader>b
-
-            " Posso passargli il numero della categoria
-            " Per esempio:
-            " 1<Leader>b gli assegnala categoria 1
-            " 2<Leader>b gli assegnala categoria 2
-            call s:unmapif('<Leader>b', 'n')
-            nmap <unique> <Leader>b <Plug>MarkSet
-            call s:unmapif('<Leader>b', 'x')
-            xmap <unique> <Leader>b <Plug>MarkSet
-
-            " Pulisce il mark sotto il cursore
-            " Se non mi trovo sopra nessun mark pulisce tutto
-            " [b]:{Mark} [d]:{delete}
-            call s:unmapif('<Leader>bd', 'n')
-            nmap <unique> <Leader>bd <Plug>MarkClear
-            " Pulisce tutti i mark
-            " [b]:{Mark} [d]:{delete} [a]:{all}
-            call s:unmapif('<Leader>bda', 'n')
-            nmap <unique> <Leader>bda <Plug>MarkAllClear
-
-            " Cerca mark corrente
-            " [b]:{Mark} [j]:{↓}
-            call s:unmapif('<Leader>bj', 'n')
-            nmap <unique> <Leader>bj <Plug>MarkSearchCurrentNext
-            " [b]:{Mark} [k]:{↑}
-            call s:unmapif('<Leader>bk', 'n')
-            nmap <unique> <Leader>bk <Plug>MarkSearchCurrentPrev
-
-            " Cerca qualsiasi mark (non solo quello corrente)
-            " [b]:{Mark} [j]:{↓} [a]:{all}
-            call s:unmapif('<Leader>bja', 'n')
-            nmap <unique> <Leader>bja <Plug>MarkSearchAnyNext
-            " [b]:{Mark} [k]:{↑} [a]:{all}
-            call s:unmapif('<Leader>bka', 'n')
-            nmap <unique> <Leader>bka <Plug>MarkSearchAnyPrev
-
-            " Toggle on/off di tutti i mark (utile per nasconderli temporaneamente)
-            " [b]:{Mark} [t]:{toggle}
-            call s:unmapif('<Leader>bt', 'n')
-            nmap <unique> <Leader>bt <Plug>MarkToggle
-
-            " Mostar tutti i mark settati e la rispettiva categoria
-            " [b]:{Mark} [l]:{list}
-            call s:unmapif('<Leader>bl', 'n')
-            nmap <unique> <Leader>bl :Marks<CR>
-
-            " ----- MAPPATURE PER CERCARE GRUPPI SPECIFICI -----
-            " Cerca il prossimo mark del gruppo 1-9 con <Leader>b1, <Leader>b2, ecc.
-            " Cerca il precedente con <Leader>B1, <Leader>B2, ecc.
-            nmap <Leader>b1 <Plug>MarkSearchGroup1Next
-            nmap <Leader>B1 <Plug>MarkSearchGroup1Prev
-            nmap <Leader>b2 <Plug>MarkSearchGroup2Next
-            nmap <Leader>B2 <Plug>MarkSearchGroup2Prev
-            nmap <Leader>b3 <Plug>MarkSearchGroup3Next
-            nmap <Leader>B3 <Plug>MarkSearchGroup3Prev
-            nmap <Leader>b4 <Plug>MarkSearchGroup4Next
-            nmap <Leader>B4 <Plug>MarkSearchGroup4Prev
-            nmap <Leader>b5 <Plug>MarkSearchGroup5Next
-            nmap <Leader>B5 <Plug>MarkSearchGroup5Prev
-            nmap <Leader>b6 <Plug>MarkSearchGroup6Next
-            nmap <Leader>B6 <Plug>MarkSearchGroup6Prev
-            nmap <Leader>b7 <Plug>MarkSearchGroup7Next
-            nmap <Leader>B7 <Plug>MarkSearchGroup7Prev
-            nmap <Leader>b8 <Plug>MarkSearchGroup8Next
-            nmap <Leader>B8 <Plug>MarkSearchGroup8Prev
-            nmap <Leader>b9 <Plug>MarkSearchGroup9Next
-            nmap <Leader>B9 <Plug>MarkSearchGroup9Prev
-        " }}} Map
-    " }}} Marks
-
-    " NrrwRgn {{{
-        " Nota {{{
-            " Questo plugin mi permette di selezionare del codice
-            " e aprirlo in un nuovo buffer e modificarlo in cambiamenti si rifleteranno
-            " anche nel buffer di origine
-            " Inoltre posso serezionare piu parti di codice da modificare
-            " Operativita:
-            " Modifica singola:
-            "   :NR         apro la selezione in modo split
-            "   :NR!        apro la selezione nella finestra correntC!!:
-            "   :WR!        chiudo il buffer di modifica e torno al buffer orginale
-            " Modifica multipla:
-            " Mi permette di selezionare piu parti di codice da modificare
-            "   :NRP        metto la selezione nella lista di codice da modificare
-            "   :NRP!       pulisto la lista del codice da moficicare
-            "   :NRM        apro la selezione multipla in modo split
-            "   :NRM!       apro la selezione multipla nella finestra corrente
-        " }}} Nota
-
-        " Config {{{
-            let g:nrrw_rgn_vert = 1
-            let g:nrrw_rgn_wdth = 100
-            let g:nrrw_rgn_hl = 'Search'
-            let g:nrrw_topbot_leftright = 'botright'
-            " let g:nrrw_rgn_update_orig_win = 1
-            let g:nrrw_rgn_nomap_nr = 1
-            let g:nrrw_rgn_nomap_Nr = 1
-        " " }}} Config
-
-        " Map {{{
-            " Invio la selezione al buffer temporaneo [split]
-            " [n]:{Narrow} [M]:{Split}
-            call s:unmapif('<Leader>ns', 'x')
-            xnoremap <unique> <Leader>ns <Plug>NrrwrgnDo
-
-            " Invio la selezione al buffer temporaneo [current window]
-            " [n]:{Narrow} [w]:{window}
-            call s:unmapif('<Leader>nw', 'x')
-            xnoremap <unique> <Leader>nw :<c-u>call nrrwrgn#NrrwRgn(visualmode(), '!')<cr>
-
-            " Salvo e chiudo le modifiche
-            " [n]:{Narrow} [w]:{window}
-            call s:unmapif('<Leader>nc', 'n')
-            nnoremap <unique> <Leader>nc :w<CR>:WR!<CR>
-
-            " Aggiunto codice in modalita multi per modficarlo
-            " [n]:{Narrow}  [a]:{Add}
-            call s:unmapif('<Leader>na', 'v')
-            vnoremap <unique> <Leader>na :<C-U>'<,'>NRP<CR>
-
-            " Apro la modalita multi per modficare il codice [split]
-            " [n]:{Narrow}  [m]:{Multi}
-            call s:unmapif('<Leader>nm', 'n')
-            nnoremap <unique> <Leader>nm :NRM<CR>
-
-            " Apro la modalita multi per modficare il codice [current window]
-            " [n]:{Narrow} [M]:{Multi} [c]:{Current}
-            call s:unmapif('<Leader>nmc', 'n')
-            nnoremap <unique> <Leader>nmc :NRM!<CR>
-
-        " }}} Map
-    " }}} NrrwRgn
 
     " NeoFormat {{{
         " Config {{{
@@ -1350,7 +745,6 @@
             let g:NERDTreeSyntaxDisableDefaultExactMatches = 1
             let g:NERDTreeSyntaxDisableDefaultPatternMatches = 1
 
-
             let g:NERDTreeFileExtensionHighlightFullName = 1
             let g:NERDTreeExactMatchHighlightFullName = 1
             let g:NERDTreePatternMatchHighlightFullName = 1
@@ -1366,7 +760,6 @@
             let g:NERDTreeExtensionHighlightColor['rb'] = "BF616A"
             let g:NERDTreeExtensionHighlightColor['yml'] = "B48EAD"
 
-
             let g:NERDTreeExactMatchHighlightColor = {}
             let g:NERDTreeExactMatchHighlightColor['.gitignore'] = "D08770"
             let g:NERDTreeExactMatchHighlightColor['Gemfile'] = "BF616A"
@@ -1376,9 +769,6 @@
             " Aggiungi un nuovo gruppo di highlight con il simbolo 
             let g:glyph_palette#palette['GlyphPalette5'] = ['']
 
-
-            " let g:WebDevIconsDefaultFolderSymbolColor = "81A1C1"
-            " let g:WebDevIconsDefaultFileSymbolColor = "A3BE8C"
         " }}} Config
     " }}} Nerdtree-syntax-highlight
 
@@ -1485,17 +875,6 @@
         endif
     " }}} Signature
 
-    " Smooth-scroll {{{
-        " Map {{{
-            noremap <silent> <leader><Up> :call smooth_scroll#up(2, 10, 1)<CR>
-            noremap <silent> <leader><Down> :call smooth_scroll#down(2, 10, 1)<CR>
-            noremap <silent> <leader><up><Up> :call smooth_scroll#up(&scroll/2, 40, 2)<CR>
-            noremap <silent> <leader><Down><Down> :call smooth_scroll#down(&scroll/2, 40, 2)<CR>
-            noremap <silent> <leader><Up><Up><Up> :call smooth_scroll#up(&scroll, 40, 2)<CR>
-            noremap <silent> <leader><Down><Down><Down> :call smooth_scroll#down(&scroll, 40, 2)<CR>
-        " }}} Map
-    " }}} Smooth-scroll
-
     " Sneak {{{
         if s:IsPlugged('vim-sneak')
             " Config {{{
@@ -1515,125 +894,14 @@
         endif
     " }}} Sneak
 
-    " Snipewin {{{
-        "  Map {{{
-            call s:unmapif('ww', 'n')
-            nnoremap <unique> ww <Plug>(snipewin)
-        "  }}} Map
-    " }}} Snipewin
-
-    " Tabular {{{
-        " Map {{{
-            nmap <Leader>a= :Tabularize /=<CR>
-            vmap <Leader>a= :Tabularize /=<CR>
-            nmap <Leader>a: :Tabularize /:\zs<CR>
-            vmap <Leader>a: :Tabularize /:\zs<CR>
-        " }}} Map
-    " }}} Tabular
-
-    " Vimade {{{
-        if s:IsPlugged('vimade')
-            " Config {{{
-                let g:vimade = {}
-                let g:vimade.lazy = 1
-                let g:vimade.fadelevel = 0.7
-                let g:vimade.enablesigns = 1
-                let g:vimade.enabletreesitter = 0
-                let g:vimade.normalid = 140
-                let g:vimade.usecursorhold=1
-                let g:vimade.ncmode = 'buffers'
-            " }}} Config
-
-            " Autocmd {{{
-                " au! FileType nerdtree VimadeBufDisable
-                " au! FileType vista VimadeBufDisable
-                " au! FileType neoterm VimadeBufDisable
-                " au! FileType dapui_scopes VimadeBufDisable
-                " au! FileType dapui_breakpoints VimadeBufDisable
-                " au! BufWinEnter quickfix VimadeBufDisable
-                au WinEnter * ++once call vimade#Load()
-            " }}} Autocmd
-        endif
-    " }}} Vimade
-
-    " Vim-Prosession {{{
-        " Config {{{
-            let g:prosession_dir = g:vim_config_dir . '/files/session'
-        " }}} Config
-    " }}} Vim-Prosession
-
-    " Vim-Obsession {{{
-        " Config {{{
-            let g:obsession_no_bufenter = 1
-        " }}} Config
-    " }}} Vim-Obsession
-
-    " Vista {{{
-        " Config {{{
-            let g:vista_fzf_preview = ['right:50%']
-            let g:vista#renderer#enable_icon = 1
-            let g:vista_default_executive = 'ctags'
-            let g:vista_icon_indent = ["╰─▸ ", "├─▸ "]
-
-            let g:vista_executive_for = {
-                \ 'ruby': 'vim_lsp',
-                \ 'javascrip': 'vim_lsp',
-                \ }
-
-            let g:vista_ctags_cmd = {
-                \ 'ruby': 'ctags --output-format=json --languages=ruby',
-                \ }
-                " 'ruby': 'ripper-tags -R --fields=+l --exclude=test --exclude=config --exclude=.rblcl --exclude=.git --exclude=doc --exclude=.yardoc',
-            let g:vista#renderer#icons = {
-                \   "function": "⨍",
-                \   "method": "⨍",
-                \   "variable": "\uf71b",
-                \  }
-            let g:vista_echo_cursor_strategy='floating_win'
-            let g:vista#renderer#default#vlnum_offset = 1
-        " }}} Config
-
-        " Autocmd {{{
-            autocmd FileType vista,vista_kind nnoremap <buffer> <silent> f :<c-u>call vista#finder#fzf#Run()<CR>
-        " }}} Autocmd
-
-        "  Map {{{
-            nmap <F3> :Vista!!<CR>
-        " }}} Map
-    " }}} Vista
-
     " Wilder {{{
         if s:IsPlugged('wilder.nvim')
             " Note {{{
-            " Questo plugin lo posso usarlo in due modalita:
-            "  - vim classico: Ha meno funzionalita, ma piu veloce e leggereo
-            "  - python: piu funzionalita ma piu pesante e meno scattante e dipende da python
-            " Lui decide in modalita autonoma quele attivare in base alle seguenti casistiche
-            " Plugin 'roxma/nvim-yarp' Attivo: Usa Python
-            " Plugin 'roxma/nvim-yarp' Disabilitato: Usa Vim
-            "
-            " Questo lo fa in base a un autocmd che ho creato io
-            " vedi configurazione sotto parte Autocmd di questo plugin
-            "
-            " Utilizzo:
-            " Quando vado in command line se non ho nessun carattere
-            " con le frecce su e giu
-            " Con <Tab> attivo il autocompletamento
-            " Con le frecce su e giu seleziono il candidato
-            " Frecia sininistra annullo
-            " Frecia destra accetto
-            "
-            " N.B:
-            " Questo plugin funzionea anche per la ricerca ma lo ho disabilitato
-            " 'modes': [':'], in questo modo funziona solo in commandi mode
-            " 'modes': [':', '?', '/'],in questo modo funziona anche con la ricerca
-            "
-            " Lo ho disabilitato perche mi dava problemi con il plugin:
-            " incsearch-easymotion.vim
-            " In quanto in questo plugin ho mappato ? e / con funzioni personalizzate
-            " e quindi non fa partire la ricerca di wilder
-            "
-
+            " Uso solo la modalita' Vim (niente python, niente nvim-yarp).
+            " Utilizzo: in command line con le frecce su/giu seleziono il candidato,
+            " <Tab> attiva l'autocompletamento, freccia sinistra annulla, destra accetta.
+            " N.B: disabilitato per la ricerca ('modes': [':']) perche' interferisce
+            " con incsearch-easymotion.vim (che mappa ? e /).
             " }}} Note
 
             " Config {{{
@@ -1700,35 +968,6 @@
                         \ ])
                 endfunction " }}}
 
-                function! s:wilder_python_init() abort " {{{
-                    call wilder#set_option('pipeline', [
-                        \    wilder#debounce(50),
-                        \    wilder#branch(
-                        \     [
-                        \       wilder#check({_, x -> empty(x)}),
-                        \       wilder#history(),
-                        \     ],
-                        \     wilder#python_file_finder_pipeline({
-                        \      'file_command': {_, arg ->
-                        \         arg[0] ==# '.' ? ['rg', '--files', '--hidden'] : ['rg', '--files']},
-                        \      'dir_command':  {_, arg ->
-                        \         arg[0] ==# '.' ? ['fd', '-tf', '-H'] : ['fd', '-tf']},
-                        \      'filters': ['fuzzy_filter', 'difflib_sorter'],
-                        \      'cache_timestamp': {-> 1},
-                        \     }),
-                        \     wilder#cmdline_pipeline({
-                        \       'language': 'python',
-                        \       'fuzzy': 1,
-                        \       'fuzzy_filter': wilder#python_fuzzy_filter(),
-                        \       'sorter': wilder#python_difflib_sorter(),
-                        \       'hide_in_substitute': 1,
-                        \     }),
-                        \   ),
-                        \ ])
-
-
-                endfunction " }}}
-
                 function! s:start_wilder() abort " {{{
                     let s:wilder_started = 1
                     return wilder#next()
@@ -1746,58 +985,11 @@
             " Autocmd {{{
                 let s:wilder_started = 0
                 autocmd CmdlineLeave * let s:wilder_started = 0 | call wilder#main#stop()
-                if s:IsPlugged('nvim-yarp')
-                    au CmdlineEnter * ++once call s:wilder_python_init()
-                else
-                    au CmdlineEnter * ++once call s:wilder_init()
-                endif
+                au CmdlineEnter * ++once call s:wilder_init()
             " }}} Autocmd
 
         endif
     " }}} Wilder
-
-    " WindowSwap {{{
-        " Config {{{
-            let g:windowswap_map_keys = 0 "prevent default bindings
-        " }}} Config
-
-        "  Map {{{
-            nnoremap <silent> <leader>yw :call WindowSwap#MarkWindowSwap()<CR>
-            nnoremap <silent> <leader>pw :call WindowSwap#DoWindowSwap()<CR>
-            nnoremap <silent> <leader>ww :call WindowSwap#EasyWindowSwap()<CR>
-        " }}} Map
-    " }}} WindowSwap
-
-    " Workspace {{{
-        " Config {{{
-            let g:workspace#vim#airline#enable = 1
-            let g:airline#extensions#tabline#show_tab_count = 0
-            let g:airline#extensions#tabline#show_tabs = 0
-        " }}} Config
-
-        "  Map {{{
-            " Mi sposto tra i tab
-            nnoremap <silent> <A-Down>  :tabprevious<CR>
-            nnoremap <silent> <A-Up>    :tabnext<CR>
-            inoremap <silent> <A-Down>  :tabprevious<CR>
-            inoremap <silent> <A-Up>    :tabnext<CR>
-            vnoremap <silent> <A-Down>  :tabprevious<CR>
-            vnoremap <silent> <A-Up>    :tabnext<CR>
-            " faccio lo switch tra due tab
-            nnoremap <silent>tt :call WS_Backforth()<CR>
-            nnoremap <silent>tc :tabclose<CR>
-            nnoremap <silent>tn :tabnew<CR>
-
-            " create a new tab with N title or move to an exiting N tab.
-            nnoremap <silent> <leader><leader>1 :WS 1<CR>
-            nnoremap <silent> <leader><leader>2 :WS 2<CR>
-            nnoremap <silent> <leader><leader>3 :WS 3<CR>
-            " move current buffer to tab N
-            nnoremap <silent> <leader><leader><leader>1 :WSbmv 1<CR>
-            nnoremap <silent> <leader><leader><leader>2 :WSbmv 2<CR>
-            nnoremap <silent> <leader><leader><leader>3 :WSbmv 3<CR>
-        " }}} Map
-    " }}} Workspace
 
 " }}} Plugin
 
@@ -1838,24 +1030,18 @@
         " Sets how many lines of history VIM has to remember
         set history=1000
         " Display incomplete commands (poi sovrascritto da noshowcmd in "In prova")
-        " Riapre la navigazione delle directory ricordandosi l'ultima
-        set browsedir=last
-        " Configure backspace so it acts as it should act
-        set backspace=indent,eol,start
         " Backspace and cursor keys wrap too
         set whichwrap+=b,s,h,l,<,>,[,]
         " Ignore case when searching
         set ignorecase
         " When searching try to be smart about cases
         set smartcase
-        " No annoying sound on errors
-        set noerrorbells
-        set novisualbell
-        set vb t_vb= t_vb=
+        " No annoying sound on errors: campanello completamente spento
+        set belloff=all
         " timeoutlen: timeout insert key
         set tm=500
         " Set English and Italian language
-        set spell spelllang=it,en
+        set spelllang=it,en
         " Cerca la documentazione in italiano se presente altrimenti in inglese
         set helplang=it,en
         " Now, when using :sb, :sbnext, :sbprev instead of :b, :bnext, :bprev to switch buffers, Vim will check if
@@ -1863,8 +1049,6 @@
         set switchbuf=usetab
         " when file change outside vim, vim reload automatically it
         set autoread
-        " disable splell checking
-        set nospell
         " di default era .,w,b,u,t,i io ci ho tolto la "i" cosi l'autocompletamento dovrebbe essere più veloce
         " perchè con l'opzione i fa lo scan di tutti i file inclusi
         " . => scan the current buffer ('wrapscan' is ignored)
@@ -1875,6 +1059,8 @@
         " i => scan current and included files
         " k => scan the files given with the 'dictionary'
         set complete=.,w,b,u
+        " menu: elenco a tendina; fuzzy: matching non consecutivo; niente preview
+        set completeopt=menu,fuzzy
         " Quando una linea va a capo (wrap) indentato allo stesso livello della linea originale
         set breakindent
         " Indent according to previous line.
@@ -1888,8 +1074,6 @@
         set autowriteall
         " Always report changed lines.
         set report      =0
-        " continue searching at top when hitting bottom
-        set wrapscan
         " Highlight matching parens
         set matchpairs=(:),[:],{:},<:>
         " substitude tabs with » and trailing spaces with ·
@@ -1957,9 +1141,7 @@
     " }}} Global
 
     " Increase Perfomance {{{
-        set nocursorcolumn
         " more characters will be sent to the screen for redrawing, instead of using insert/delete line commands
-        set ttyfast
         " Don't redraw while executing macros (good performance config)
         set lazyredraw
         if $TERM_PROGRAM ==# 'WezTerm'
@@ -1971,8 +1153,6 @@
 
     " Files, backups and undo {{{
         " Turn backup off
-        set nobackup
-        set nowb
         set noswapfile
         set undofile
         set undolevels=100
@@ -2026,8 +1206,6 @@
         set shiftround
         " Line break on 500 characters
         set lbr
-        " Quando fa il wrpa di righe lunghe evita di spezzare le parole a metà riga
-        set tw=0
         " Indent at the same level of the previous line
         set autoindent
         " Quando linee piu grande della finestra non le manda a capo
@@ -2063,10 +1241,6 @@
             " Disable conceal for json,jsonc
             autocmd FileType json,jsonc syntax match Comment +\/\/.\+$+ | setlocal conceallevel=0
 
-            " Enable omni completion
-            autocmd FileType css setlocal omnifunc=csscomplete#CompleteCSS
-            autocmd FileType xml setlocal omnifunc=xmlcomplete#CompleteTags
-
             " Set fileype
             autocmd BufRead,BufNewFile {Gemfile,Rakefile,config.ru} setlocal ft=ruby
             autocmd BufRead,BufNewFile *.yml setlocal ft=yaml
@@ -2075,12 +1249,6 @@
 
 
             autocmd FocusLost,CursorHold * silent! wall
-
-            " Automatically reload vimrc when it's saved
-            autocmd BufWritePost vimrc ++nested call ReloadVimrc()
-
-            " Funzione che crea 'header per i miei file
-            " autocmd BufNewFile *.rb,*.rbw,*.haml,*.html.erb,*.erb silent call MakeFileHeader()
 
             " salva la view
             " uso il plugin tpope/vim-obsession
@@ -2132,37 +1300,32 @@
 
     " UI Setting {{{
         " disables the initial message
+        set shortmess=aoOTIcF
         set shortmess+=I
         " don't give |ins-completion-menu| messages.
         set shortmess+=c
-        " hide tab
+        " " hide tab
         set guioptions-=e
-        " hide toolbar
+        " " hide toolbar
         set guioptions-=T
-        " hide menubar
+        " " hide menubar
         set guioptions-=m
         set guioptions+=M
-        " hide the left-hand scrollbar for splits/new windows
+        " " hide the left-hand scrollbar for splits/new windows
         set guioptions-=L
-        " hide the right scrollbar
+        " " hide the right scrollbar
         set guioptions-=r
-        " quando eseguo un comando esterno, lo vedo dentro vim e non apre una nuova console
-        " set guioptions+=!
-        " set width fold column
-        set foldcolumn=0
-        " dark mode
+        " " dark mode
         set guioptions+=d
+        " " quando eseguo un comando esterno, lo vedo dentro vim e non apre una nuova console
+        " " set guioptions+=!
+        " " set width fold column
         " set the terminal's title
         set title
-        " display the current mode
-        set showmode
-        " height of the command bar
-        set cmdheight=1
         " Always show the status line
         set laststatus=2
         " set cursor behavior
         set guicursor+=a:blinkon0
-
 
         " Cambio il cursore del terminale
         if !g:is_gui_running
@@ -2186,12 +1349,8 @@
         if has('reltime')
 			set incsearch
 		endif
-        " for regular expressions turn magic on
-        set magic
         " show line number
         set number
-        " abilito il Wildmenu per migliorare autocompletamento riga comandi
-        set wildmenu
         set wildoptions=pum
         " command <Tab> completion, list matches, then longest common part, then all
         " set wildmode=longest:full,full
@@ -2573,37 +1732,6 @@
             nnoremap <silent> g* ms:<c-u>let @/='\V' . escape(expand('<cword>'), '/\')     <bar>call histadd('/',@/)<bar>set hlsearch<cr>
         " }}} Search & Replace
 
-        " Ctags {{{
-            " va indietro dopo essere andato a una definizione
-            call s:unmapif('t<left>', 'None')
-            map <unique><silent> t<left> <C-T>
-
-            " jump al tag sotto il cursore (usa tagfunc con flag 'c' → LSP definition position-based)
-            call s:unmapif('t<Right>', 'None')
-            map <unique><silent> t<Right> <C-]>
-
-            " va al tag sotto il cursore in vertical split window
-            call s:unmapif('tv', 'None')
-            map <unique><silent> tv :vsp<CR><C-]>
-            " va al tag sotto il cursore in split window orizzontale
-            call s:unmapif('ts', 'None')
-            map <unique><silent> ts <C-W>]
-
-            " mi apre il tag in preview window, senza spostare il cursore nel buffer corrente
-            " dopo per chiudere la preview window C-w-z
-            call s:unmapif('tp', 'None')
-            map <unique><silent> tp <C-W>}
-
-            " mi apre il tags stack
-            call s:unmapif('tts', 'None')
-            map <unique><silent> tts :tags <CR>
-
-            " ritorna avanti nello stack
-            call s:unmapif('tt<Right>', 'None')
-            map <unique><silent> tt<Right> <C-]>
-
-        " }}} Ctags
-
         " Diff mode {{{
             " per spostarmi tra le differenze in modalità diff
             "" Toggle on diff mode for the current buffer.
@@ -2632,16 +1760,10 @@
     nnoremap cp :pclose<cr>
 
     set signcolumn=number
-    ab todo # @TODO:
-    ab <silent> bp binding.pry<C-o>
-    " let g:peekaboo_ins_prefix = '<c-x>'
-
-    " highlight Beacon guibg=white ctermbg=15
 
     " Dicono che migliori le perfomance da testare
     set noruler
     set noshowcmd
-    " set inccommand=split
 
     set concealcursor=niv
     " set conceallevel=2
@@ -2655,7 +1777,6 @@
         set grepprg=rg\ --vimgrep\ --no-heading\ --smart-case
         set grepformat=%f:%l:%c:%m,%f:%l:%m
     endif
-    set shortmess=aoOTIcF
     set scrolloff=2
     set sidescrolloff=5
     " Jump 5 lines when running out of the screen
@@ -2663,21 +1784,8 @@
 
     let g:vimsyn_embed = 'l'
 
-    " copio current file and line to clipboard
-    " utile da usare con pry, per settare brekpoint
-    " :break app/actions/forecast/connect_excel.rb:36
-    nnoremap <leader>y :let @+=substitute(fnamemodify(expand("%"), ":~:."),"\\","/", "g") . ':' . line(".")<CR>
-
     " VimL
     let g:vimsyn_folding  = 'af' "Fold augroups and functions
-
-    function! GenTagRuby()
-        let tags_file  = getcwd() . "\\" . "tags"
-        " echom 'ripper-tags ' . "-f -R " . shellescape(tags_file)
-        " echom shellescape(current_dir)
-        call system('ripper-tags ' . "-R -f " . shellescape(tags_file) . " --exclude=test --exclude=config --exclude=.rblcl --exclude=doc  --exclude=.yardoc --exclude=.git")
-    endfunction
-    command! -range=% Ciao :call GenTagRuby()
 
 	" keep cursor in the same column (if possible) when moving cursor
 	set nostartofline
@@ -2688,377 +1796,3 @@
     let g:hlyank_invisual = v:true
 
 " }}} In Prove
-
-" TODO {{{
-"     [] Settare unique le map importanti
-
-
-
-" }}} TODO
-
-" Unused Stuff {{{
-
-    " Stratup Vim-Plug {{{
-        " call plug#begin($HOME.'/vimfiles/plugged')
-            " Plug 'vim-ctrlspace/vim-ctrlspace'
-            " Plug 'preservim/tagbar',                       {'on': 'TagbarToggle'}
-            " Plug 'mhinz/vim-grepper', { 'on': ['Grepper', '<plug>(GrepperOperator)'] }
-            " Plug 'dyng/ctrlsf.vim'
-            " Plug 'SirVer/ultisnips'
-            " Plug 'kassio/neoterm',                          {'on': ['T', 'TREPLSendSelection', 'TREPLSendLine', 'Topen']}
-            " Plug 'w0rp/ale'
-            " Plug 'zhaocai/GoldenView.Vim'
-            " Plug 'tpope/vim-rails'
-            " Plug 'ternjs/tern_for_vim', {'for': 'javascript'}
-            " Plug 'dbakker/vim-projectroot', {'for': 'ruby'}
-            " Plug 'itchyny/vim-cursorword'
-            " Plug 'vim-scripts/MarkLines',
-            " Plug 'bounceme/poppy.vim',                      {'on': []}
-            " Plug $VIM.'/vimfiles/plugged/Matchlines'
-        " call plug#end()
-    " }}}Stratup Vim-Plug
-
-    " General {{{
-
-    " }}} General
-
-    " Language Support {{{
-
-        " Ruby & Rails {{{
-            """""""""""""""""""""""""""""""""""""""""PARAMETRI""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-            """""""""""""""""""""""""""""""""""""""""SHORTCUT"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-
-            " ho creato una funzione in Helper functions per andare in rails
-            " al file corrispondente se presente in un tab
-            " map <F8> :call GoBuf()<CR>
-
-
-            "" torno indietro con plugin rails
-            "map <leader>p <c-^>
-            " map <localleader><PageUp> [m
-            " map <localleader><PageDown> ]m
-            " map <localleader><S-PageUp> [[
-            " map <localleader><S-PageDown> ]]
-
-            """""""""""""""""""""""""""""""""""""""""NOTE"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-            " Vedere impostazione presenti in Autocmd
-
-        " }}} Ruby & Rails
-
-    " }}} Language Support
-
-    " Plugin {{{
-
-        " Ale {{{
-            """"""""""""""""""""""""""""""""""""""""""PARAMETRI""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-            "let g:ale_linters = {
-            "    \   'javascript': ['eslint'],
-            "    \   'css':  ['stylelint'],
-            "    \   'ruby':  ['rubocop'],
-            "    \}
-
-            "let g:ale_fixers = {
-            "    \   'javascript': ['eslint'],
-            "    \   'scss': ['prettier'],
-            "    \   'ruby':  ['rubocop'],
-            "    \}
-
-            "let g:airline#extensions#ale#enabled = 1
-            "let g:ale_open_list = 0
-            "let g:ale_set_loclist = 0
-            "let g:ale_set_quickfix = 0
-            "let g:ale_linters_explicit = 1
-            "let g:ale_set_balloons = 0
-            "let g:ale_sign_error = '✘'
-            "let g:ale_sign_warning = '⚠'
-            "let g:ale_lint_on_enter = 1
-            "let g:ale_lint_on_text_changed = 'never'
-            "let g:ale_lint_on_save = 1
-            "let g:ale_echo_msg_error_str = 'E'
-            "let g:ale_echo_msg_warning_str = 'W'
-            "let g:ale_echo_msg_format = '[%linter%] %s [%severity%]'
-            """"""""""""""""""""""""""""""""""""""""""SHORTCUT"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-            "nmap <F8> <Plug>(ale_fix)
-            "nmap <silent> <Leader>a<Up> <Plug>(ale_previous_wrap)
-            "nmap <silent> <Leader>a<Down> <Plug>(ale_next_wrap)
-        " }}} ALe
-
-        " CtrlSpace {{{
-            """"""""""""""""""""""""""""""""""""""""""PARAMETRI""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-            "set showtabline=0
-            "let g:CtrlSpaceDefaultMappingKey = "<C-space> "
-            "let g:CtrlSpaceFileEngine = 'file_engine_windows_amd64'
-            "let g:CtrlSpaceStatuslineFunction = "airline#extensions#ctrlspace#statusline()"
-            "let g:ctrlspace_use_mouse_and_arrows = 1
-            "let g:airline_exclude_preview = 1
-
-            "" let g:CtrlSpaceGlobCommand = 'rg --files-with-matches .'
-            "let g:CtrlSpaceGlobCommand = 'fd --type file --hidden --exclude .git --exclude node_modules_custom .'
-            "let g:ctrlspace_show_key_info=1
-            "let g:ctrlspace_load_last_workspace_on_start=0
-            "let g:ctrlspace_save_workspace_on_exit=0
-            "let g:CtrlSpaceSearchTiming = 500
-            "let g:CtrlSpaceUseTabline = 1
-            "let g:airline#extensions#ctrlspace#enabled = 1
-
-            "" """""""""""""""""""""""""""""""""""""""""SHORTCUT"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-            "nnoremap <silent> <A-Left>  :CtrlSpaceGoUp<CR>
-            "nnoremap <silent> <A-Right> :CtrlSpaceGoDown<CR>
-            "inoremap <silent> <A-Left>  :CtrlSpaceGoUp<CR>
-            "inoremap <silent> <A-Right> :CtrlSpaceGoDown<CR>
-            "vnoremap <silent> <A-Left>  :CtrlSpaceGoUp<CR>
-            "vnoremap <silent> <A-Right> :CtrlSpaceGoDown<CR>
-            "function! Down(k)
-            "    call feedkeys("j")
-            "endfunction
-            "function! Up(k)
-            "    call feedkeys("k")
-            "endfunction
-            "let g:CtrlSpaceKeys = { "Buffer": { "Down": "Down", "Up": "Up" } , "File": { "Down": "Down", "Up": "Up" } }
-            "" mi mostra i buffer solo del tab in cui mi trovo e mi posso spostare con le frecce
-            "nnoremap <Leader>tb :CtrlSpace h<cr>
-            "" mi mostra i buffer solo del tab in cui mi in modalità fuzzy
-            "nnoremap <Leader>tbi :CtrlSpace H<cr>
-        " }}} CtrlSpace
-
-        " Grepper {{{
-            """"""""""""""""""""""""""""""""""""""""""PARAMETRI"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-            "let g:grepper       = {}
-            "let g:grepper.tools = ['rg', 'ag', 'pt', 'git']
-            "let g:grepper.highlight = 1
-            "let g:grepper.side      = 1
-            "autocmd FileType GrepperSide
-            "  \  silent execute 'keeppatterns v#'.b:grepper_side.'#>'
-            "  \| silent normal! ggn
-            " highlight Directory ctermfg=216 ctermbg=NONE cterm=NONE guifg=#ffaf87 guibg=NONE gui=NONE
-            " highlight qfLineNr ctermfg=238 ctermbg=NONE cterm=NONE guifg=#444444 guibg=NONE gui=NONE
-            " highlight qfSeparator ctermfg=243 ctermbg=NONE cterm=NONE guifg=#767676 guibg=NONE gui=NONE
-            " highlight GrepperSideFile ctermfg=161 cterm=reverse
-            " highlight Conceal ctermfg=NONE ctermbg=250
-            " let g:grepper.quickfix      = 1
-            " " autocmd FileType qf wincmd K
-            "" """""""""""""""""""""""""""""""""""""""""SHORTCUT"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-            " " nmap gs  <plug>(GrepperOperator)
-            " " xmap gs  <plug>(GrepperOperator)
-            " nnoremap <localleader>sg :Grepper -tool git -side<cr>
-            " nnoremap <localleader>sa :Grepper -tool ag -side<cr>
-            " nnoremap <localleader>s  :Grepper -tool rg -side<cr>
-            " nnoremap <localleader>*  :Grepper -tool rg -side -cword<cr>
-            " nnoremap <localleader>sb  :Grepper -tool rg -side -buffer<cr>
-            " nnoremap <localleader>sbw  :Grepper -tool rg -side -buffer -cword<cr>
-
-
-            " command! Todo :Grepper
-            "       \ -noprompt
-            "       \ -tool git
-            "       \ -grepprg git grep -nIi '\(TODO\|FIXME\|todo\|fixme\)'
-        " }}} Grepper
-
-        "" Neoterm {{{
-        "    if s:IsPlugged('neoterm')
-        "        " Note {{{
-        "            " AVVIO SESSIONE DEBUG CON PRY
-        "            " Setto un'interuzzione nel codice con:
-        "            " binding.pry
-        "            " In Neovim avvio il Debug com il comando per chiamare l'avvio del programma
-        "            " :T ruby application.rb args*
-        "            " Ora sono dentro la sessione di Debug con PRY, posso lanciare qualsiasi comandi pry da quindi
-        "            " Per settare un breakpoint nel codice ho creato una funzione SetBreakPoint, che invia a PRY il nome del
-        "            " file e la riga e setta il breakpoint
-        "            " per settarlo ho settato la map <localleader>nb
-        "        " }}} Note
-
-        "        " Config {{{
-        "            let g:neoterm_callbacks = {}
-        "            function! g:neoterm_callbacks.before_new()
-        "                if winwidth('.') > 100
-        "                    let g:neoterm_default_mod = 'botright vertical'
-        "                else
-        "                    let g:neoterm_default_mod = 'botright'
-        "                end
-        "            endfunction
-
-        "            " let g:neoterm_autoscroll = '1'
-        "            "let g:neoterm_shell = 'pwsh'
-        "            " if has("win32")
-        "            "     let g:neoterm_eof = "\r"
-        "            " endif
-        "            " let &shell = 'pwsh'
-        "            " let &shellcmdflag = '-NoLogo -NoProfile -ExecutionPolicy RemoteSigned -Command [Console]::InputEncoding=[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;'
-        "            " let &shellredir = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
-        "            " let &shellpipe = '2>&1 | Out-File -Encoding UTF8 %s; exit $LastExitCode'
-        "            let g:neoterm_repl_ruby = 'pry'
-        "            " set shellquote= shellxquote=
-        "            " tnoremap <Esc> <C-\><C-n>
-        "            " command! -nargs=+ TT Topen | T
-        "        " }}} Config
-
-        "        " Map {{{
-        "            vnoremap <localleader>ns :TREPLSendSelection
-        "            nnoremap <localleader>nl :TREPLSendLine
-        "            function! SetBreakPoint() abort
-        "                let l:path_and_line = substitute(fnamemodify(expand("%"), ":~:."),"\\","/", "g") . ':' . line(".")
-        "                echom "Set break Point" . l:path_and_line
-        "                execute "T break " . l:path_and_line
-        "            endfunction
-        "            nnoremap <silent> <localleader>nb :<C-U>call SetBreakPoint()<CR>
-        "        " }}} Map
-        "    endif
-        "" }}} Neoterm
-
-        " MarkLines {{{
-        "     " Config {{{
-        "         let g:marklines_noautomap = 1
-        "     " }}} Config
-
-        "     " Map {{{
-        "         silent! nunmap <leader>bc
-        "         silent! nunmap <leader>bl
-        "         silent! nunmap <leader>bt
-        "         silent! nunmap <leader>be
-        "         silent! vunmap <leader>bc
-        "         silent! vunmap <leader>bl
-        "         silent! vunmap <leader>bt
-        "         silent! vunmap <leader>be
-
-        "         nmap <silent> <unique> <leader>bc :MarkLinesOff<CR>
-        "         nmap <silent> <unique> <leader>bl :MarkLinesOn<CR>
-        "         nmap <silent> <unique> <leader>bt :MarkLinesToggle<CR>
-        "         nmap <silent> <unique> <leader>be :MarkLinesToggle ErrorMsg<CR>
-        "         vmap <silent> <unique> <leader>bc :MarkLinesOff<CR>
-        "         vmap <silent> <unique> <leader>bl :MarkLinesOn<CR>
-        "         vmap <silent> <unique> <leader>bt :MarkLinesToggle<CR>
-        "         vmap <silent> <unique> <leader>be :MarkLinesToggle ErrorMsg<CR>
-        "     " }}} Map
-        " }}} MarkLines
-
-        " Poppy {{{
-            """""""""""""""""""""""""""""""""""""""""PARAMETRI""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-            " au! cursormoved *.rb,*.js call PoppyInit()
-            """""""""""""""""""""""""""""""""""""""""""NOTE"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-            " Mi fa il rainbow rainbow parenthesis
-        " }}} Poppy
-
-        " Tagbar {{{
-            """""""""""""""""""""""""""""""""""""""""PARAMETRI""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-            " let g:tagbar_autoclose = 0
-            " let g:tagbar_usearrows = 1
-            " let g:tagbar_sort = 0
-            " let g:tagbar_width=28
-            " let g:tagbar_autofocus = 1
-            " let g:tagbar_show_linenumbers = 1
-            " let g:tagbar_iconchars = ['▶', '▼']
-            " let g:tagbar_type_ruby = {
-            "   \ 'kinds'      : ['m:modules',
-            "                   \ 'c:classes',
-            "                   \ 'C:constants',
-            "                   \ 'F:singleton methods',
-            "                   \ 'f:methods',
-            "                   \ 'a:aliases'],
-            "   \ 'kind2scope' : { 'c' : 'class',
-            "                    \ 'm' : 'class' },
-            "   \ 'scope2kind' : { 'class' : 'c' },
-            "   \ 'ctagsbin'   : 'ripper-tags',
-            "   \ 'ctagsargs'  : ['-f', '-']
-            "   \ }
-            """""""""""""""""""""""""""""""""""""""""SHORTCUT"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-            " nmap <F3> :TagbarToggle<CR>
-        " }}} Tagbar
-
-        " Tern {{{
-            """"""""""""""""""""""""""""""""""""""""""PARAMETRI""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-            "let g:tern_show_argument_hints='on_hold'
-            "let g:tern_show_signature_in_pum = 1
-            "let g:tern_map_keys=0
-            """"""""""""""""""""""""""""""""""""""""""SHORTCUT"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-            "nnoremap <Leader><Leader><Right>  :TernDef<CR>
-            "nnoremap <Leader><Leader>s<Right> :TernDefSplit<CR>
-            "nnoremap <Leader><Leader>p<Right> :TernDefPreview<CR>
-            "nnoremap <Leader><Leader>r :TernRename<CR>
-            "nnoremap <Leader><leader><Left> <C-o>
-            "" apre il file sotto il cursore
-            "map <leader>o :vertical wincmd f<CR>
-        " }}} Tern
-
-        " Ultisnip {{{
-            """""""""""""""""""""""""""""""""""""""""PARAMETRI""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-            " let g:UltiSnipsExpandTrigger = "<NUL>"
-            "" Setto le cartelle dove cercare gli snippet
-            "if WINDOWS()
-            "    let g:UltiSnipsSnippetsDir=$HOME."/vimfiles/plugged/ultisnips/UltiSnips"
-            "endif
-
-            "let g:UltiSnipsUsePythonVersion = 3
-            "let g:UltiSnipsSnippetDirectories=["UltiSnips","CssUltiSnips","snippet"]
-            """"""""""""""""""""""""""""""""""""""""""SHORTCUT"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
-            "" let g:UltiSnipsListSnippets="<C-e>"
-        " }}} Ultisnip
-
-    " }}} Plugin
-
-    " Autocmd {{{
-        " " ULTISNIP ==> Viene utilizzato per migliorare l'integrazione con l'autocompletamento
-        " au BufEnter * exec "inoremap <silent> " . g:UltiSnipsExpandTrigger . " <C-R>=g:UltiSnips_Complete()<cr>"
-        " au BufEnter * exec "inoremap <silent> " . g:UltiSnipsJumpBackwardTrigger . " <C-R>=g:UltiSnips_Reverse()<cr>"
-    "  }}} Autocmd
-
-    " Helper functions {{{
-        "    " Trasforma in HTML il testo selezionato mantenendo la sintassi
-        "    let g:html_use_css = 1
-        "    let html_number_lines = 0
-        "    function! MyToHtml(line1, line2)
-        "        " make sure to generate in the correct format
-        "        let old_css = 1
-        "        if exists('g:html_use_css')
-        "            let old_css = g:html_use_css
-        "        endif
-        "        let g:html_use_css = 0
-
-        "        " generate and delete unneeded lines
-        "        exec a:line1.','.a:line2.'TOhtml'
-        "        %g/<body/normal k$dgg
-
-        "        " convert body to a table
-        "        %s/<body\s*\(bgcolor="[^"]*"\)\s*text=\("[^"]*"\)\s*>/<table \1 cellPadding=0><tr><td><font color=\2>/
-        "        %s#</body>\(.\|\n\)*</html>#\='</font></td></tr></table>'#i
-
-        "        " restore old setting
-        "        let g:html_use_css = old_css
-        "    endfunction
-        "    command! -range=% MyToHtml :call MyToHtml(<line1>,<line2>)
-
-        "    function! GoBuf()
-        "        for t in range(tabpagenr('$'))
-        "            let winnr       = tabpagewinnr(t)
-        "            let buflist     = tabpagebuflist(t)
-        "            let bufnr       = buflist[winnr - 1]
-        "            let bufname     = bufname(bufnr)
-        "            let tabTitle    = ctrlspace#api#TabTitle(t, bufnr, bufname)
-        "            echo tabTitle
-        "         endfor
-        "        let path_file = findfile(rails#cfile())
-        "        let currentTab = tabpagenr()
-        "        let title   = ctrlspace#util#Gettabvar(2, "CtrlSpaceLabel")
-        "        try
-        "            execute ":sb "path_file
-        "        catch
-        "        if path_file =~ '\<app/views/'
-        "          execute ":tabn 2 "
-        "          execute ":sp "path_file
-        "         endif
-        "        endtry
-        "    endfunction
-
-
-        "    " Controlla se il file è stato modificato aggiorna l'header se presente, salva il file
-        "    function! Autosave ()
-        "        if &modified
-        "             " silent call UpdateHeader()
-        "             write
-        "        endif
-        "    endfunction
-
-    " }}} Helper functions
-
-" }}} Unused Stuff

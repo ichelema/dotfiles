@@ -11,18 +11,11 @@ elseif OSX()
 endif
 
 set background=dark               " Background.
-set cmdheight=1
 set mouse=a
 set nomousefocus
 set mousehide
-set guioptions-=e
-" hide toolbar
-set guioptions-=T
-" hide menubar
-set guioptions-=m
-set guioptions+=M
-" hide the left-hand scrollbar for splits/new windows
-set guioptions-=L
-" hide the right scrollbar
-set guioptions-=r
 
+" Ctrl+F: finestra di ricerca (dialogo Find di gvim)
+nnoremap <C-f> :promptfind<CR>
+" Ctrl+H: dialogo Find & Replace
+nnoremap <F3> :promptrepl<CR>

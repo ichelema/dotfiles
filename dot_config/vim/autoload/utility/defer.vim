@@ -7,9 +7,10 @@ let s:cpo_save = &cpo
 set cpo&vim
 
 function! s:lod(...)
-  " Ignore unknown functions from vim-plug due to the excluded functions
   for l:plug in a:000
-    silent! call plug#load(l:plug)
+    if has_key(g:plugs, l:plug)
+      call plug#load(l:plug)
+    endif
   endfor
 endfunction
 
@@ -36,7 +37,6 @@ endfunction
 function! utility#defer#utility1(timer) abort
   call s:lod('tabular',
            \ 'vim-signature',
-           \ 'vim-commentary',
            \ 'ZoomWin',
            \ 'vim-windowswap',
            \ 'vim-smooth-scroll',
