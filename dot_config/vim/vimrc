@@ -2119,6 +2119,7 @@
              highlight MarkedLine ctermfg=12 guifg=NONE ctermbg=5 guibg=#49688E |
              highlight Comment guifg=#66738e  guibg=NONE |
              highlight VimLineComment guifg=#66738e  guibg=NONE |
+             highlight YankHighlight ctermfg=0 ctermbg=11 guifg=#000000 guibg=#FFD75F |
         endfunction " }}}
 
         augroup ThemeSpecificColors
@@ -2683,7 +2684,7 @@
 	set nostartofline
 
     packadd! hlyank
-    let g:hlyank_hlgroup = 'IncSearch'
+    let g:hlyank_hlgroup = 'YankHighlight'
     let g:hlyank_duration = 1000
     let g:hlyank_invisual = v:true
 
