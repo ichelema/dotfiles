@@ -1,9 +1,0 @@
-#!/bin/bash
-# Ricostruisce il gruppo centrale del layout a tre zone (SUPER+SHIFT+G):
-# scioglie i gruppi incoerenti tra le finestre centrali e li ricrea.
-# Non tocca browser, Dolphin, floating e modali.
-#
-#   center-group-reset            # reset standard
-#   center-group-reset --adopt    # in piu' rimette in tiling le finestre float
-#                                 # di classi note (utile alla prima migrazione)
-exec "$(dirname "$(readlink -f "$0")")/center-group-daemon" --reset "$@"

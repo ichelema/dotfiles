@@ -1,6 +1,0 @@
-# Cache compilata dello screen shader corrente (generata da bin/shader-set)
-shaders/.compiled.*.glsl
-
-# Checkout di consultazione e artefatti compilati locali
-/hyprland-wiki/
-/plugins/group-alias/build/
