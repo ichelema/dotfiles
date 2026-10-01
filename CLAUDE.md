@@ -86,6 +86,8 @@ Templates use `{{ if eq .chezmoi.os "windows" }}` / `{{ if ne .chezmoi.os "windo
 | Git | `dot_config/git/config.tmpl` | Templated (XDG path, read via junction on Windows); uses `delta` for diffs |
 | Vim | `dot_config/vim/` | All OS; vim-plug plugins; on Windows `vimfiles` is a junction to it |
 | Neovim | External git repo | `ichelema/neovim_config`; not in this repo |
+| Claude Code | `dot_claude/` + `claude-settings/` | `settings.json` is NOT a managed file: `.chezmoiscripts/run_onchange_after_claude-settings.sh.tmpl` merges it with jq (local < `shared.json` < `<os>.json`, so keys written by Claude at runtime survive; `env`/`enabledPlugins`/`extraKnownMarketplaces` are owned by the repo). Edit `claude-settings/*.json`, never `~/.claude/settings.json`. Skills/hooks/MCP come from the Trinity plugin, not from here |
+| Pi agent | `dot_pi/agent/` | Config only: `auth.json`, `sessions/`, `npm/`, `git/`, `tmp/`, `node_modules`, `*.bak` stay out. Pi rewrites `settings.json` at runtime (`defaultModel`, `lastChangelogVersion`): pull those changes back with `chezmoi re-add` before committing |
 
 ## Vim Configuration
 
