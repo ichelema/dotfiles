@@ -54,6 +54,7 @@ Su una macchina nuova vanno ricreati a mano il blocco `[age]` e, su Windows, `[i
 | Pi agent | `dot_pi/agent/` | Solo config. Fuori: `auth.json`, `sessions/`, `npm/`, `git/`, `tmp/`, `node_modules`, `*.bak`. Pi riscrive `settings.json` a runtime: `chezmoi re-add` prima del commit |
 | LiteLLM | `dot_litellm/`, `dot_local/bin/executable_litellm-*` | Config, moduli (`callbacks.py`, `responses_bridge.py`), test, launcher. `master-key.txt` cifrata; `logs/` locale. Dopo `apply` riavviare il proxy. Su Linux `litellm-proxy-run.py`, `litellm-start-proxy.sh` e `litellm-pg-ensure.py` sono ignorati (lì restano le versioni Linux locali) |
 | mise | `dot_config/mise/config.toml` | Versioni globali dei runtime |
+| Ruby REPL, ctags | `dot_irbrc`, `dot_irbrc_rails`, `dot_pryrc`, `dot_ctags` | Solo config: le cronologie (`.irb_history`, `.pry_history`) restano locali |
 
 ## Script
 
