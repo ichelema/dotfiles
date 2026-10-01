@@ -68,7 +68,7 @@ chezmoi execute-template < .chezmoiignore.tmpl
 | `.tmpl` suffix | processed through Go templates before deployment |
 
 ### Key Files
-- `.chezmoiexternal.toml` — pulls the neovim config from `git@github.com:sphynx79/neovim_config.git` (refreshes every 2h); path differs by OS (`~/.config/nvim` on Linux/macOS, `AppData/Local/nvim` on Windows)
+- `.chezmoiexternal.toml` — pulls the neovim config from `git@github.com:ichelema/neovim_config.git` (refreshes every 2h); path differs by OS (`~/.config/nvim` on Linux/macOS, `AppData/Local/nvim` on Windows)
 - `.chezmoiignore.tmpl` — excludes vim plugin cache (`plugged/`), state dirs, and on Windows excludes the entire `dot_config/vim/` tree
 - `.chezmoidata.toml` — minimal template data (currently only a `test.color` placeholder)
 - `.chezmoiscripts/run_after_vim-sync.cmd.tmpl` — Windows-only post-apply script: uses `robocopy` to sync vim files into `%USERPROFILE%\vimfiles` and auto-runs `vim.exe -c "PlugInstall"`
@@ -85,7 +85,7 @@ Templates use `{{ if eq .chezmoi.os "windows" }}` / `{{ if ne .chezmoi.os "windo
 |--------|----------|-------|
 | Git | `dot_gitconfig.tmpl` | Templated; uses `delta` for diffs |
 | Vim | `dot_config/vim/` | Linux/macOS only; vim-plug plugins; Windows uses robocopy sync instead |
-| Neovim | External git repo | `sphynx79/neovim_config`; not in this repo |
+| Neovim | External git repo | `ichelema/neovim_config`; not in this repo |
 
 ## Vim Configuration
 

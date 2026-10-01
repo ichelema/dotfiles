@@ -2,12 +2,12 @@
 # Linux e macOS
 [".config/nvim"]
     type = "git-repo"
-    url = "git@github.com:sphynx79/neovim_config.git"
+    url = "git@github.com:ichelema/neovim_config.git"
     refreshPeriod = "2h"
 {{- else }}
 # Windows
 ["AppData/Local/nvim"]
     type = "git-repo"
-    url = "git@github.com:sphynx79/neovim_config.git"
+    url = "git@github.com:ichelema/neovim_config.git"
     refreshPeriod = "2h"
 {{- end }}
