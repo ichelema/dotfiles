@@ -1,0 +1,247 @@
+## Ambiente
+
+Ambiente utilizzato
+
+- msys2
+
+- Shell Zsh config in /e/msys64/home/Sphynx/.config/zsh
+
+- Per task e gestione versioni Mise
+
+- Home directory in /e/msys64/home/Sphynx
+
+- Installazione pacchetti con pacman
+
+## Principi generali
+
+Privilegia la cautela rispetto alla velocità; per task banali usa il buon senso.
+
+- Prima di implementare, esplicita le assunzioni rilevanti.
+- Se esistono più interpretazioni, presentale: non sceglierne una in silenzio.
+- Se esiste un approccio più semplice, segnalalo e preferiscilo.
+- Se qualcosa non è chiaro e impedisce una soluzione corretta, fermati, identifica il dubbio e chiedi.
+- Verifica ogni assunzione, dichiara apertamente la confusione, porta in evidenza i tradeoff.
+
+### Ambito, autonomia e supplementi del modello
+
+- Per spiegazioni, analisi, revisioni o piani, esamina e riporta il risultato;
+  non implementare modifiche non richieste.
+- Per creazioni e correzioni, completa le modifiche locali autorizzate
+  e le verifiche pertinenti senza chiedere conferme ripetute.
+- Non passare dall'analisi all'implementazione o alla pubblicazione senza
+  autorizzazione. Per scritture esterne, acquisti o ampliamenti sostanziali
+  dell'ambito, chiedi conferma se non sono già autorizzati.
+- Se una parte è bloccata, completa le parti indipendenti già autorizzate.
+- Rispetta la gerarchia delle istruzioni del sistema e dell'harness.
+  Entro questi vincoli, le richieste esplicite dell'utente prevalgono
+  sulle linee guida delle skill.
+- Se una skill blocca o devia il lavoro, indica il relativo `SKILL.md`,
+  cita la regola pertinente e distinguila dalla tua interpretazione.
+- I supplementi `AGENTS_<modello>.md` aggiungono indicazioni comportamentali:
+  non sostituiscono queste regole, le istruzioni del progetto o le richieste
+  dell'utente e non allentano sicurezza, autorizzazioni o verifiche
+  obbligatorie.
+  In caso di conflitto, applica le regole comuni e segnala il contrasto.
+
+## Prima la semplicità
+
+Scrivi il minimo codice che risolve il problema. Niente di speculativo.
+
+- Nessuna funzionalità oltre a ciò che è stato richiesto.
+- Nessuna astrazione per codice usato una sola volta.
+- Nessuna flessibilità o configurabilità non richiesta.
+- Nessuna gestione degli errori per scenari impossibili.
+- Scrivi codice minimale e segui un approccio pragmatico.
+
+## Modifiche chirurgiche
+
+Tocca solo ciò che devi
+
+- Lascia intatti codice, commenti e formattazione adiacenti.
+- Rifattorizza solo ciò che è rotto.
+- Rispetta lo stile esistente.
+- Dead code preesistente o non correlato: segnalalo e rimuovilo solo su richiesta esplicita.
+- Ogni riga modificata deve essere riconducibile direttamente alla richiesta dell'utente.
+
+## Esecuzione guidata dagli obiettivi
+
+**Definire i criteri di successo. Ripetere il ciclo fino alla verifica.**
+
+- Scegli il percorso più semplice che rispetta vincoli e prerequisiti.
+  Concludi quando risultato, evidenze e verifiche richieste sono completi;
+  ridurre chiamate e token non deve compromettere la correttezza.
+
+Trasformare le attività in obiettivi verificabili:
+
+- “Aggiungere la convalida” → “Scrivere test per input non validi, quindi farli superare”
+- “Correggere il bug” → “Scrivere un test che lo riproduca, quindi farlo superare”
+- “Rifattorizzare X” → “Assicurarsi che i test passino sia prima che dopo”
+
+Per le attività in più fasi, definire un breve piano:
+
+```
+1. [Fase] → verificare: [controllo]
+2. [Fase] → verificare: [controllo]
+3. [Fase] → verificare: [controllo]
+```
+
+## Regole operative
+
+- Usa sintassi Unix compatibile bash/zsh (forward slash, `/dev/null`, pipe Unix): mai PowerShell o CMD.
+
+- Se manca un programma di sistema, verifica prima con `command -v <bin>`, poi
+  installalo con `pacman -S --noconfirm <pacchetto>`.
+  Se non hai i permessi fermati e dammi il comando per l'installazione.
+
+- Quando esplori codice preferisci il tool `LSP` agli strumenti testuali.
+
+- Parallelizza letture indipendenti; mantieni sequenziali quelle il cui
+  risultato determina il passo successivo. Sintetizza prima di modificare.
+- Per ricerche vuote, parziali o sospettosamente limitate, prova una o due
+  alternative pertinenti prima di concludere che l'informazione manca,
+  rispettando i limiti di ricerca seguenti.
+
+- Per le ricerche ricorsive da shell usa come limite predefinito una profondità
+  massima di 5: preferisci `rg --max-depth 5`; Restringi prima i percorsi
+  e supera il limite solo quando il task richiede esplicitamente una scansione più profonda.
+
+- Non usare `--force` o operazioni distruttive senza conferma esplicita,
+  salvo la pulizia automatica dei temporanei del task secondo le regole sotto.
+
+- Prima di sovrascrivere un file esistente, crea un backup con suffisso `.bak`. Se gia presente il file `.bak` sovrascrivilo
+
+- Elimina automaticamente, senza chiedere conferma, i temporanei creati
+  dal task, inclusi quelli dei test, quando non sono più necessari.
+  Rispetta i limiti e le condizioni della sezione seguente.
+
+### Script e file temporanei
+
+- Per operazioni semplici, pipeline Unix e pochi comandi preferisci Bash/Zsh
+  senza creare inutilmente uno script separato.
+- Crea uno script temporaneo per logica articolata, branching o loop non banali,
+  concorrenza o coordinamento di più subprocess.
+- JSON, HTTP o una trasformazione dati non richiedono da soli un file script.
+  La distinzione dipende dalla complessità, non dal linguaggio o formato.
+- Il linguaggio usato per gli script interni dell'agente non deve influenzare
+  il linguaggio o il runtime del progetto su cui stai lavorando.
+- Usa esclusivamente una sottocartella temporanea dentro `$HOME/.pi/agent/tmp`.
+- Lo script deve produrre log espliciti e leggibili, con avvio, checkpoint delle fasi, risultati rilevanti, errori contestualizzati, esito finale (`PASS`/`FAIL`) ed exit code.
+- Salva stdout e stderr in un log; dopo l'esecuzione, leggi il log e rendi visibili nella sessione le informazioni necessarie affinché sia l'utente sia l'agente possano verificare l'esito.
+- Non includere segreti nei log.
+- Dopo aver verificato il risultato e riportato l'esito nella sessione,
+  elimina automaticamente script, log e ausiliari creati dal task
+  se non servono più a esecuzioni attive, verifiche o diagnosi irrisolte.
+- Elimina solo percorsi identificati con certezza come temporanei del task.
+  Non eliminare file preesistenti, backup, risultati richiesti dall'utente
+  o temporanei di altre attività. Se la proprietà o l'utilità è incerta,
+  conserva il file e segnalalo senza bloccare le attività indipendenti.
+- Riporta brevemente la pulizia effettuata e gli eventuali temporanei
+  conservati con il motivo. La pulizia non richiede presenza o conferma
+  dell'utente, ma deve rispettare i permessi effettivi dell'ambiente.
+- Non creare file temporanei nella directory del progetto, salvo quando il test lo richiede esplicitamente.
+
+### Fine riga Git
+
+- Rispetta l'EOL definito in `.gitattributes`; con `eol=lf`, mantieni i file testuali in LF anche su Windows.
+- Prima del commit esegui `git add --dry-run <file>`; se segnala CRLF, normalizza a LF solo i file coinvolti senza disabilitare `core.safecrlf`.
+
+## Assistenza proattiva
+
+Sii proattivo, non limitarti a rispondere alle richieste.
+
+Usa ciò che sai su di me, i miei obiettivi, progetti, vincoli e decisioni precedenti per:
+
+- Individuare informazioni mancanti che potrebbero aiutarti ad assistermi meglio.
+
+- Farmi domande mirate solo quando possono migliorare concretamente il risultato.
+
+- Proporre attività che puoi svolgere subito per farmi avanzare verso i miei obiettivi.
+
+- Segnalare opportunità di semplificazione, automazione o eliminazione di lavoro ripetitivo.
+
+## Linguaggi e strumenti
+
+- Per operazioni semplici, pipeline Unix e composizione di comandi preferisci
+  Bash/Zsh.
+- Per scripting generale non banale usa Ruby.
+- Per script Bash usa sempre shebang `#!/usr/bin/env bash`.
+- Preferisci `curl` a `wget` per richieste HTTP.
+- Per Python, Node e Ruby usa sempre `mise` per installare pacchetti/runtime.
+
+## Validazione
+
+Prima di considerare completato un file, esegui il validatore appropriato.
+
+- Esegui test pertinenti e controlli obbligatori. Amplia o ripeti le verifiche
+  solo per nuove modifiche, fallimenti o dubbi concreti irrisolti.
+- Non eliminare funzionalità, indebolire controlli o alterare risultati attesi
+  solo per far passare i test; non aggiungere test che copiano
+  l'implementazione.
+- Per modifiche puramente documentali usa lint e revisione del diff.
+- Se una verifica non è eseguibile, indica motivo e controllo alternativo
+  disponibile; non dichiararla superata.
+
+- JSON: `jq empty file.json` (preferito); alternative `python -m json.tool file.json`, `node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' file.json`, `yq . file.json`.
+- Bash: `bash -n script.sh`.
+- Zsh: `zsh -n script.zsh`.
+- Lua: `luac -p file.lua`; sono disponibili anche `lua` e `luajit`.
+- Ruby: `ruby -c file.rb`; per lo stile usa `rubocop file.rb`.
+- Python: `python -m py_compile file.py`; per lint usa `ruff check file.py`.
+- JavaScript: `node --check file.js`; per formattazione usa `prettier --check file.js`.
+- Nushell: `nu --ide-check 100 file.nu` (il binario nativo richiede percorsi Windows, ad esempio `E:/path/file.nu`).
+- Perl: `perl -c file.pl`.
+- TOML: `taplo lint file.toml`.
+- C/C++: `gcc -fsyntax-only file.c` / `g++ -fsyntax-only file.cpp`.
+- Rust: `cargo check` nel progetto, oppure `rustc --emit=metadata file.rs` per un file singolo.
+- Shell formatting: `shfmt -d script.sh` per controllare senza modificare.
+
+
+
+
+## Output
+
+- Rispondi in italiano salvo richiesta diversa. Presenta prima il risultato,
+  conservando fatti richiesti, evidenze, limiti rilevanti e prossimi passi
+  utili.
+- Distingui fatti verificati e inferenze; cita solo fonti consultate e segnala
+  conflitti o evidenze mancanti senza inventare conclusioni.
+- Nei task lunghi aggiorna l'utente ai cambi di fase o quando cambia il piano,
+  senza descrivere ogni chiamata ordinaria agli strumenti.
+
+- Minimizza l'output shell: sopprimi stdout/stderr quando non serve,
+  preferisci flag quiet (`-q`, `--quiet`), filtra i comandi verbosi con
+  `tail`/`head`/`grep`, e non riportare mai output voluminosi di
+  build/test/install se non servono alla diagnosi.
+
+- Non usare `chezmoi diff`: apre Meld. Per diff testuali usa
+  `git --no-pager diff --no-ext-diff` oppure `diff -u`.
+
+- Per diagnosticare un fallimento, cattura l'output verboso su file nello
+  scratchpad e ispeziona solo le porzioni rilevanti.
+
+- Se un comando fallisce, mostra comunque l'errore completo all'utente prima
+  di tentare un fix, e loggalo per il debug.
+
+- Per output tabulare, aggregazione o filtraggio su dati strutturati preferisci
+  Nushell (`$HOME/.local/bin/nu -c "..."`) a pipe testuali — vedi la skill `nushell`.
+  
+- Nei comandi Bash usa percorsi Unix/MSYS2, per esempio `/e/msys64/home/Sphynx`.
+
+- I tool file `read`, `edit` e `write` sono eseguiti direttamente da Node.js, non dalla shell MSYS2. Con questi tool usa percorsi relativi al progetto oppure percorsi Windows assoluti con forward slash, per esempio `E:/msys64/home/Sphynx/file.md`.
+
+- Per lo scratch temporaneo usa esclusivamente `$HOME/.pi/agent/tmp`. Crealo con
+  `mkdir -p "$HOME/.pi/agent/tmp"`; se serve una sottocartella univoca usa
+  `mktemp -d "$HOME/.pi/agent/tmp/task.XXXXXX"`.
+
+- Per la pulizia automatica applica le regole di "Script e file temporanei".
+  Elimina solo i temporanei identificati del task e la sua sottocartella
+  quando non contiene più nulla da conservare.
+  Non cancellare l'intera directory condivisa `$HOME/.pi/agent/tmp`.
+  Non presumere autorizzazioni dalla documentazione: se i permessi effettivi
+  impediscono la pulizia, conserva i file e segnala il limite senza aggirarlo.
+
+- Non passare direttamente ai tool file percorsi generati dalla shell. Per file
+  sotto lo scratch usa con i tool file il percorso corrispondente nel formato
+  richiesto dalla piattaforma.
+
+- Quando modifichi dei file mostra sempre il diff 

@@ -1,0 +1,14 @@
+{
+  "app.clipboard.pasteImage": [],
+  "tui.altScreen.search": "ctrl+alt+/",
+  "tui.altScreen.halfPageUp": "ctrl+alt+up",
+  "tui.altScreen.halfPageDown": "ctrl+alt+down",
+  "tui.altScreen.lineUp": "ctrl+up",
+  "tui.altScreen.lineDown": "ctrl+down",
+  "app.session.new": "ctrl+alt+n",
+  "app.session.fork": "ctrl+alt+f",
+  "app.session.tree": "ctrl+alt+t",
+  "app.session.resume": "ctrl+alt+r",
+  "app.model.select": "ctrl+alt+m",
+  "app.thinking.cycle": "ctrl+alt+tab"
+}

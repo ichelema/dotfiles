@@ -1,0 +1,66 @@
+{
+  "lastChangelogVersion": "0.87.1",
+  "theme": "nord",
+  "editorPaddingX": 1,
+  "steeringMode": "one-at-a-time",
+  "enableInstallTelemetry": false,
+  "hideThinkingBlock": false,
+  "treeFilterMode": "all",
+  "tuiMode": "fullscreen",
+  "showCacheMissNotices": true,
+  "enabledModels": [
+    "deepseek/deepseek-flash",
+    "openai-codex/gpt-5.3-codex-spark",
+    "openai-codex/gpt-5.6-luna",
+    "openai-codex/gpt-5.6-sol",
+    "openai-codex/gpt-6-sol",
+    "openai-codex/gpt-6-luna",
+    "openai-codex/gpt-6-astra",
+    "openrouter/moonshotai/kimi-k3",
+    "openrouter/z-ai/glm-5.3-flash"
+  ],
+  "defaultThinkingLevel": "medium",
+  "defaultModel": "gpt-6-astra",
+  "modelThinkingLevels": {
+    "openai-codex/gpt-5.6-sol": "medium",
+    "openai-codex/gpt-6-luna": "high",
+    "openrouter/z-ai/glm-5.3-flash": "high",
+    "groq/qwen/qwen3.8-27b": "high"
+  },
+  "outputPad": 1,
+  "terminal": {
+    "images": "kitty",
+    "trueColor": true
+  },
+  "kendex": {
+    "extensionManager": {
+      "config": {
+        "@vanillagreen/pi-tool-renderer": {
+          "alignAssistantMessages": false,
+          "styledCodeBlocks": false,
+          "registerBatchTool": true,
+          "renderMutationTools": true,
+          "splitDiffs": true
+        }
+      }
+    }
+  },
+  "packages": [
+    "git:github.com/pasky/chrome-cdp-skill@v1.1.0",
+    {
+      "source": "npm:pi-tool-display",
+      "extensions": [
+        "-index.ts"
+      ]
+    },
+    "npm:pi-omplike-advisor",
+    "npm:@juancrg90/nightfox-themes",
+    "npm:@pi-archimedes/image-paste",
+    "npm:@tintinweb/pi-subagents",
+    "git:github.com/DietrichGebert/ponytail",
+    "npm:@sting8k/pi-vcc",
+    "npm:pi-web-search",
+    "npm:@vanillagreen/pi-tool-renderer"
+  ],
+  "defaultProvider": "openai-codex"
+}
