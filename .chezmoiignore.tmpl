@@ -22,3 +22,7 @@ CLAUDE.md
 .local/bin/litellm-start-proxy.sh
 .local/bin/litellm-pg-ensure.py
 {{- end }}
+{{- if not (stat (joinPath .chezmoi.homeDir ".config/chezmoi/key.txt")) }}
+# segreti cifrati age: saltati finche' la chiave non e' copiata su questa macchina
+.litellm/master-key.txt
+{{- end }}
