@@ -123,7 +123,12 @@
     "command": "/e/msys64/home/sphynx/.claude/statusline.sh"
   },
 {{- end }}
-  "enabledPlugins": {{ if eq .chezmoi.os "linux" }}{"lua-lsp@claude-plugins-official":true}{{ else }}{}{{ end }},
+  "enabledPlugins": {
+    "pyright-lsp@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true,
+    "ruby-lsp@claude-plugins-official": true,
+    "lua-lsp@claude-plugins-official": true
+  },
   "extraKnownMarketplaces": {},
   "outputStyle": "simple",
   "language": "italiano",
