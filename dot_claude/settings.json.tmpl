@@ -1,10 +1,5 @@
 {
   "cleanupPeriodDays": 20,
-  "skillOverrides": {
-    "simplify": "off",
-    "dataviz": "off",
-    "claude-in-chrome": "off"
-  },
   "env": {
     "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "90",
     "CLAUDE_CODE_DISABLE_UNKNOWN_MODEL_WINDOW_ENFORCEMENT": "1",
@@ -14,11 +9,44 @@
     "CLAUDE_CODE_DISABLE_FEEDBACK_SURVEY": "1",
     "API_TIMEOUT_MS": "300000",
     "MCP_TIMEOUT": "60000",
-    "ENABLE_CLAUDEAI_MCP_SERVERS": "false"
+    "ENABLE_CLAUDEAI_MCP_SERVERS": "false",
+{{- if eq .chezmoi.os "windows" }}
+    "CLAUDE_CODE_AUTO_MODE_SERVER": "0",
+    "CLAUDE_CODE_GIT_BASH_PATH": "e:\\msys64\\usr\\bin\\bash.exe",
+    "MSYSTEM": "UCRT64",
+    "CHERE_INVOKING": "1",
+    "MSYS2_PATH_TYPE": "strict",
+    "HOME": "e:\\msys64\\home\\sphynx",
+    "OBSIDIAN_VAULT": "e:/obsidian/sinapsi",
+    "OBSIDIAN_VAULT_NAME": "sinapsi",
+    "NOTEBOOKLM_DATA": "e:/ai/tools/notebooklm-data",
+    "NOTEBOOKLM_LIB": "e:/ai/tools/notebooklm",
+    "ADHD_LIB": "e:/ai/tools/adhd",
+    "MCP_EXCALIDRAW_DIR": "e:/msys64/home/sphynx/.local/opt/mcp_excalidraw",
+    "MCP_DEBUGGER_DIR": "e:/ai/tools/mcp-debugger",
+    "MCP_NEOVIM_DIR": "e:/ai/tools/mcp-neovim-server",
+    "EDITOR": "e:\\msys64\\home\\Sphynx\\.local\\bin\\vim-claude.cmd",
+    "CLAUDE_ENV_FILE": "e:/msys64/home/sphynx/.local/bin/claude-msys2-env.sh",
+    "TRINITY_PLUGIN_DIR": "E:/AI/Claude/Trinity"
+{{- else }}
+    "EDITOR": "nvim",
+    "SUDO_ASKPASS": "/home/ichelema/.local/bin/sudo-askpass.sh",
+    "OBSIDIAN_VAULT": "/Dati/Obsidian/Sinapsi",
+    "OBSIDIAN_VAULT_NAME": "sinapsi",
+    "MCP_EXCALIDRAW_DIR": "/home/ichelema/.local/opt/mcp_excalidraw",
+    "MCP_DEBUGGER_DIR": "/Dati/AI/tools/mcp-debugger",
+    "MCP_NEOVIM_DIR": "/Dati/AI/tools/mcp-neovim-server",
+    "NVIM_SOCKET_PATH": "/run/user/1001/claude-debug-Trinity",
+    "NOTEBOOKLM_DATA": "/Dati/AI/tools/notebooklm-data",
+    "NOTEBOOKLM_LIB": "/home/ichelema/.local/share/mise/installs/python/3.13/lib/python3.13/site-packages",
+    "PLAYWRIGHT_MCP_BROWSER": "chromium",
+    "TRINITY_PLUGIN_DIR": "/Dati/AI/Claude/Trinity"
+{{- end }}
   },
   "attribution": {
     "commit": "",
-    "pr": ""
+    "pr": "",
+    "sessionUrl": false
   },
   "includeCoAuthoredBy": false,
   "permissions": {
@@ -72,20 +100,41 @@
       "Read(~/.ssh/**)",
       "Edit(~/.ssh/**)"
     ],
-    "defaultMode": "auto"
+    "defaultMode": "auto",
+    "disableBundledSkills": true,
+    "disableWorkflows": true,
+    "disableRemoteControl": true,
+    "disableClaudeAiConnectors": true,
+    "disableArtifact": true
+  },
+  "model": {{ if eq .chezmoi.os "linux" }}"opus"{{ else }}"opus[1m]"{{ end }},
+  "disableClaudeAiConnectors": true,
+  "skillOverrides": {
+    "simplify": "off",
+    "dataviz": "off",
+    "claude-in-chrome": "off"
   },
   "disableBundledSkills": true,
-  "disableWorkflows": true,
   "disableRemoteControl": true,
-  "disableClaudeAiConnectors": true,
+  "disableWorkflows": true,
   "enableArtifact": false,
-  "model": "opus[1m]",
-  "enabledPlugins": {},
+{{- if eq .chezmoi.os "windows" }}
+  "statusLine": {
+    "type": "command",
+    "command": "/e/msys64/home/sphynx/.claude/statusline.sh"
+  },
+{{- end }}
+  "enabledPlugins": {{ if eq .chezmoi.os "linux" }}{"lua-lsp@claude-plugins-official":true}{{ else }}{}{{ end }},
   "extraKnownMarketplaces": {},
   "outputStyle": "simple",
   "language": "italiano",
   "spinnerTipsEnabled": false,
   "effortLevel": "high",
+  "modelSettings": {
+    "claude-gpt-5-6-sol-max": {
+      "effortLevel": "high"
+    }
+  },
   "tui": "fullscreen",
   "showThinkingSummaries": true,
   "skipDangerousModePermissionPrompt": false,
