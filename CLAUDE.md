@@ -45,7 +45,7 @@ chezmoi diff
 chezmoi apply -v
 
 # Edit a managed file (opens in $EDITOR, stages on save)
-chezmoi edit ~/.gitconfig
+chezmoi edit ~/.config/git/config
 
 # Add a new file to management
 chezmoi add ~/.some_new_file
@@ -68,30 +68,30 @@ chezmoi execute-template < .chezmoiignore.tmpl
 | `.tmpl` suffix | processed through Go templates before deployment |
 
 ### Key Files
-- `.chezmoiexternal.toml` — pulls the neovim config from `git@github.com:ichelema/neovim_config.git` (refreshes every 2h); path differs by OS (`~/.config/nvim` on Linux/macOS, `AppData/Local/nvim` on Windows)
-- `.chezmoiignore.tmpl` — excludes vim plugin cache (`plugged/`), state dirs, and on Windows excludes the entire `dot_config/vim/` tree
+- `.chezmoiexternal.toml` — pulls the neovim config from `git@github.com:ichelema/neovim_config.git` (refreshes every 2h) into `~/.config/nvim` on every OS; on Windows `%LOCALAPPDATA%\nvim` is a junction to it
+- `.chezmoiignore.tmpl` — excludes vim plugin cache (`plugged/`), state dirs
 - `.chezmoidata.toml` — minimal template data (currently only a `test.color` placeholder)
-- `.chezmoiscripts/run_after_vim-sync.cmd.tmpl` — Windows-only post-apply script: uses `robocopy` to sync vim files into `%USERPROFILE%\vimfiles` and auto-runs `vim.exe -c "PlugInstall"`
+- `.chezmoiscripts/run_onchange_after_windows-junctions.sh.tmpl` — Windows-only, runs via MSYS2 bash (`[interpreters.sh]` in the local config): creates NTFS junctions (`mklink /J`, no admin needed) so native Windows programs read the config deployed in the MSYS2 home: `C:\Users\<user>\vimfiles` and `~/vimfiles` → `~/.config/vim`, `C:\Users\<user>\.config\git` → `~/.config/git`, `%LOCALAPPDATA%\nvim` → `~/.config/nvim`. Existing real directories are skipped (move them to `.bak` first)
 
 ### Platform Branching in Templates
 Templates use `{{ if eq .chezmoi.os "windows" }}` / `{{ if ne .chezmoi.os "windows" }}` / `{{ if eq .chezmoi.os "linux" }}` guards. The main branching points are:
 
-- `dot_gitconfig.tmpl`: WinMerge + gvim on Windows; Meld + vim on Linux; OS-specific SSL and credential settings
+- `dot_config/git/config.tmpl`: WinMerge + gvim on Windows; Meld + vim on Linux; OS-specific SSL and credential settings
 - `.chezmoiexternal.toml`: different nvim config path per OS
 - `.chezmoiignore.tmpl`: vim config is ignored on Windows
 
 ### What's Managed Where
 | Config | Location | Notes |
 |--------|----------|-------|
-| Git | `dot_gitconfig.tmpl` | Templated; uses `delta` for diffs |
-| Vim | `dot_config/vim/` | Linux/macOS only; vim-plug plugins; Windows uses robocopy sync instead |
+| Git | `dot_config/git/config.tmpl` | Templated (XDG path, read via junction on Windows); uses `delta` for diffs |
+| Vim | `dot_config/vim/` | All OS; vim-plug plugins; on Windows `vimfiles` is a junction to it |
 | Neovim | External git repo | `ichelema/neovim_config`; not in this repo |
 
 ## Vim Configuration
 
 Located at `dot_config/vim/`. Uses **vim-plug** as plugin manager. The `plugged/` directory is excluded from chezmoi tracking (only `.keep` placeholder committed). State directories (`files/info`, `files/log`, `files/session`, `files/undo`, `files/view`) are similarly excluded.
 
-On Windows, vim files live in `%USERPROFILE%\vimfiles` and are synced by the post-apply script rather than deployed directly by chezmoi.
+On Windows, `%USERPROFILE%\vimfiles` is a junction to `~/.config/vim` (created by the junction script). Plugins are not installed automatically: run `:PlugInstall` after changing the plugin list.
 
 ## Notes
 
@@ -198,7 +198,7 @@ Scripts are placed at the repo root or, preferably, inside `.chezmoiscripts/`. T
 | `run_after_*`                           | After files are applied.                                              |
 | `*.tmpl` suffix                         | Script is rendered as a Go template before execution.                 |
 
-**Idempotence is mandatory.** Scripts must be safe to re-run: guard with `if not exist`, `mkdir -p`, "pull if exists else clone", etc. The existing `run_after_vim-sync.cmd.tmpl` follows this pattern (uses `robocopy /L /MIR` to detect drift, then `/MIR` only when needed).
+**Idempotence is mandatory.** Scripts must be safe to re-run: guard with `if not exist`, `mkdir -p`, "pull if exists else clone", etc. The existing junction script follows this pattern (skips links that already exist).
 
 ## Local `chezmoi.toml` (per-machine, NOT versioned)
 
@@ -328,7 +328,7 @@ When the same tool lives at different paths on Linux vs Windows:
 | `run_after_*` script      | Need to copy / junction / install plugins after apply.     |
 | Separate per-OS files     | Configs are too divergent to share.                        |
 
-This repo uses all five: ignore for `vim` on Windows, external for nvim per-OS path, and the `run_after_vim-sync.cmd.tmpl` script as the bridge between `dot_config/vim` and `%USERPROFILE%\vimfiles`.
+This repo uses all five: ignore for vim state dirs, external for nvim, and the junction script as the bridge between the MSYS2 home and the native Windows paths.
 
 ## Troubleshooting
 

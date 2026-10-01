@@ -1,0 +1,28 @@
+{{- if eq .chezmoi.os "windows" -}}
+#!/usr/bin/env bash
+# I programmi nativi Windows (gvim, nvim, Git for Windows) leggono la config da
+# C:\Users\<utente>, chezmoi la scrive nella home MSYS2: le junction collegano i
+# due posti. Junction e non symlink: non richiedono admin/Developer Mode.
+set -euo pipefail
+
+link() { # link <percorso-junction> <cartella-reale>
+  local l=$1 t=$2
+  [ -L "$l" ] && return 0
+  if [ -e "$l" ]; then
+    echo "SALTATA $l: e' una cartella reale, spostala in .bak e rilancia apply" >&2
+    return 0
+  fi
+  MSYS_NO_PATHCONV=1 cmd /c mklink /J "$(cygpath -w "$l")" "$(cygpath -w "$t")" >/dev/null
+  echo "junction $l -> $t"
+}
+
+home={{ .chezmoi.homeDir | quote }}
+win_home={{ printf "%s%s" (env "HOMEDRIVE") (env "HOMEPATH") | replace "\\" "/" | quote }}
+local_appdata={{ env "LOCALAPPDATA" | replace "\\" "/" | quote }}
+
+link "$win_home/vimfiles"    "$home/.config/vim"
+link "$win_home/.config/git" "$home/.config/git"
+link "$local_appdata/nvim"   "$home/.config/nvim"
+# vim nativo lanciato da MSYS2 eredita USERPROFILE=home MSYS2 e cerca qui
+link "$home/vimfiles"        "$home/.config/vim"
+{{ end -}}

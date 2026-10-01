@@ -1,13 +1,6 @@
-{{- if ne .chezmoi.os "windows" }}
-# Linux e macOS
+# Su Windows nvim legge %LOCALAPPDATA%\nvim: una junction punta qui
+# (vedi .chezmoiscripts/run_onchange_after_windows-junctions.sh.tmpl).
 [".config/nvim"]
     type = "git-repo"
     url = "git@github.com:ichelema/neovim_config.git"
     refreshPeriod = "2h"
-{{- else }}
-# Windows
-["AppData/Local/nvim"]
-    type = "git-repo"
-    url = "git@github.com:ichelema/neovim_config.git"
-    refreshPeriod = "2h"
-{{- end }}
