@@ -88,6 +88,7 @@ Templates use `{{ if eq .chezmoi.os "windows" }}` / `{{ if ne .chezmoi.os "windo
 | Neovim | External git repo | `ichelema/neovim_config`; not in this repo |
 | Claude Code | `dot_claude/` | `settings.json.tmpl` is a single template: OS-specific parts (`env`, `statusLine`, `model`, `enabledPlugins`) in `{{ if eq .chezmoi.os ... }}` blocks. chezmoi owns the whole file: when Claude rewrites it at runtime (`/model`, `/output-style`…) `chezmoi apply` asks before overwriting — port wanted changes into the template (`re-add` does not work on templates). Skills/hooks/MCP come from the Trinity plugin, not from here |
 | Pi agent | `dot_pi/agent/` | Config only: `auth.json`, `sessions/`, `npm/`, `git/`, `tmp/`, `node_modules`, `*.bak` stay out. Pi rewrites `settings.json` at runtime (`defaultModel`, `lastChangelogVersion`): pull those changes back with `chezmoi re-add` before committing |
+| LiteLLM proxy | `dot_litellm/` | `litellm_config.yaml`, modules loaded by the proxy (`callbacks.py`, `responses_bridge.py`) and their tests. Secrets are `os.environ/…` references; `master-key.txt`, `pgdata/`, `logs/` stay local. `claude-oauth-helper.cmd` is Windows-only. Restart the proxy after `chezmoi apply`. Launchers in `~/.local/bin/litellm-*` are not managed here |
 
 ## Vim Configuration
 
