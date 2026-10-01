@@ -10,6 +10,7 @@
     pager        = delta
     filemode     = false
     fsmonitor    = true
+    untrackedCache = true
 
 [interactive]
     diffFilter = delta --color-only
@@ -25,6 +26,11 @@
 {{- if eq .chezmoi.os "linux" }}
     hyperlinks-file-link-format = "file://{path}#{line}"
 {{- end }}
+
+[grep]
+    column     = true
+    fullname   = true
+    lineNumber = true
 
 [push]
     default           = simple
@@ -90,11 +96,22 @@
     cmd           = C:/APPL/WinMerge/WinMergeU.exe -u -e $LOCAL $REMOTE
 
 [http]
-    sslcainfo = C:\\APPL\\cmder\\vendor\\git-for-windows\\ca-bundle.crt
+{{- if stat "C:/certs/cacert.pem" }}
+    sslCAInfo = C:/certs/cacert.pem
+{{- end }}
     sslVerify = false
 
 [credential "helperselector"]
     selected = wincred
+{{- with lookPath "gh" }}
+{{- $gh := . | replace "\\" "/" }}
+[credential "https://github.com"]
+    helper =
+    helper = !'{{ $gh }}' auth git-credential
+[credential "https://gist.github.com"]
+    helper =
+    helper = !'{{ $gh }}' auth git-credential
+{{- end }}
 
 {{- else if eq .chezmoi.os "linux" }}
 [core]
