@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Genera ~/.claude/settings.json da claude-settings/ (ex sync-settings di Trinity).
+# Merge, l'ultimo vince: file locale < shared.json < <os>.json. Le chiavi solo
+# locali (scritte da Claude Code a runtime) sopravvivono; env, enabledPlugins ed
+# extraKnownMarketplaces sono posseduti per intero dal repo (niente voci zombie).
+# jq e non i merge di chezmoi: quelli ignorano i valori false/0.
+# Riparte quando cambiano i JSON:
+# shared {{ include "claude-settings/shared.json" | sha256sum }}
+# {{ .chezmoi.os }} {{ include (printf "claude-settings/%s.json" .chezmoi.os) | sha256sum }}
+set -euo pipefail
+
+dst="{{ .chezmoi.homeDir }}/.claude/settings.json"
+cd "{{ .chezmoi.sourceDir }}/claude-settings"   # path relativi: jq nativo su Windows non capisce /e/...
+local_json='{}'
+[ -f "$dst" ] && local_json=$(cat "$dst")
+
+new=$(jq --indent 2 --argjson l "$local_json" \
+  --slurpfile s shared.json --slurpfile o {{ .chezmoi.os }}.json -n '
+  $s[0] as $s | $o[0] as $o
+  | ($l * $s * $o)
+  | .env = (($s.env // {}) + ($o.env // {}))
+  | reduce ("enabledPlugins", "extraKnownMarketplaces") as $k (.;
+      if ($o | has($k)) then .[$k] = $o[$k]
+      elif ($s | has($k)) then .[$k] = $s[$k]
+      else . end)' | tr -d '\r')
+
+if [ -f "$dst" ] && [ "$new" = "$(cat "$dst")" ]; then exit 0; fi
+[ -f "$dst" ] && cp "$dst" "$dst.bak"
+mkdir -p "$(dirname "$dst")"
+printf '%s\n' "$new" > "$dst"
+echo "settings.json aggiornato (backup: settings.json.bak)"
