@@ -17,8 +17,10 @@ link() { # link <percorso-junction> <cartella-reale>
 }
 
 home={{ .chezmoi.homeDir | quote }}
-win_home={{ printf "%s%s" (env "HOMEDRIVE") (env "HOMEPATH") | replace "\\" "/" | quote }}
 local_appdata={{ env "LOCALAPPDATA" | replace "\\" "/" | quote }}
+# Da LOCALAPPDATA, non da HOMEDRIVE/HOMEPATH: sul PC aziendale quelli possono
+# puntare alla home di rete (V:), dove le junction non si possono creare.
+win_home="${local_appdata%/AppData/Local}"
 
 link "$win_home/vimfiles"    "$home/.config/vim"
 link "$win_home/.config/git" "$home/.config/git"
