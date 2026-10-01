@@ -1,0 +1,12 @@
+# ~/.zshenv
+# Punto d'ingresso minimale: fa usare a zsh ~/.config/zsh come directory config.
+
+# Bonifica ambiente: rimuove eventuali env var 'aliases'/'options' ereditate dal
+# processo padre (es. AutoRun di cmd.exe / Clink quando zsh e' avviato via ttyd).
+# Sono scalar esportati che collidono coi parametri speciali del modulo
+# zsh/parameter: senza questa pulizia, add-zle-hook-widget fallisce con
+# "Can't add module parameter 'aliases': parameter already exists".
+# Va fatto QUI, prima che compinit/prompt carichino zsh/parameter.
+unset aliases options 2>/dev/null
+
+export ZDOTDIR="$HOME/.config/zsh"

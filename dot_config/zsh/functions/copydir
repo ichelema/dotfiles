@@ -1,0 +1,2 @@
+echo -n "$PWD" | /c/Windows/System32/clip.exe
+echo "Copied '$PWD' to clipboard."

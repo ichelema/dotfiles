@@ -1,0 +1,26 @@
+emulate -L zsh
+
+# Lancia il Neovim NATIVO Windows ripulendo le var d'ambiente MSYS
+# (HOME/XDG/SHELL) cosi' che usi la sua config Windows (~/AppData/Local/nvim)
+# invece di ereditare quella di MSYS2. Path assoluto = niente ricorsione.
+local nvim_win="/c/Appl/Neovim/bin/nvim.exe"
+
+# Antepone git-for-windows al PATH: senza, nvim userebbe il git MSYS, che
+# restituisce path in formato MSYS (/d/AI/...) -> nvim li legge come \d\AI\...
+# e l'fs watcher fallisce con ENOENT (nvim-tree, gitsigns, fugitive).
+local git_win="/c/Appl/cmder/vendor/git-for-windows/cmd"
+
+env \
+  -u XDG_CONFIG_HOME \
+  -u XDG_DATA_HOME \
+  -u XDG_STATE_HOME \
+  -u XDG_CACHE_HOME \
+  -u XDG_RUNTIME_DIR \
+  -u XDG_CONFIG_DIRS \
+  -u XDG_DATA_DIRS \
+  -u HOME \
+  -u SHELL \
+  -u PWD \
+  -u OLDPWD \
+  "PATH=$git_win:$PATH" \
+  "$nvim_win" "$@"

@@ -1,0 +1,15 @@
+local file msys_path win_path
+
+file="$(fd -e svg . "${1:-.}" |
+  fzf \
+    --preview='chafa --size=${FZF_PREVIEW_COLUMNS}x${FZF_PREVIEW_LINES} {}' \
+    --preview-window=right:60%)"
+
+[[ -z "$file" ]] && return
+
+msys_path="$(realpath "$file")"
+win_path="$(cygpath -w "$msys_path")"
+
+printf '%s' "$win_path" | /c/Windows/System32/clip.exe
+printf 'copied: %s\n' "$win_path"
+printf 'msys:   %s\n' "$msys_path"
