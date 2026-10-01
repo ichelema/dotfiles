@@ -16,3 +16,9 @@ CLAUDE.md
 .pi/agent/extensions/nord-footer/node_modules
 .pi/agent/extensions/nord-footer/node_modules/**
 .pi/agent/**/*.bak
+{{- if ne .chezmoi.os "windows" }}
+# Versioni Windows-specifiche: su Linux restano quelle locali (README Trinity §13.1)
+.local/bin/litellm-proxy-run.py
+.local/bin/litellm-start-proxy.sh
+.local/bin/litellm-pg-ensure.py
+{{- end }}
