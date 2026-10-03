@@ -1,5 +1,5 @@
 {
-  "theme": {{ if eq .chezmoi.os "windows" }}"nord"{{ else }}"theme"{{ end }},
+  "theme": {{ if eq .chezmoi.hostname "browserino" }}"theme"{{ else }}"nord"{{ end }},
   "editorPaddingX": 1,
   "steeringMode": "one-at-a-time",
   "enableInstallTelemetry": false,
