@@ -2,6 +2,7 @@
 
 Ambiente utilizzato
 
+{{ if eq .chezmoi.os "windows" -}}
 - msys2
 
 - Shell Zsh config in /e/msys64/home/Sphynx/.config/zsh
@@ -12,7 +13,21 @@ Ambiente utilizzato
 
 - Installazione pacchetti con pacman
 
-## Principi generali
+{{ else -}}
+- Nome utente Ichelema
+
+- Arch Linux
+
+- Installazione paccetti utilizza pacman
+
+- Shell Zsh config in {{ .chezmoi.homeDir }}/.config/zsh
+
+- Per task e gestione versioni Mise
+
+- Home directory in {{ .chezmoi.homeDir }}
+
+
+{{ end }}## Principi generali
 
 Privilegia la cautela rispetto alla velocità; per task banali usa il buon senso.
 
@@ -39,8 +54,7 @@ Privilegia la cautela rispetto alla velocità; per task banali usa il buon senso
   cita la regola pertinente e distinguila dalla tua interpretazione.
 - I supplementi `AGENTS_<modello>.md` aggiungono indicazioni comportamentali:
   non sostituiscono queste regole, le istruzioni del progetto o le richieste
-  dell'utente e non allentano sicurezza, autorizzazioni o verifiche
-  obbligatorie.
+  dell'utente e non allentano sicurezza, autorizzazioni o verifiche obbligatorie.
   In caso di conflitto, applica le regole comuni e segnala il contrasto.
 
 ## Prima la semplicità
@@ -87,12 +101,12 @@ Per le attività in più fasi, definire un breve piano:
 
 ## Regole operative
 
-- Usa sintassi Unix compatibile bash/zsh (forward slash, `/dev/null`, pipe Unix): mai PowerShell o CMD.
+- Usa sintassi Unix compatibile bash/zsh (forward slash, `/dev/null`, pipe Unix){{ if eq .chezmoi.os "windows" }}: mai PowerShell o CMD.{{ end }}
 
 - Se manca un programma di sistema, verifica prima con `command -v <bin>`, poi
-  installalo con `pacman -S --noconfirm <pacchetto>`.
+  installalo con `pacman -S --noconfirm <pacchetto>`. 
   Se non hai i permessi fermati e dammi il comando per l'installazione.
-
+  
 - Quando esplori codice preferisci il tool `LSP` agli strumenti testuali.
 
 - Parallelizza letture indipendenti; mantieni sequenziali quelle il cui
@@ -114,16 +128,19 @@ Per le attività in più fasi, definire un breve piano:
   dal task, inclusi quelli dei test, quando non sono più necessari.
   Rispetta i limiti e le condizioni della sezione seguente.
 
+
 ### Script e file temporanei
 
-- Per operazioni semplici, pipeline Unix e pochi comandi preferisci Bash/Zsh
-  senza creare inutilmente uno script separato.
+- Per operazioni semplici, pipeline Unix e pochi comandi preferisci Bash/Zsh senza creare inutilmente uno script separato.
 - Crea uno script temporaneo per logica articolata, branching o loop non banali,
   concorrenza o coordinamento di più subprocess.
-- JSON, HTTP o una trasformazione dati non richiedono da soli un file script.
+- Per operazioni semplici usa un comando, una pipeline o `bun -e '...'`.
+  JSON, HTTP o una trasformazione dati non richiedono da soli un file script.
   La distinzione dipende dalla complessità, non dal linguaggio o formato.
-- Il linguaggio usato per gli script interni dell'agente non deve influenzare
-  il linguaggio o il runtime del progetto su cui stai lavorando.
+- Quando serve uno script generale non banale, usa TypeScript eseguito con Bun come scelta predefinita.
+- Non creare uno script Bun quando una semplice pipeline shell è più corta e leggibile.
+- Non usare Bash per logica complessa solo per evitare TypeScript.
+- Il linguaggio usato per gli script interni dell'agente non deve influenzare il linguaggio o il runtime del progetto su cui stai lavorando.
 - Usa esclusivamente una sottocartella temporanea dentro `$HOME/.pi/agent/tmp`.
 - Lo script deve produrre log espliciti e leggibili, con avvio, checkpoint delle fasi, risultati rilevanti, errori contestualizzati, esito finale (`PASS`/`FAIL`) ed exit code.
 - Salva stdout e stderr in un log; dopo l'esecuzione, leggi il log e rendi visibili nella sessione le informazioni necessarie affinché sia l'utente sia l'agente possano verificare l'esito.
@@ -161,12 +178,25 @@ Usa ciò che sai su di me, i miei obiettivi, progetti, vincoli e decisioni prece
 
 ## Linguaggi e strumenti
 
-- Per operazioni semplici, pipeline Unix e composizione di comandi preferisci
-  Bash/Zsh.
-- Per scripting generale non banale usa Ruby.
+- Per operazioni semplici, pipeline Unix e composizione di comandi preferisci Bash/Zsh.
+- Per scripting generale non banale usa TypeScript eseguito con Bun.
+- Preferisci Nushell per pipeline tabulari, filtri e aggregazioni
+  su dati strutturati; consulta la skill `nushell`.
+- Usa Bun/TypeScript per logica applicativa articolata, concorrenza
+  o coordinamento di subprocess. Per semplici richieste HTTP usa `curl`;
+  JSON e altri formati non impongono da soli un runtime.
+- Non creare codice TypeScript quando una singola pipeline shell risolve il problema in modo più semplice e leggibile.
+- Per script brevi in TypeScript preferisci `bun -e '...'` quando evita inutilmente la creazione di un file.
+- Per script più articolati crea un file `.ts` ed eseguilo con `bun run <file.ts>`.
+- Preferisci le API native di Bun e le Web API prima di aggiungere dipendenze.
+- Per filesystem preferisci `Bun.file` e `Bun.write` quando appropriato.
+- Per subprocess preferisci `Bun.spawn` o `Bun.spawnSync`.
+- Non usare Ruby, Python o Node.js come linguaggio generico di scratch quando il task può essere svolto ragionevolmente con Bun/TypeScript.
+- Usa un altro linguaggio per gli script interni solo quando offre un vantaggio tecnico concreto o quando il task lo richiede esplicitamente.
+- Questa preferenza riguarda esclusivamente il lavoro interno dell'agente: per il codice del progetto rispetta sempre linguaggio, runtime, dipendenze e convenzioni già esistenti.
 - Per script Bash usa sempre shebang `#!/usr/bin/env bash`.
 - Preferisci `curl` a `wget` per richieste HTTP.
-- Per Python, Node e Ruby usa sempre `mise` per installare pacchetti/runtime.
+- Per Bun, Python, Node e Ruby usa sempre `mise` per installare runtime e tool quando necessario.
 
 ## Validazione
 
@@ -175,12 +205,12 @@ Prima di considerare completato un file, esegui il validatore appropriato.
 - Esegui test pertinenti e controlli obbligatori. Amplia o ripeti le verifiche
   solo per nuove modifiche, fallimenti o dubbi concreti irrisolti.
 - Non eliminare funzionalità, indebolire controlli o alterare risultati attesi
-  solo per far passare i test; non aggiungere test che copiano
-  l'implementazione.
+  solo per far passare i test; non aggiungere test che copiano l'implementazione.
 - Per modifiche puramente documentali usa lint e revisione del diff.
 - Se una verifica non è eseguibile, indica motivo e controllo alternativo
   disponibile; non dichiararla superata.
 
+{{ if eq .chezmoi.os "windows" -}}
 - JSON: `jq empty file.json` (preferito); alternative `python -m json.tool file.json`, `node -e 'JSON.parse(require("fs").readFileSync(process.argv[1], "utf8"))' file.json`, `yq . file.json`.
 - Bash: `bash -n script.sh`.
 - Zsh: `zsh -n script.zsh`.
@@ -198,11 +228,36 @@ Prima di considerare completato un file, esegui il validatore appropriato.
 
 
 
-## Output
+{{ else -}}
+Preferisci i comandi già disponibili nell'ambiente:
+
+- JSON: `jq empty file.json`
+- Bash: `bash -n file.sh; shellcheck file.sh; shfmt -d file.sh`.
+- Zsh: `zsh -n script.zsh`.
+- Lua: ` luac -p file.lua && luacheck file.lua` per il controllo sintattico e il lint. Sono disponibili anche `lua` e `luajit`.
+- Ruby: `ruby -c file.rb`; per lo stile usa `rubocop file.rb`.
+- Python: `python -m py_compile file.py`; per lint usa `mise exec -- ruff check file.py`; per il controllo dei tipi usa `mise exec -- mypy file.py`.
+- JavaScript: per script interni dell'agente esegui il file con `bun run file.js`; per formattazione e lint usa `biome ci file.js` senza modificare il file.
+- TypeScript: per script interni dell'agente esegui il file con `bun run file.ts`; per lint e formattazione usa `biome ci file.ts`.
+- TypeScript/TSX/JSX del progetto: usa i validator già previsti dal progetto; in assenza di configurazione specifica usa `tsc --noEmit` e `biome ci`.
+- CSS/SCSS: per il lint usa `stylelint file.css` e `stylelint file.scss`.
+- Nushell: `nu --ide-check 100 file.nu`.
+- Perl: `perl -c file.pl`; per l'analisi statica usa `perlcritic file.pl`; per la formattazione verifica con `perltidy -st file.pl | diff -u file.pl -`.
+- YAML: `yq '.' file.yml >/dev/null && yamllint file.yml && yamlfmt -lint file.yml`.
+- Markdown: per il lint usa `markdownlint-cli2 file.md`.
+- TOML: per il controllo sintattico e il lint usa `taplo lint file.toml`.
+- SQL: usa `sqlfluff lint file.sql` con il dialetto configurato in `.sqlfluff`; in assenza di configurazione specifica `--dialect <dialetto>`.
+- Dockerfile: per il lint usa `hadolint Dockerfile`.
+- XML: per il controllo sintattico usa `xmllint --noout file.xml`.
+- HTML: per il lint usa `htmlhint file.html`.
+- C/C++: `gcc -fsyntax-only file.c` / `g++ -fsyntax-only file.cpp`.
+- Rust: `cargo check` nel progetto, oppure `rustc --emit=metadata file.rs` per un file singolo.
+- Shell formatting: `shfmt -d script.sh` per controllare senza modificare.
+
+{{ end }}## Output
 
 - Rispondi in italiano salvo richiesta diversa. Presenta prima il risultato,
-  conservando fatti richiesti, evidenze, limiti rilevanti e prossimi passi
-  utili.
+  conservando fatti richiesti, evidenze, limiti rilevanti e prossimi passi utili.
 - Distingui fatti verificati e inferenze; cita solo fonti consultate e segnala
   conflitti o evidenze mancanti senza inventare conclusioni.
 - Nei task lunghi aggiorna l'utente ai cambi di fase o quando cambia il piano,
@@ -222,6 +277,7 @@ Prima di considerare completato un file, esegui il validatore appropriato.
 - Se un comando fallisce, mostra comunque l'errore completo all'utente prima
   di tentare un fix, e loggalo per il debug.
 
+{{ if eq .chezmoi.os "windows" -}}
 - Per output tabulare, aggregazione o filtraggio su dati strutturati preferisci
   Nushell (`$HOME/.local/bin/nu -c "..."`) a pipe testuali — vedi la skill `nushell`.
   
@@ -229,7 +285,11 @@ Prima di considerare completato un file, esegui il validatore appropriato.
 
 - I tool file `read`, `edit` e `write` sono eseguiti direttamente da Node.js, non dalla shell MSYS2. Con questi tool usa percorsi relativi al progetto oppure percorsi Windows assoluti con forward slash, per esempio `E:/msys64/home/Sphynx/file.md`.
 
-- Per lo scratch temporaneo usa esclusivamente `$HOME/.pi/agent/tmp`. Crealo con
+{{ else -}}
+- Per output tabulare, aggregazione o filtraggio su dati strutturati preferisci
+  Nushell a pipe testuali — vedi la skill `nushell`.
+  
+{{ end }}- Per lo scratch temporaneo usa esclusivamente `$HOME/.pi/agent/tmp`. Crealo con
   `mkdir -p "$HOME/.pi/agent/tmp"`; se serve una sottocartella univoca usa
   `mktemp -d "$HOME/.pi/agent/tmp/task.XXXXXX"`.
 

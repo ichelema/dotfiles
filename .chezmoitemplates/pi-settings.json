@@ -1,6 +1,5 @@
 {
-  "lastChangelogVersion": "0.87.1",
-  "theme": "nord",
+  "theme": {{ if eq .chezmoi.os "windows" }}"nord"{{ else }}"theme"{{ end }},
   "editorPaddingX": 1,
   "steeringMode": "one-at-a-time",
   "enableInstallTelemetry": false,
@@ -20,7 +19,6 @@
     "openrouter/z-ai/glm-5.3-flash"
   ],
   "defaultThinkingLevel": "medium",
-  "defaultModel": "gpt-6-astra",
   "modelThinkingLevels": {
     "openai-codex/gpt-5.6-sol": "medium",
     "openai-codex/gpt-6-luna": "high",
@@ -47,6 +45,9 @@
   },
   "packages": [
     "git:github.com/pasky/chrome-cdp-skill@v1.1.0",
+{{- if eq .chezmoi.os "linux" }}
+    "npm:pi-codex-tools",
+{{- end }}
     {
       "source": "npm:pi-tool-display",
       "extensions": [
@@ -56,11 +57,13 @@
     "npm:pi-omplike-advisor",
     "npm:@juancrg90/nightfox-themes",
     "npm:@pi-archimedes/image-paste",
-    "npm:@tintinweb/pi-subagents",
     "git:github.com/DietrichGebert/ponytail",
-    "npm:@sting8k/pi-vcc",
+    "npm:@tintinweb/pi-subagents",
     "npm:pi-web-search",
+    "npm:@sting8k/pi-vcc",
+{{- if eq .chezmoi.os "linux" }}
+    "npm:@xynogen/pix-sudo",
+{{- end }}
     "npm:@vanillagreen/pi-tool-renderer"
-  ],
-  "defaultProvider": "openai-codex"
+  ]
 }

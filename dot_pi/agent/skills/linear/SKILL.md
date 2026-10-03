@@ -48,7 +48,7 @@ unavailable.
 3. Smoke check:
 
    ```bash
-   python /home/sphynx/.pi/agent/skills/linear/scripts/linear.py query \
+   python "$HOME"/.pi/agent/skills/linear/scripts/linear.py query \
      'query { viewer { id name email } }'
    ```
 

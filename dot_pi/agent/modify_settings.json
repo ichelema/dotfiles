@@ -1,0 +1,9 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- $new := includeTemplate "pi-settings.json" . | fromJson -}}
+{{- if .chezmoi.stdin -}}
+{{-   $cur := fromJson .chezmoi.stdin -}}
+{{-   range list "lastChangelogVersion" "defaultModel" "defaultProvider" }}{{ if hasKey $cur . }}{{ $_ := set $new . (index $cur .) }}{{ end }}{{ end -}}
+{{-   if deepEqual $cur $new }}{{ .chezmoi.stdin }}{{ else }}{{ toPrettyJson $new }}{{ end -}}
+{{- else -}}
+{{ toPrettyJson $new }}
+{{- end -}}

@@ -19,6 +19,7 @@ Activate when:
 
 ## Environment (this setup)
 
+{{ if eq .chezmoi.os "windows" -}}
 - Binary: `$HOME/.local/bin/nu` — not in the MSYS2 shell `PATH`; always use
   the full path.
 - It is a native Windows binary, not an MSYS2 binary: pass Windows paths such
@@ -28,7 +29,12 @@ Activate when:
 - Do not pipe MSYS2 process output into Nushell because of stdin compatibility
   issues; read files with `open` and Windows paths instead.
 
-### Quick one-liner use cases
+{{ else -}}
+- Binary: `nu` is available in `PATH`; use `nu` directly.
+- This environment is Linux: use POSIX paths such as `/home/user/data.json`.
+- Nushell commands can read files directly with `open`; use standard POSIX paths.
+
+{{ end }}### Quick one-liner use cases
 
 - List files with filters: `nu -c "ls | where size > 1mb | sort-by size"` instead of `ls -la | awk ...`
 - Read and filter JSON/CSV/YAML: `nu -c "open data.json | where status == 'active' | select name email"` instead of `cat data.json | jq ...`
@@ -53,8 +59,14 @@ Nushell is a modern shell that:
 ## Installation
 
 ```bash
-# Linux (Cargo)
+# macOS
+brew install nushell
+
+# Linux (cargo)
 cargo install nu
+
+# Windows
+winget install nushell
 
 # Via mise (recommended for project-level management)
 # Add to mise.toml:

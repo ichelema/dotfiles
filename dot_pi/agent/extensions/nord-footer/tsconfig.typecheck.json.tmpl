@@ -1,0 +1,17 @@
+{{- $nm := printf "%s/.local/share/mise/installs/node/lts/lib/node_modules" .chezmoi.homeDir -}}
+{{- if eq .chezmoi.os "windows" }}{{ $nm = "E:/msys64/home/Sphynx/.local/share/mise/installs/node/24.16.0/node_modules" }}{{ end -}}
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "paths": {
+      "@earendil-works/pi-coding-agent": [
+        "{{ $nm }}/@earendil-works/pi-coding-agent/dist/index.d.ts"
+      ],
+      "@earendil-works/pi-tui": [
+        "{{ $nm }}/@earendil-works/pi-coding-agent/node_modules/@earendil-works/pi-tui/dist/index.d.ts"
+      ]
+    }
+  }
+}
