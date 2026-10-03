@@ -1,6 +1,0 @@
-[tools]
-bun = "latest"
-node = "lts"
-python = "3.13"
-ruby = "4.0.1"
-usage = "latest"

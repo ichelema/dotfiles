@@ -1,0 +1,19 @@
+[tools]
+bun = "latest"
+direnv = "2.37.1"
+gh = "latest"
+node = "lts"
+python = "3.13"
+ruby = "4.0.1"
+usage = "latest"
+{{- if eq .chezmoi.os "linux" }}
+uv = "latest"
+pnpm = "latest"
+ruff = "latest"
+"pipx:pyprland" = "latest"
+"pipx:mypy" = "latest"
+"pipx:terminaltexteffects" = "latest"
+"npm:stylelint" = "latest"
+"npm:htmlhint" = "latest"
+"npm:typescript" = "latest"
+{{- end }}
