@@ -41,7 +41,7 @@ Su una macchina nuova vanno ricreati a mano il blocco `[age]` e, su Windows, `[i
 - La chiave privata `~/.config/chezmoi/key.txt` **non è mai nel repo**: si copia a mano (scp) sulle
   altre macchine. Se si perde, i file cifrati non sono più recuperabili.
 - Finché la chiave manca, `.chezmoiignore.tmpl` salta i file cifrati invece di far fallire l'apply.
-- File cifrati oggi: `dot_litellm/encrypted_master-key.txt.age`.
+- File cifrati oggi: `private_dot_litellm/encrypted_private_master-key.txt.age` (cartella 0700, file 0600, senza fine riga finale).
 
 ## Cosa è gestito
 
@@ -52,7 +52,7 @@ Su una macchina nuova vanno ricreati a mano il blocco `[age]` e, su Windows, `[i
 | Neovim | `.chezmoiexternal.toml` | Repo esterno `ichelema/neovim_config` in `~/.config/nvim` |
 | Claude Code | `dot_claude/`, `.chezmoitemplates/claude-settings.json` | `settings.json` è un modify-template (`dot_claude/modify_settings.json`): il contenuto viene da `.chezmoitemplates/claude-settings.json`, con blocchi per OS (`env`, `model`, comando di `statusLine`). Dal file sul disco conserva solo `model`, `modelSettings` e `fastMode`; ogni altra chiave scritta da Claude a runtime viene tolta al prossimo `apply`, quindi le modifiche da tenere vanno riportate nel template (`re-add` non funziona). Il ramo non-Windows di `env` contiene percorsi della macchina Linux principale (`/Dati/...`). Skill, hook e MCP vengono dal plugin Trinity, non da qui |
 | Pi agent | `dot_pi/agent/` | Solo config. Fuori: `auth.json`, `sessions/`, `npm/`, `git/`, `tmp/`, `node_modules`, `*.bak`. `AGENTS.md.tmpl` ha blocchi per OS (ambiente, validatori, percorsi). `settings.json` è un modify-template (`.chezmoitemplates/pi-settings.json`) che conserva `lastChangelogVersion`, `defaultModel`, `defaultProvider` scritti da Pi a runtime |
-| LiteLLM | `dot_litellm/`, `dot_local/bin/executable_litellm-*` | Config, moduli (`callbacks.py`, `responses_bridge.py`), test, launcher. `master-key.txt` cifrata; `logs/` locale. Dopo `apply` riavviare il proxy. Su Linux `litellm-proxy-run.py`, `litellm-start-proxy.sh` e `litellm-pg-ensure.py` sono ignorati (lì restano le versioni Linux locali) |
+| LiteLLM | `private_dot_litellm/`, `dot_local/bin/executable_litellm-*` | Config, moduli (`callbacks.py`, `responses_bridge.py`), test, launcher. `master-key.txt` cifrata; `logs/` locale. Dopo `apply` riavviare il proxy. Su Linux `litellm-proxy-run.py`, `litellm-start-proxy.sh` e `litellm-pg-ensure.py` sono ignorati (lì restano le versioni Linux locali) |
 | mise | `dot_config/mise/config.toml.tmpl` | Versioni globali dei runtime; base comune + blocco solo Linux |
 | zsh (solo Windows) | `dot_zshenv`, `dot_config/zsh/` (`.zshrc`, `modules/`, `functions/`) | Config MSYS2; su Linux è ignorata e resta quella locale. Plugin (`fast-syntax-highlighting`, `fzf-tab`, `zsh-autosuggestions`) come `git-repo` in `.chezmoiexternal.toml`. Fuori: `.histfile`, `.zcompdump*`, `*.bak*`. `mise.zsh` mette in `PATH` anche `~/.local/bin/lua-language-server/bin` (serve al plugin `lua-lsp`) |
 | Claude Desktop (solo Windows) | `dot_local/bin/executable_claude_code_desktop*.cmd` | Launcher con PATH e env MSYS2. CRLF conservati da `.gitattributes` (`*.cmd -text`): non modificarli con `sed -i` di MSYS2, che toglie i `\r` |
