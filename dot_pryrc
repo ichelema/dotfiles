@@ -1,0 +1,212 @@
+# .pryrc
+# vim:syntax=ruby
+
+puts "Loading #{__FILE__}..."
+
+# Rende caricabile una gemma, installandola se davvero manca.
+#
+# Sotto Bundler il $LOAD_PATH è ristretto alle gemme del Gemfile: `gem <nome>`
+# alza Gem::LoadError e il require fallisce anche quando la gemma è installata,
+# quindi ogni avvio ritentava l'installazione a vuoto. Aggiungo a mano la lib
+# della gemma e delle sue dipendenze, in coda al $LOAD_PATH così le versioni
+# del bundle mantengono la precedenza.
+def ensure_gem(gem_name)
+  warn "Init Plugin: ==> #{gem_name}"
+  return true if add_to_load_path(gem_name)
+
+  warn "Gemma #{gem_name} non presente, procedo con l'installazione..."
+  system("gem", "install", gem_name)
+  Gem.refresh
+  add_to_load_path(gem_name)
+end
+
+# Mette nel $LOAD_PATH la lib della gemma e delle sue dipendenze runtime.
+# Restituisce false se la gemma non è installata.
+def add_to_load_path(gem_name, seen = [])
+  return true if seen.include?(gem_name)
+
+  seen << gem_name
+  path = gem_lib_path(gem_name)
+  return false unless path
+
+  $LOAD_PATH.push(path) unless $LOAD_PATH.include?(path)
+  gem_dependencies(gem_name).each { |dep| add_to_load_path(dep, seen) }
+  true
+end
+
+# Cartella lib della versione più alta della gemma installata, o nil se manca.
+def gem_lib_path(gem_name)
+  Gem.path
+    .flat_map { |root| Dir["#{root}/gems/#{gem_name}-*/lib"] }
+    .max_by { |path| Gem::Version.new(path[%r{-([^-/]+)/lib\z}, 1] || "0") }
+end
+
+# Nomi delle dipendenze runtime, lette dalla gemspec installata.
+def gem_dependencies(gem_name)
+  spec_file = Gem.path.flat_map { |root| Dir["#{root}/specifications/#{gem_name}-*.gemspec"] }.max
+  spec_file ? Gem::Specification.load(spec_file).runtime_dependencies.map(&:name) : []
+rescue StandardError, LoadError
+  []
+end
+
+def show_exception(gem_name)
+  warn "An error of type #{$!.class} happened, message is #{$!.message}"
+  warn "Impossibile usare #{gem_name}, provare installare manualmente:"
+  warn "  gem install #{gem_name}"
+end
+
+def a_array
+  (1..6).to_a
+end
+
+def a_hash
+  {hello: "world", free: "of charge"}
+end
+
+# AMAZING_PRINT (fork mantenuto di awesome_print)
+begin
+  if ensure_gem('amazing_print')
+    warn "  Desc: usato per avere un miglior output con ap"
+    require 'amazing_print'
+    AmazingPrint.pry!  # usa ap come formatter di default per i risultati
+  end
+rescue StandardError, LoadError
+  show_exception('amazing_print')
+end
+
+# LOOKSEE
+begin
+  if ensure_gem('looksee')
+    warn "  Desc: serve per avere la lista dei metodi per un oggetto"
+    warn "     Command: Looksee.help          => mosta introduzione"
+    warn "     Command: [].look               => mosta tutti i metodi"
+    warn "     Command: [].look :noprivate    => mosta tutti i metodi ma non quelli privati"
+    warn "     Command: [].look.edit :to_set  => mi apre vim su quel metodo"
+    require 'looksee'
+    Looksee.editor = "vim +%l %f"
+  end
+rescue StandardError, LoadError
+  show_exception('looksee')
+end
+
+# HIRB
+begin
+  if ensure_gem('hirb')
+    warn "  Desc: mi stampa in formato tabella i miei oggetti tipo array o hash o activerecord"
+    warn "    Command: table mio_hash"
+    require 'hirb'
+    HIRB_LOADED = true
+    extend Hirb::Console
+    Hirb.enable({:width => 200, :height => 500, :formatter => false})
+  end
+rescue StandardError, LoadError
+  show_exception('hirb')
+  HIRB_LOADED = false
+end
+
+# PRY-BYEBUG
+begin
+  if ensure_gem('pry-byebug')
+    warn "  Desc: debugger: step / next / continue / break / up / down"
+    require 'pry-byebug'
+  end
+rescue StandardError, LoadError
+  show_exception('pry-byebug')
+end
+
+# PRY-CLIPBOARD
+begin
+  if ensure_gem('pry-clipboard')
+    warn "  Desc: integrazione con la clipboard"
+    warn "     Command:  copy-history -l              ==> copia history e risultati"
+    warn "     Command:  copy-result                  ==> copia risultati"
+    warn "     Command:  paste                        ==> incolla"
+    warn "     Esempio:  history --tail 10            ==> mostra gli ultimi 10 comandi"
+    warn "     Esempio:  copy-history 9               ==> copia il comando 9"
+    warn "     Esempio:  copy-history --range 1..4    ==> copia un range"
+    require 'pry-clipboard'
+  end
+rescue StandardError, LoadError
+  show_exception('pry-clipboard')
+end
+
+# Pry.config.editor = proc { |file, line| "gvim --servername GVIM --remote-tab-wait-silent +#{line} #{file}" }
+Pry.config.editor = proc { |file, line| "vim +#{line} #{file}" }
+
+# Il pager esterno (less/more) blocca il prompt su WezTerm + ConPTY
+# (stessa race documentata in .irbrc) => output diretto senza pager.
+Pry.config.pager = false
+
+Pry.config.history_file = "#{ENV['HOME']}/.pry_history"
+
+Pry.config.prompt_name = "#{File.basename(Dir.pwd)}"
+Pry.config.prompt = Pry::Prompt.new(
+  "sphynx",
+  "Prompt con contatore input, nome directory e contesto",
+  [
+    proc { |target_self, nest_level, pry|
+      prompt = "[#{pry.input_ring.size}]"
+      prompt += " #{Pry.config.prompt_name}"
+      prompt += "(#{Pry.view_clip(target_self)})"
+      prompt += "#{":#{nest_level}" unless nest_level.zero?}> "
+      prompt
+    },
+    proc { |target_self, nest_level, pry|
+      prompt = "[#{pry.input_ring.size}]"
+      prompt += " #{Pry.config.prompt_name}"
+      prompt += "(#{Pry.view_clip(target_self)})"
+      prompt += "#{":#{nest_level}" unless nest_level.zero?}"
+      prompt = ([' '] * prompt.length).join('')
+      prompt = prompt[0...-(pry.input_ring.size.to_s.length + 2)]
+      prompt += " #{pry.input_ring.size} "
+      prompt += "> "
+      prompt
+    },
+  ]
+)
+
+cmd_aliases = {
+  'continue' => 'c',
+  'step' => 's',
+  'next' => 'n',
+  'whereami' => 'w',
+  'whereami -m' => 'wm',
+  'whereami -c' => 'wc',
+  'copy-history' => 'ch',
+  'copy-result' => 'cr',
+}
+cmd_aliases.each do |_cmd, _alias|
+  Pry.commands.alias_command _alias, _cmd if Pry.commands[_cmd]
+end
+
+# per eseguire 3 righe devo dare "play -l 3"
+# con il codice seguente ora posso dare "pl 3" oppure "pl 3..5"
+Pry::Commands.block_command 'pl', "Alias for 'play -l'" do |lines|
+  run "play -l #{lines}"
+end
+
+Pry.config.color = true
+Pry.config.auto_indent = true
+Pry.config.correct_indent = true
+
+Pry.config.exception_handler = proc do |output, exception, _pry_|
+  if SyntaxError === exception
+    output.puts "SyntaxError: #{exception.message.sub(/.*syntax error, */m, '')}"
+  else
+    output.puts "#{exception.class}: #{exception.message}"
+    output.print "From:\n"
+    output.print exception.backtrace.join("\n")
+    print "\n"
+  end
+end
+
+puts
+puts 'Helpful history:'
+puts 'hist --tail 20        : ultimi 20 comandi'
+puts 'hist --grep <expr>    : comandi che matchano una espressione'
+puts 'hist --replay <n>     : riesegue il comando n'
+puts
+puts 'Samples variables'
+puts 'a_array : [1, 2, 3, 4, 5, 6]'
+puts 'a_hash : { hello: "world", free: "of charge" }'
+puts

@@ -1,0 +1,393 @@
+# ~/.litellm/litellm_config.yaml
+
+model_list:
+  # =========================
+  # GPT-5.6: Sol / Terra / Luna (via ChatGPT Max OAuth)
+  # =========================
+  # Dati verificati il 2026-07-15 interrogando l'abbonamento:
+  #   GET https://chatgpt.com/backend-api/codex/models?client_version=<ver>
+  # Effort REALMENTE ammessi (campo supported_reasoning_levels):
+  #   sol   : low, medium, high, xhigh, max
+  #   terra : low, medium, high, xhigh, max
+  #   luna  : low, medium, high, xhigh, max
+  # NB 'minimal' e 'none' NON sono supportati da questi modelli; gpt-5.5 arriva
+
+  # Flagship — lavoro pesante (default del modello: low)
+  - model_name: claude-gpt-5-6-sol-high
+    model_info:
+      mode: responses
+      max_input_tokens: 794000
+      max_output_tokens: 128000
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0
+    litellm_params:
+      model: chatgpt/gpt-5.6-sol
+      reasoning_effort:
+        effort: high
+
+  - model_name: claude-gpt-5-6-sol-xhigh
+    model_info:
+      mode: responses
+      max_input_tokens: 794000
+      max_output_tokens: 128000
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0
+    litellm_params:
+      model: chatgpt/gpt-5.6-sol
+      reasoning_effort:
+        effort: xhigh
+
+  # dict obbligatorio: 'max' come stringa verrebbe scartato
+  - model_name: claude-gpt-5-6-sol-max
+    model_info:
+      mode: responses
+      max_input_tokens: 794000
+      max_output_tokens: 128000
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0
+    litellm_params:
+      model: chatgpt/gpt-5.6-sol
+      reasoning_effort:
+        effort: max
+
+  - model_name: claude-gpt-6-luna-low
+    model_info:
+      mode: responses
+      max_input_tokens: 272000
+      max_output_tokens: 128000
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0
+    litellm_params:
+      model: chatgpt/gpt-6-luna
+      reasoning_effort:
+        effort: low
+
+  - model_name: claude-gpt-6-luna-medium
+    model_info:
+      mode: responses
+      max_input_tokens: 272000
+      max_output_tokens: 128000
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0
+    litellm_params:
+      model: chatgpt/gpt-6-luna
+      reasoning_effort:
+        effort: medium
+
+  - model_name: claude-gpt-6-luna-high
+    model_info:
+      mode: responses
+      max_input_tokens: 272000
+      max_output_tokens: 128000
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0
+    litellm_params:
+      model: chatgpt/gpt-6-luna
+      reasoning_effort:
+        effort: high
+
+  - model_name: claude-gpt-6-luna-xhigh
+    model_info:
+      mode: responses
+      max_input_tokens: 272000
+      max_output_tokens: 128000
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0
+    litellm_params:
+      model: chatgpt/gpt-6-luna
+      reasoning_effort:
+        effort: xhigh
+
+  - model_name: claude-gpt-6-luna-max
+    model_info:
+      mode: responses
+      max_input_tokens: 272000
+      max_output_tokens: 128000
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0
+    litellm_params:
+      model: chatgpt/gpt-6-luna
+      reasoning_effort:
+        effort: max
+
+  # =========================
+  # GPT-6 Astra (via ChatGPT Max OAuth)
+  # =========================
+  # Dati verificati il 2026-09-26 su:
+  #   GET https://chatgpt.com/backend-api/codex/models?client_version=1.94.0
+  #   slug gpt-6-astra, context_window 272000 (max_context_window 872000),
+  #   default_reasoning_level medium, input_modalities text+image.
+  # Effort ammessi (supported_reasoning_levels): low, medium, high, xhigh,
+  # max, ultra (ultra = massimo reasoning con delega automatica dei task).
+
+  - model_name: claude-gpt-6-astra-low
+    model_info:
+      mode: responses
+      max_input_tokens: 272000
+      max_output_tokens: 128000
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0
+    litellm_params:
+      model: chatgpt/gpt-6-astra
+      reasoning_effort:
+        effort: low
+
+  - model_name: claude-gpt-6-astra-medium
+    model_info:
+      mode: responses
+      max_input_tokens: 272000
+      max_output_tokens: 128000
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0
+    litellm_params:
+      model: chatgpt/gpt-6-astra
+      reasoning_effort:
+        effort: medium
+
+  - model_name: claude-gpt-6-astra-high
+    model_info:
+      mode: responses
+      max_input_tokens: 272000
+      max_output_tokens: 128000
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0
+    litellm_params:
+      model: chatgpt/gpt-6-astra
+      reasoning_effort:
+        effort: high
+
+  - model_name: claude-gpt-6-astra-xhigh
+    model_info:
+      mode: responses
+      max_input_tokens: 272000
+      max_output_tokens: 128000
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0
+    litellm_params:
+      model: chatgpt/gpt-6-astra
+      reasoning_effort:
+        effort: xhigh
+
+  - model_name: claude-gpt-6-astra-max
+    model_info:
+      mode: responses
+      max_input_tokens: 272000
+      max_output_tokens: 128000
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0
+    litellm_params:
+      model: chatgpt/gpt-6-astra
+      reasoning_effort:
+        effort: max
+
+  - model_name: claude-gpt-6-astra-ultra
+    model_info:
+      mode: responses
+      max_input_tokens: 272000
+      max_output_tokens: 128000
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0
+    litellm_params:
+      model: chatgpt/gpt-6-astra
+      reasoning_effort:
+        effort: ultra
+
+  # =========================
+  # Kimi K3 via OpenRouter
+  # =========================
+  # Reasoning sempre attivo; effort: low | high | max (default max)
+  # Sampling fisso (temperature/top_p non modificabili)
+  # Costo: $3/MTok input, $15/MTok output, $0.30/MTok cache read
+  # Prezzi verificati il 2026-07-29 su GET https://openrouter.ai/api/v1/models:
+  # prompt 3e-6, completion 15e-6, input_cache_read 3e-7. Il campo
+  # input_cache_write non esiste -> la scrittura in cache non e' addebitata,
+  # quindi cache_creation_input_token_cost: 0 e' il valore reale.
+  
+  - model_name: claude-kimi-k3-low
+    model_info:
+      max_input_tokens: 1000000
+      max_output_tokens: 262144
+      input_cost_per_token: 0.000003
+      output_cost_per_token: 0.000015
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0.0000003
+    litellm_params:
+      model: openrouter/moonshotai/kimi-k3
+      api_key: os.environ/OPENROUTER_API_KEY
+      reasoning_effort: low
+      extra_body:
+        reasoning:
+            exclude: false
+
+  - model_name: claude-kimi-k3-high
+    model_info:
+      max_input_tokens: 1000000
+      max_output_tokens: 262144
+      input_cost_per_token: 0.000003
+      output_cost_per_token: 0.000015
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0.0000003
+    litellm_params:
+      model: openrouter/moonshotai/kimi-k3
+      api_key: os.environ/OPENROUTER_API_KEY
+      reasoning_effort: high
+      extra_body:
+        reasoning:
+            exclude: false
+
+  - model_name: claude-kimi-k3-max
+    model_info:
+      max_input_tokens: 1000000
+      max_output_tokens: 262144
+      input_cost_per_token: 0.000003
+      output_cost_per_token: 0.000015
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0.0000003
+    litellm_params:
+      model: openrouter/moonshotai/kimi-k3
+      api_key: os.environ/OPENROUTER_API_KEY
+      extra_body:
+        reasoning:
+            exclude: false
+
+
+
+  # =========================
+  # DeepSeek via DeepSeek API
+  # =========================
+  # Unico modello unificato: deepseek-flash (V4.1 Flash). Il reasoning e'
+  # sempre attivo (reasoning_content presente anche senza parametro
+  # `thinking`), quindi non servono alias separati per il thinking.
+  # Prezzi peak per MTok (off-peak = meta'): input 0.30, output 1.20,
+  # cache hit 0.006. Cache write non addebitata -> 0.
+  # Verificato il 2026-09-24 su GET https://api.deepseek.com/models.
+
+  - model_name: claude-deepseek-flash
+    model_info:
+      supports_vision: true
+      max_input_tokens: 1000000
+      max_output_tokens: 384000
+      input_cost_per_token: 0.0000003
+      output_cost_per_token: 0.0000012
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0.000000006
+    litellm_params:
+      model: deepseek/deepseek-flash
+      api_key: os.environ/DEEPSEEK_API_KEY
+
+  # =========================
+  # Anthropic via Claude Max OAuth
+  # =========================
+
+  - model_name: claude-opus
+    model_info:
+      supports_vision: true
+      max_input_tokens: 1000000
+      max_output_tokens: 128000
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0
+    litellm_params:
+      model: anthropic/claude-opus-5-5
+      reasoning_effort: high
+      
+      
+  - model_name: claude-opus-4-6
+    model_info:
+      supports_vision: true
+      max_input_tokens: 1000000
+      max_output_tokens: 128000
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0
+    litellm_params:
+      model: anthropic/claude-opus-4-6
+      reasoning_effort: high
+
+  - model_name: "claude-sonnet"
+    model_info:
+      supports_vision: true
+      max_input_tokens: 1000000
+      max_output_tokens:  128000
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0
+    litellm_params:
+      model: anthropic/claude-sonnet-5-5
+      reasoning_effort: high
+      
+  - model_name: claude-haiku
+    model_info:
+      supports_vision: true
+      max_input_tokens: 200000
+      max_output_tokens: 8192
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0
+    litellm_params:
+      model: anthropic/claude-haiku-4-5-20251001
+
+  - model_name: claude-fable
+    model_info:
+      supports_vision: true
+      max_input_tokens: 1000000
+      max_output_tokens: 128000
+      input_cost_per_token: 0
+      output_cost_per_token: 0
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0
+    litellm_params:
+      model: anthropic/claude-fable-5-1
+      reasoning_effort: xhigh
+
+general_settings:
+  master_key: os.environ/LITELLM_MASTER_KEY
+  database_url: os.environ/DATABASE_URL
+  forward_client_headers_to_llm_api: true  # Required: forwards OAuth token to Anthropic
+
+
+litellm_settings:
+  callbacks: callbacks.proxy_handler_instance
+  drop_params: true
+  # 300s per allinearsi ad API_TIMEOUT_MS di Claude Code (era 60): sol-ultra e'
+  # multi-agente e sui compiti complessi sfora il minuto. Misurato il 2026-07-15
+  # sulle chiamate reali: media 13.9s ma massimo 71.6s, con 2 chiamate oltre 45s.
+  request_timeout: 300
+  model_group_settings:
+    forward_client_headers_to_llm_api:
+      - "claude-sonnet*"
+      - "claude-opus*"
+      - "claude-haiku*"
+      - "claude-fable*"

@@ -1,0 +1,16 @@
+local dir
+
+dir="$(
+  fd --type d \
+    --hidden \
+    --exclude .git \
+    --exclude .cache \
+    --exclude node_modules \
+    --exclude dist \
+    --exclude build |
+  fzf --height=80% --reverse
+)"
+
+[[ -z "$dir" ]] && return
+
+cd "$dir" || return

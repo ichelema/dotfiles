@@ -1,0 +1,28 @@
+local selected
+
+selected="$(
+  fc -rl 1 |
+  awk '
+    {
+      cmd=$0
+      sub(/^[ \t]*[0-9]+\**[ \t]+/, "", cmd)
+      if (!seen[cmd]++) print $0
+    }
+  ' |
+  fzf \
+    --height=80% \
+    --reverse \
+    --scheme=history \
+    --no-sort \
+    --query="$LBUFFER" \
+    --bind=ctrl-r:toggle-sort \
+    --prompt="history> "
+)"
+
+if [[ -n "$selected" ]]; then
+  BUFFER="${selected#*[0-9] }"
+  BUFFER="$(printf '%s' "$BUFFER" | sed -E 's/^[[:space:]]*[0-9]+\*?[[:space:]]+//')"
+  CURSOR=${#BUFFER}
+fi
+
+zle reset-prompt

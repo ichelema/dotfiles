@@ -1,0 +1,16 @@
+emulate -L zsh
+
+# Lancia il Vim NATIVO Windows ripulendo HOME/PWD/SHELL (var MSYS) cosi' che usi
+# la sua config Windows (C:\Users\en27553\vimfiles) invece di ereditare
+# HOME MSYS (E:\msys64\home\Sphynx). -u SHELL fa usare cmd.exe (default)
+# invece di bash/zsh: fzf.vim richiede cmd.exe per convertire i path.
+# --not-a-term: sopprime "Vim: Warning: Output is not to a terminal" e i 2s
+# di attesa all'avvio quando vim.exe nativo gira da terminale MSYS2.
+local vim_win="/c/Appl/Vim/vim.exe"
+
+env \
+  -u HOME \
+  -u PWD \
+  -u OLDPWD \
+  -u SHELL \
+  "$vim_win" --not-a-term "$@"

@@ -1,0 +1,45 @@
+# ~/.config/zsh/.zshrc
+
+# Normalizza il percorso Windows ereditato da ZDOTDIR prima di caricare i moduli.
+# I plugin zsh si aspettano percorsi assoluti POSIX/MSYS2.
+if [[ "$ZDOTDIR" == [A-Za-z]:* ]]; then
+  export ZDOTDIR="$(cygpath -u "$ZDOTDIR")"
+fi
+
+# --- Base paths ---
+export ZSH_CONFIG="${ZDOTDIR:-$HOME/.config/zsh}"
+export ZSH_MODULES="$ZSH_CONFIG/modules"
+export ZSH_FUNCTIONS="$ZSH_CONFIG/functions"
+
+# --- Custom autoload functions ---
+fpath=("$ZSH_FUNCTIONS" $fpath)
+autoload -Uz copydir copyfile man fcd fv fcp fsvg open nvim vim fzf_history_widget
+
+# --- Module loader ---
+for _zsh_module in \
+  env \
+  compinit \
+  plugins \
+  prompt \
+  fzf \
+  fzf-tab \
+  aliases \
+  zoxide \
+  keybinds \
+  msys-path-paste \
+  mise \
+  path-overrides \
+  chezmoi
+do
+  [[ -r "$ZSH_MODULES/${_zsh_module}.zsh" ]] &&
+    source "$ZSH_MODULES/${_zsh_module}.zsh"
+done
+
+unset _zsh_module
+
+# Con ZSH_AUTOSUGGEST_MANUAL_REBIND=1 il rebind automatico e' off.
+# Lo invochiamo una volta sola in startup per coprire i widget definiti
+# dopo plugins.zsh (es. fzf_history_widget in keybinds.zsh).
+if (( $+functions[_zsh_autosuggest_bind_widgets] )); then
+  _zsh_autosuggest_bind_widgets
+fi

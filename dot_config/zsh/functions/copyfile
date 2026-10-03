@@ -1,0 +1,12 @@
+if [[ $# -eq 0 ]]; then
+  echo "Usage: copyfile <file>"
+  return 1
+fi
+
+if [[ ! -f "$1" ]]; then
+  echo "Error: file '$1' not found"
+  return 1
+fi
+
+cat "$1" | /c/Windows/System32/clip.exe
+echo "Copied '$1' to clipboard."

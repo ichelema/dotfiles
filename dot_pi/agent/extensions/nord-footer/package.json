@@ -1,0 +1,17 @@
+{
+  "name": "nord-footer",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Global PI extension: Nord-themed reactive footer (model | effort | git | context | cache | quota/cost)",
+  "dependencies": {
+    "@earendil-works/pi-tui": "^0.84.4"
+  },
+  "scripts": {
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.0",
+    "typescript": "^7.0.2"
+  }
+}

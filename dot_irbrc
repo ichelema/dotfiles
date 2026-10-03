@@ -1,0 +1,132 @@
+# .irbrc
+# vim:syntax=ruby
+
+puts "Loading #{__FILE__}..."
+
+def ensure_gem(gem_name)
+  warn "Init Plugin: ==> #{gem_name}"
+  begin
+    gem gem_name
+  rescue Gem::LoadError
+    warn "Gemma #{gem_name} non presente, procedo con l'installazione..."
+    system("gem", "install", gem_name)
+    Gem.refresh
+  end
+end
+
+def show_exception(gem_name)
+  warn "An error of type #{$!.class} happened, message is #{$!.message}"
+  warn "Impossibile usare #{gem_name}, provare installare manualmente:"
+  warn "  gem install #{gem_name}"
+end
+
+# INTERACTIVE_EDITOR
+# IRB ha il comando built-in `edit`, ma interactive_editor
+# permette di aprire vim con un temp file e fare eval al salvataggio.
+# Se non usi piu' questo pattern, puoi rimuovere questo blocco.
+begin
+  if ensure_gem('interactive_editor')
+    warn "  Desc: usato per interagire con vim"
+    require 'interactive_editor'
+  end
+rescue StandardError
+  show_exception('interactive_editor')
+end
+
+# AMAZING_PRINT (fork mantenuto di awesome_print)
+begin
+  if ensure_gem('amazing_print')
+    warn "  Desc: usato per avere un miglior output con ap"
+    require 'amazing_print'
+
+    AmazingPrint.irb!
+  end
+rescue StandardError
+  show_exception('amazing_print')
+end
+
+# LOOKSEE
+begin
+  if ensure_gem('looksee')
+    warn "  Desc: serve per avere la lista dei metodi per un oggetto"
+    warn "     Command: Looksee.help          => mosta introduzione"
+    warn "     Command: [].look               => mosta tutti i metodi"
+    warn "     Command: [].look :noprivate    => mosta tutti i metodi ma non quelli privati"
+    warn "     Command: [].look.edit :to_set  => mi apre gvim su quel metodo"
+    require 'looksee'
+    Looksee.editor = "vim +%l %f"
+  end
+rescue Exception
+   show_exceptio('looksee')
+end
+
+# HIRB
+begin
+  if ensure_gem('hirb')
+    warn "  Desc: mi stampa in formato tabella i miei oggetti tipo array o hash o activerecord"
+    warn "    Command: table mio_hash"
+    require 'hirb'
+    HIRB_LOADED = true
+    extend Hirb::Console
+    Hirb.enable({:width => 200, :height => 500, :formatter=> false})
+  end
+rescue Exception
+   show_exceptio('hirb')
+   HIRB_LOADED = false
+end
+
+# Colori del dialog di completamento
+Reline::Face.config :completion_dialog do |config|
+  config.define :default, foreground: :white, background: :black
+  config.define :enhanced, foreground: :black, background: :green
+  config.define :scrollbar, foreground: :bright_white, background: :black
+end
+
+IRB.conf[:AUTO_INDENT]  = true
+IRB.conf[:PROMPT_MODE]  = :SIMPLE
+IRB.conf[:SAVE_HISTORY] = 200
+IRB.conf[:EVAL_HISTORY] = 1_000
+IRB.conf[:HISTORY_FILE] = "#{Dir.home}/.cache/irb/history.log"
+IRB.conf[:ECHO]         = false
+IRB.conf[:COMPLETOR] 	= :type
+IRB.conf[:USE_AUTOCOMPLETE] = true
+IRB.conf[:USE_PAGER] = false
+
+IRB.conf[:COMMAND_ALIASES]
+   .merge! b: :backtrace,
+           c: :continue,
+           e: :edit,
+           h: :show_cmds,
+           i: :info,
+           l: :ls,
+           n: :next,
+           m: :measure,
+           s: :step,
+           w: :whereami
+
+# show_doc (RDoc::RI::Driver) tenta sempre un pager esterno, a differenza del
+# pager di IRB. Su questo setup (WezTerm + MSYS pty) qualunque sottoprocessο
+# che scrive molto output subito prima che Reline riprenda l'input causa un
+# blocco del prompt (race fra il drain asincrono di ConPTY e la query di
+# stato del terminale di Reline) — confermato con less, bat, less nativo e
+# persino cat con output lungo. Forziamo l'output diretto su $stdout.
+require 'rdoc/ri/driver'
+class RDoc::RI::Driver
+  def setup_pager
+    @use_stdout = true
+    nil
+  end
+end
+
+# load .irbrc_rails in rails environments
+railsrc_path = (File.expand_path("#{ENV['HOME']}/.irbrc_rails"))
+
+if (Kernel.const_defined?("Rails") && File.exist?( railsrc_path ))
+   begin
+      load railsrc_path
+   rescue Exception
+      warn "Could not load: #{ railsrc_path } because of #{$!.message}"
+   end
+end
+
+

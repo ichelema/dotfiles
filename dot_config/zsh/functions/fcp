@@ -1,0 +1,27 @@
+local file root_path msys_path quoted_path
+
+file="$(
+  fd . . \
+    --type f \
+    --hidden \
+    --exclude .git \
+    --exclude .cache \
+    --exclude node_modules \
+    --exclude dist \
+    --exclude build \
+    --exclude .venv \
+    --exclude __pycache__ \
+    --exclude .next \
+    --exclude .turbo |
+  fzf --height=80% --reverse
+)"
+
+[[ -z "$file" ]] && return
+
+root_path="$(pwd -W)"
+msys_path="$(cygpath -u "$root_path/$file")"
+
+quoted_path="'${msys_path//\'/\'\\\'\'}'"
+
+printf '%s' "$quoted_path" | /c/Windows/System32/clip.exe
+printf 'copied: %s\n' "$quoted_path"

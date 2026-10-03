@@ -10,11 +10,31 @@
 !.config/vim/files/undo/.keep
 .config/vim/files/view/**
 !.config/vim/files/view/.keep
-support_files/
-support_files/**
-.claude/
-.claude/**
 CLAUDE.md
-{{ if eq .chezmoi.os "windows" -}}
-.config/vim/**
+.pi/agent/extensions/nord-footer/node_modules
+.pi/agent/extensions/nord-footer/node_modules/**
+.pi/agent/**/*.bak
+# mod replay: tipi rigenerati da Claude Code a ogni caricamento
+.claude/skills/replay/.claude-plugin/types
+.claude/skills/replay/.claude-plugin/types/**
+# zsh: stato locale e backup
+.config/zsh/.histfile
+.config/zsh/.zcompdump*
+.config/zsh/**/*.bak*
+{{- if ne .chezmoi.os "windows" }}
+# Versioni Windows-specifiche: su Linux restano quelle locali (README Trinity §13.1)
+.local/bin/litellm-proxy-run.py
+.local/bin/litellm-start-proxy.sh
+.local/bin/litellm-pg-ensure.py
+# Launcher di Claude Code Desktop: solo Windows
+.local/bin/claude_code_desktop.cmd
+.local/bin/claude_code_desktop_zsh.cmd
+# Config zsh MSYS2: su Linux resta quella locale
+.zshenv
+.config/zsh
+.config/zsh/**
+{{- end }}
+{{- if not (stat (joinPath .chezmoi.homeDir ".config/chezmoi/key.txt")) }}
+# segreti cifrati age: saltati finche' la chiave non e' copiata su questa macchina
+.litellm/master-key.txt
 {{- end }}

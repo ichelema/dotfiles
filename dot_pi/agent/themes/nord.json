@@ -1,0 +1,119 @@
+{
+  "$schema": "https://raw.githubusercontent.com/earendil-works/pi/main/packages/coding-agent/src/modes/interactive/theme/theme-schema.json",
+  "name": "nord",
+
+  "vars": {
+    "bg0": "#0F1826",
+    "bg1": "#192330",
+    "bg2": "#1D304A",
+    "bg3": "#29394f",
+    "bg4": "#39506d",
+    "fg0": "#d6d6d7",
+    "fg1": "#cdcecf",
+    "fg2": "#aeafb0",
+    "fg3": "#71839b",
+    "fg4": "#5B6B81",
+    "sel0": "#2b3b51",
+    "sel1": "#284762",
+    "comment": "#738091",
+    "red": "#c94f6d",
+    "green": "#81b29a",
+    "yellow": "#dbc074",
+    "blue": "#5D8AB6",
+    "magenta": "#9d79d6",
+    "cyan": "#63cdcf",
+    "white": "#dfdfe0",
+    "orange": "#f4a261",
+    "pink": "#d67ad2",
+    "bracket": "#aeafb0",
+    "keyword": "#9d79d6",
+    "func": "#86abdc",
+    "variable": "#dfdfe0",
+    "string": "#81b29a",
+    "number": "#f4a261",
+    "type": "#dbc074",
+    "operator": "#aeafb0",
+    "successBg": "#2e4045",
+    "errorBg": "#260E14",
+    "infoBg": "#2b3b51",
+    "warningUi": "#dbc074"
+  },
+
+  "colors": {
+    "accent": "blue",
+
+    "border": "bg4",
+    "borderAccent": "cyan",
+    "borderMuted": "bg3",
+
+    "success": "green",
+    "error": "red",
+    "warning": "warningUi",
+
+    "muted": "comment",
+    "dim": "fg3",
+
+    "text": "fg1",
+    "thinkingText": "comment",
+
+    "selectedBg": "sel0",
+
+    "searchMatchBg": "yellow",
+    "searchMatchText": "bg0",
+
+    "userMessageBg": "bg2",
+    "userMessageText": "fg3",
+
+    "customMessageBg": "bg3",
+    "customMessageText": "fg1",
+    "customMessageLabel": "pink",
+
+    "toolPendingBg": "bg0",
+    "toolSuccessBg": "bg0",
+    "toolErrorBg": "errorBg",
+
+    "toolTitle": "fg3",
+    "toolOutput": "fg4",
+
+    "mdHeading": "blue",
+    "mdLink": "cyan",
+    "mdLinkUrl": "comment",
+    "mdCode": "orange",
+    "mdCodeBlock": "string",
+    "mdCodeBlockBorder": "bg4",
+    "mdQuote": "comment",
+    "mdQuoteBorder": "bg4",
+    "mdHr": "bg4",
+    "mdListBullet": "magenta",
+
+    "toolDiffAdded": "green",
+    "toolDiffRemoved": "red",
+    "toolDiffContext": "comment",
+
+    "syntaxComment": "comment",
+    "syntaxKeyword": "keyword",
+    "syntaxKeyword": "keyword",
+    "syntaxFunction": "func",
+    "syntaxVariable": "variable",
+    "syntaxString": "string",
+    "syntaxNumber": "number",
+    "syntaxType": "type",
+    "syntaxOperator": "operator",
+    "syntaxPunctuation": "bracket",
+
+    "thinkingOff": "bg4",
+    "thinkingMinimal": "bg4",
+    "thinkingLow": "yellow",
+    "thinkingMedium": "fg3",
+    "thinkingHigh": "sel1",
+    "thinkingXhigh": "orange",
+    "thinkingMax": "red",
+
+    "bashMode": "green"
+  },
+  "export": {
+    "pageBg": "#131a24",
+    "cardBg": "#192330",
+    "infoBg": "#2b3b51"
+  }
+}

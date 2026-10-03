@@ -1,0 +1,38 @@
+emulate -L zsh
+
+local target winpath doublecmd
+
+target="${1:-.}"
+
+# Percorso di Double Commander: modifica se diverso
+doublecmd="/c/Appl/doublecmd/doublecmd.exe"
+
+# URL: usa l'app predefinita di Windows
+if [[ "$target" == http://* || "$target" == https://* || "$target" == mailto:* ]]; then
+  powershell.exe -NoProfile -Command 'Start-Process -FilePath $args[0]' "$target" >/dev/null 2>&1 &
+  return
+fi
+
+# Controllo esistenza per file/cartelle locali
+if [[ ! -e "$target" ]]; then
+  print -u2 "open: non esiste: $target"
+  return 1
+fi
+
+# Converte path MSYS: /c/prova -> C:\prova
+winpath="$(cygpath -aw -- "$target")" || return 1
+
+# Directory: apri con Double Commander
+if [[ -d "$target" ]]; then
+  if [[ -x "$doublecmd" ]]; then
+    "$doublecmd" -C -T "$winpath" >/dev/null 2>&1 &
+  else
+    print -u2 "open: Double Commander non trovato: $doublecmd"
+    print -u2 "open: fallback su Explorer"
+    explorer.exe "$winpath" >/dev/null 2>&1 &
+  fi
+  return
+fi
+
+# File: apri con app predefinita Windows
+pwsh.exe -NoProfile -Command 'Start-Process -LiteralPath $args[0]' "$winpath" >/dev/null 2>&1 &

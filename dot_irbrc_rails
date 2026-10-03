@@ -1,0 +1,23 @@
+# vim:syntax=ruby
+
+if HIRB_LOADED
+   Hirb::Formatter.dynamic_config['ActiveRecord::Base']
+   Hirb.enable(width: 200, height: 500)
+else
+   puts "hirb is not loaded"
+end
+
+
+# Prompt con nome app Rails
+rails_root = File.basename(Dir.pwd)
+IRB.conf[:PROMPT] ||= {}
+IRB.conf[:PROMPT][:RAILS] = {
+   :PROMPT_I => "#{rails_root}> ", # normal prompt
+   :PROMPT_S => "#{rails_root}* ", # prompt when continuing a string
+   :PROMPT_C => "#{rails_root}? ", # prompt when continuing a statement
+   :RETURN   => "=> %s\n"          # prefixes output
+}
+IRB.conf[:PROMPT_MODE] = :RAILS
+
+# Decommentare per SQL logging in console:
+ActiveRecord::Base.logger = Logger.new(STDOUT)

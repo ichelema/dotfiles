@@ -1,0 +1,2 @@
+# Launcher Windows: i CRLF vanno conservati byte per byte
+*.cmd -text
