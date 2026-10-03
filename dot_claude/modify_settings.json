@@ -1,0 +1,9 @@
+{{- /* chezmoi:modify-template */ -}}
+{{- $new := includeTemplate "claude-settings.json" . | fromJson -}}
+{{- if .chezmoi.stdin -}}
+{{-   $cur := fromJson .chezmoi.stdin -}}
+{{-   range list "model" "modelSettings" "fastMode" }}{{ if hasKey $cur . }}{{ $_ := set $new . (index $cur .) }}{{ end }}{{ end -}}
+{{-   if deepEqual $cur $new }}{{ .chezmoi.stdin }}{{ else }}{{ toPrettyJson $new }}{{ end -}}
+{{- else -}}
+{{ toPrettyJson $new }}
+{{- end -}}
