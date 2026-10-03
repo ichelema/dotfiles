@@ -3,6 +3,9 @@ import type { EngineInterface, Register } from 'claude-code'
 
 const DOT = '•'
 const SUDO = /(^|[\s;&|(`])sudo\s/
+// Senza -A sudo usa l'askpass solo se DISPLAY è impostata (non lo è su una
+// macchina senza schermo): la mod lo aggiunge dove manca.
+const SUDO_WITHOUT_A = /(^|[\s;&|(`])sudo(?=\s)(?!\s+-A\b)/g
 // Il comando sudo in attesa di password, come lo mostra la fascia.
 const ask = atom({ plugin: 'sudo-popup', key: 'ask' } as const, null)
 
@@ -59,7 +62,10 @@ export const register: Register = on => {
         return { deny: 'sudo-popup: comando sudo annullato dall’utente.' }
       }
 
-      return await next(e)
+      return await next({
+        ...e,
+        command: e.command.replace(SUDO_WITHOUT_A, '$1sudo -A'),
+      })
     } finally {
       isAsking = false
       password = ''

@@ -54,7 +54,7 @@ test('la password scritta nel prompt è mascherata e arriva a sudo', async ($, o
   const type = (e: ReturnType<typeof edit>) =>
     ($.prompt as unknown as { edit: (e: unknown) => Promise<{ text: string }> }).edit(e)
 
-  const call = $.tool.call({ tool: 'Bash', command: 'sudo -A pacman -Syu' })
+  const call = $.tool.call({ tool: 'Bash', command: 'sudo pacman -Syu && sudo -A true' })
   await started
 
   const ui = await $.ui.mount({
@@ -74,7 +74,7 @@ test('la password scritta nel prompt è mascherata e arriva a sudo', async ($, o
   expect(sent.drop).toBeDefined()
   await call
   expect(saved).toBe('As3\n')
-  expect(ran).toBe('sudo -A pacman -Syu')
+  expect(ran).toBe('sudo -A pacman -Syu && sudo -A true')
 
   expect((await type(edit('', 0, 0, 'ciao'))).text).toBe('ciao')
 })
