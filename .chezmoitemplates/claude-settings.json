@@ -115,12 +115,10 @@
   "disableRemoteControl": true,
   "disableWorkflows": true,
   "enableArtifact": false,
-{{- if eq .chezmoi.os "windows" }}
   "statusLine": {
     "type": "command",
-    "command": "/e/msys64/home/sphynx/.claude/statusline.sh"
+    "command": {{ if eq .chezmoi.os "windows" }}"/e/msys64/home/sphynx/.claude/statusline.sh"{{ else }}"~/.claude/statusline.sh"{{ end }}
   },
-{{- end }}
   "enabledPlugins": {
     "pyright-lsp@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true,

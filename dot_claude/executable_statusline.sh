@@ -3,6 +3,10 @@
 # Single line: Model | tokens | %used | %remain | think | 5h bar @reset | 7d bar @reset | extra
 
 set -f # disable globbing
+# Force C locale for numeric formatting: on locales that use comma as the decimal
+# separator (e.g. it_IT), bash `printf "%.0f"` rejects dot-decimal values like "42.5".
+# LC_NUMERIC only affects number parsing/formatting, not UTF-8 output (the … glyph).
+export LC_NUMERIC=C
 VERSION="1.4.4"
 
 input=$(cat)
