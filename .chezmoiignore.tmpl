@@ -17,6 +17,9 @@ CLAUDE.md
 # mod replay: tipi rigenerati da Claude Code a ogni caricamento
 .claude/skills/replay/.claude-plugin/types
 .claude/skills/replay/.claude-plugin/types/**
+# mod sudo-popup: tipi rigenerati da Claude Code a ogni caricamento
+.claude/skills/sudo-popup/.claude-plugin/types
+.claude/skills/sudo-popup/.claude-plugin/types/**
 # zsh: stato locale e backup
 .config/zsh/.histfile
 .config/zsh/.zcompdump*
@@ -33,6 +36,12 @@ CLAUDE.md
 .zshenv
 .config/zsh
 .config/zsh/**
+{{- end }}
+{{- if ne .chezmoi.os "linux" }}
+# mod sudo-popup e il suo askpass: solo Linux
+.claude/skills/sudo-popup
+.claude/skills/sudo-popup/**
+.local/bin/sudo-askpass.sh
 {{- end }}
 {{- if not (stat (joinPath .chezmoi.homeDir ".config/chezmoi/key.txt")) }}
 # segreti cifrati age: saltati finche' la chiave non e' copiata su questa macchina

@@ -1,0 +1,6 @@
+{
+  "name": "sudo-popup",
+  "version": "0.1.0",
+  "description": "Popup che mostra il comando sudo e chiede la password (mascherata) prima di eseguirlo",
+  "types": "./types/index.d.ts"
+}
