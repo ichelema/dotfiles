@@ -145,6 +145,7 @@ eval "$(echo "$input" | jq -r '
   "transcript_path=" + ((.transcript_path // "") | @sh),
   "session_id=" + ((.session_id // "") | @sh),
   "stdin_effort=" + ((.effort.level // "") | @sh),
+  "fast_mode=" + ((.fast_mode // false) | tostring),
   "builtin_five_hour_pct=" + ((.rate_limits.five_hour.used_percentage // "") | tostring),
   "builtin_five_hour_reset=" + ((.rate_limits.five_hour.resets_at // "") | tostring),
   "builtin_seven_day_pct=" + ((.rate_limits.seven_day.used_percentage // "") | tostring),
@@ -235,6 +236,7 @@ if [ -f "$ponytail_flag" ]; then
     fi
 fi
 out+="${blue}${model_name}${reset}"
+[ "$fast_mode" = "true" ] && out+=" ${yellow}⚡${reset}"
 
 # Current working directory (cwd already extracted in main jq eval above)
 cwd="${cwd//\\/\/}" # Normalize Windows backslashes to forward slashes (bash built-in, no subprocess)
