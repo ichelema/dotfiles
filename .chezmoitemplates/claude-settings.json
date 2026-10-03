@@ -33,7 +33,7 @@
     "MCP_EXCALIDRAW_DIR": "/home/ichelema/.local/opt/mcp_excalidraw",
     "MCP_DEBUGGER_DIR": "/Dati/AI/tools/mcp-debugger",
     "MCP_NEOVIM_DIR": "/Dati/AI/tools/mcp-neovim-server",
-    "NVIM_SOCKET_PATH": "/run/user/1001/claude-debug-Trinity",
+    "NVIM_SOCKET_PATH": "/run/user/{{ .chezmoi.uid }}/claude-debug-Trinity",
     "NOTEBOOKLM_DATA": "/Dati/AI/tools/notebooklm-data",
     "NOTEBOOKLM_LIB": "/home/ichelema/.local/share/mise/installs/python/3.13/lib/python3.13/site-packages",
     "PLAYWRIGHT_MCP_BROWSER": "chromium",
