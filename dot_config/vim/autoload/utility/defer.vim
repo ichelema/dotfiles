@@ -16,6 +16,9 @@ endfunction
 
 function! utility#defer#airline(timer) abort
   call s:lod('vim-airline')
+  if exists('g:airline_theme') && exists(':AirlineTheme')
+    execute 'AirlineTheme ' . g:airline_theme
+  endif
   redraws!
   " redrawtabline
 endfunction

@@ -156,7 +156,7 @@
 " Stratup Vim-Plug {{{
     call plug#begin()
         " Normal Load {{{
-            Plug 'arcticicestudio/nord-vim'
+            Plug 'EdenEast/nightfox.nvim'
             Plug 'gelguy/wilder.nvim'
             Plug 'lambdalisue/vim-glyph-palette'
             Plug 'justinmk/vim-sneak',
@@ -220,7 +220,7 @@
             let g:airline_powerline_fonts = 1
             let g:Powerline_symbols = 'unicode'
             " seleziono il tema
-            " let g:airline_theme='oceanicnext'
+            let g:airline_theme='nightfox'
             " dovrebbe migliorare le performance
             let g:airline_highlighting_cache = 1
             " quando avvio vim airline aspetta che vengano caricate tutte le estensioni
@@ -1295,7 +1295,7 @@
         autocmd ColorScheme * call FixColorScheme()
         augroup END
 
-        colorscheme nord
+        colorscheme nightfox
         call FixColorScheme()
     " }}} Color
 
