@@ -9,6 +9,7 @@
     "API_TIMEOUT_MS": "300000",
     "MCP_TIMEOUT": "60000",
     "ENABLE_CLAUDEAI_MCP_SERVERS": "false",
+    "CLAUDE_CODE_PLUGIN_DIRS": "~/.claude/mods",
 {{- if eq .chezmoi.os "windows" }}
     "CLAUDE_CODE_AUTO_MODE_SERVER": "0",
     "CLAUDE_CODE_GIT_BASH_PATH": "e:\\msys64\\usr\\bin\\bash.exe",
