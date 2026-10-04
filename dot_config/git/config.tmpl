@@ -103,15 +103,12 @@
 
 [credential "helperselector"]
     selected = wincred
-{{- with lookPath "gh" }}
-{{- $gh := . | replace "\\" "/" }}
 [credential "https://github.com"]
     helper =
-    helper = !'{{ $gh }}' auth git-credential
+    helper = !gh auth git-credential
 [credential "https://gist.github.com"]
     helper =
-    helper = !'{{ $gh }}' auth git-credential
-{{- end }}
+    helper = !gh auth git-credential
 
 {{- else if eq .chezmoi.os "linux" }}
 [core]
