@@ -85,6 +85,11 @@
       "mcp__hindsight__list_memories"
     ],
     "deny": [
+      {{- if eq .chezmoi.os "windows" }}
+      "Bash(rm */c/*)",
+      "Bash(rm *C:*)",
+      "Bash(rm *c:*)",
+      {{- end }}
       "Read(./.env)",
       "Read(./.env.*)",
       "Read(~/.ssh/infomaniak_vps)",
@@ -98,12 +103,7 @@
       "Read(~/.ssh/**)",
       "Edit(~/.ssh/**)"
     ],
-    "defaultMode": "auto",
-    "disableBundledSkills": true,
-    "disableWorkflows": true,
-    "disableRemoteControl": true,
-    "disableClaudeAiConnectors": true,
-    "disableArtifact": true
+    "defaultMode": "auto"
   },
   "model": {{ if eq .chezmoi.os "linux" }}"opus"{{ else }}"opus[1m]"{{ end }},
   "disableClaudeAiConnectors": true,
