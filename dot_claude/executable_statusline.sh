@@ -179,10 +179,6 @@ case "$model_lower" in
   # ── DeepSeek V4 (1M input, 384K output) ──
   *deepseek-v4*)             size=1000000 ;;
   *deepseek*v4*)             size=1000000 ;;
-  # ── Anthropic via LiteLLM (200k input, già default) ──
-  *claude-sonnet*|*sonnet*)  size=200000 ;;
-  *claude-opus*|*opus*)      size=200000 ;;
-  *claude-haiku*|*haiku*)    size=200000 ;;
   # ── Modello non riconosciuto: resta il fallback (200k o size da JSON) ──
 esac
 unset model_lower
