@@ -1,7 +1,7 @@
 # ~/.config/zsh/modules/aliases.zsh
 
 # --- Claude ---
-alias claude='env HOME="$(cygpath -w "$HOME")" USERPROFILE="$(cygpath -w "$HOME")" CLAUDE_CONFIG_DIR="$(cygpath -w "$HOME/.claude")" claude --tools "Agent,Bash,CronCreate,CronDelete,CronList,Edit,Glob,Grep,ListAgents,ListMcpResourcesTool,LSP,Read,ReadMcpResourceDirTool,ReadMcpResourceTool,ScheduleWakeup,SendMessage,Skill,TaskCreate,TaskGet,TaskList,TaskOutput,TaskStop,TaskUpdate,WaitForMcpServers,WebFetch,WebSearch,Write"'
+alias claude='env HOME="$(cygpath -w "$HOME")" USERPROFILE="$(cygpath -w "$HOME")" CLAUDE_CONFIG_DIR="$(cygpath -w "$HOME/.claude")" claude --disallowedTools "DesignSync,NotebookEdit,PowerShell,Artifact,ArtifactComments,ArtifactData,ArtifactCheck,SendFeedback"'
 
 # --- Base aliases ---
 alias ll='ls -lah --color=auto'
