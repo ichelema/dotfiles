@@ -1,0 +1,4 @@
+commit 3a95837 (0.8.0) da https://github.com/NahumLitvin/prismantis
+Patch locali (da riapplicare dopo un update):
+- hooks/register.tsx: HINT di diagramHints solo al primo prompt (flag `hinted`, reset su session.end/session.compact)
+- hooks/render.tsx copySource: niente bottone copy sulle liste
