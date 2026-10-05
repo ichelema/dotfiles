@@ -18,8 +18,17 @@ const openReplay = async ($: EngineInterface) => {
   if ((await read($, steps)).length === 0) return false
   await update($, at, () => 0)
   await update($, isHidden, () => true)
+  // The band's Replay button holds the keys until the band is gone: let it
+  // redraw hidden, or the pane opens without the keyboard.
+  await $.clock.sleep(200)
   const columns = terminalColumns && Math.round(terminalColumns * PANE_SHARE)
-  await $.ui.open({ id: PANE, title: 'Replay', ...(columns ? { columns } : {}) })
+  await $.ui.open({
+    id: PANE,
+    title: 'Replay',
+    focus: true,
+    closeOnEscape: true,
+    ...(columns ? { columns } : {}),
+  })
 
   return true
 }
@@ -28,8 +37,19 @@ type Row = { left?: string; right?: string; isSame: boolean }
 
 const linesOf = (s: string) => (s === '' ? [] : s.split('\n'))
 
-// ponytail: O(n·m) LCS, fine for an edit hunk; switch to Myers if big Write replays lag
+// Past this many lines a side the LCS (n·m cells, run per step on every draw)
+// is skipped: every old line shows removed, every new one added.
+const MAX_LCS_LINES = 400
+
+// ponytail: O(n·m) LCS, capped at MAX_LCS_LINES; switch to Myers if big Write replays need real matching
 const sideBySide = (a: string[], b: string[]): Row[] => {
+  if (a.length > MAX_LCS_LINES || b.length > MAX_LCS_LINES)
+    return Array.from({ length: Math.max(a.length, b.length) }, (_, k) => ({
+      left: a[k],
+      right: b[k],
+      isSame: false,
+    }))
+
   const L = a.map(() => new Array<number>(b.length + 1).fill(0))
   L.push(new Array<number>(b.length + 1).fill(0))
   for (let i = a.length - 1; i >= 0; i--)
@@ -243,7 +263,9 @@ export const register: Register = on => {
     const room = Math.max(4, (e.viewport?.rows ?? 24) - 7 - list.length)
     const half = Math.max(10, Math.floor((e.props.bodyColumns - 3) / 2))
     const delta = await deltaLines($, step, e.props.bodyColumns)
-    const rows = delta ? [] : sideBySide(linesOf(step.before), linesOf(step.after)).slice(0, room)
+    const allRows = delta ? [] : sideBySide(linesOf(step.before), linesOf(step.after))
+    const rows = allRows.slice(0, room)
+    const hiddenLines = (delta?.length ?? allRows.length) - room
 
     return (
       <Box flexDirection="column" minHeight={e.props.scroll.bodyRows} backgroundColor={PANE_BG}>
@@ -280,11 +302,13 @@ export const register: Register = on => {
             </Box>
           </Box>
         ))}
+        {hiddenLines > 0 && <Text dimColor>… {hiddenLines} more lines</Text>}
         <Box>
           <Button key="prev" label="Prev" hotkey="p" onPress={() => update($, at, n => Math.max(0, n - 1))} />
           {i < list.length - 1 && (
             <Button key="next" label="Next" hotkey="n" onPress={() => update($, at, n => Math.min(list.length - 1, n + 1))} />
           )}
+          <Button key="close" label="Close" hotkey="c" onPress={() => $.ui.close({ id: PANE })} />
         </Box>
       </Box>
     )

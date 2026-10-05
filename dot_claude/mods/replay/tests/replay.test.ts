@@ -5,6 +5,7 @@ test('an edit in the main turn is replayed side by side in the pane', async ($, 
   on('tool.call', () => ({ result: {} as never }))
   on('turn.complete', () => ({ text: '' }))
   on('ui.open', () => ({ value: undefined }) as never)
+  on('clock.sleep', () => ({ value: undefined }) as never)
 
   await $.turn.start({ text: 'go', turnId: 't1' })
   await $.tool.call({
@@ -44,6 +45,7 @@ test('Next hides on the last step and comes back on Prev', async ($, on) => {
   on('turn.complete', () => ({ text: '' }))
   on('tool.call', () => ({ result: {} as never }))
   on('ui.open', () => ({ value: undefined }) as never)
+  on('clock.sleep', () => ({ value: undefined }) as never)
 
   for (const id of ['u1', 'u2'])
     await $.tool.call({ tool: 'Edit', tool_use_id: id, file_path: `${id}.txt`, old_string: 'a', new_string: 'b' })
@@ -74,6 +76,7 @@ test("delta's ANSI colours become Text colours", async ($, on) => {
   on('turn.complete', () => ({ text: '' }))
   on('tool.call', () => ({ result: {} as never }))
   on('ui.open', () => ({ value: undefined }) as never)
+  on('clock.sleep', () => ({ value: undefined }) as never)
   on('env.get', () => ({ value: 'T' }) as never)
   on('fs.write', () => ({ value: undefined }) as never)
   on('process.run', () => ({
@@ -100,4 +103,35 @@ test("delta's ANSI colours become Text colours", async ($, on) => {
   // One step: it is the last, so there is no Next.
   expect(await ui.find({ key: 'next' })).toBeUndefined()
   expect(await ui.find({ type: 'Text', text: /8;;/ })).toBeUndefined()
+})
+
+test('a long Write skips the LCS, says how many lines are cut, and Close closes', async ($, on) => {
+  const old = Array.from({ length: 500 }, (_, k) => `line ${k}`).join('\n')
+  const closed: unknown[] = []
+  on('turn.complete', () => ({ text: '' }))
+  on('tool.call', () => ({ result: {} as never }))
+  on('fs.read', () => ({ value: old }) as never)
+  on('ui.open', () => ({ value: undefined }) as never)
+  on('clock.sleep', () => ({ value: undefined }) as never)
+  on('ui.close', (_, e) => {
+    closed.push(e)
+    return { value: undefined } as never
+  })
+
+  await $.tool.call({ tool: 'Write', tool_use_id: 'u1', file_path: 'big.txt', content: `${old}\nend` })
+  await $.turn.complete({ reason: 'answer', answer: '', durationMs: 1, isAborted: false, turnId: 't1' })
+  await $.command.run({ command: 'replay', args: '' } as never)
+
+  const ui = await $.ui.mount({
+    plugin: 'replay',
+    surface: 'terminal',
+    component: 'Pane',
+    requestId: 'replay',
+    props: { title: 'Replay', isFocused: true, bodyColumns: 80, scroll: { offset: 0, bodyRows: 20 } } as never,
+  })
+  // Past 400 lines nothing is matched: 500 removed beside 501 added.
+  expect(await ui.find({ key: 'step:0', text: /Write \+501 −500/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /^… \d+ more lines$/ })).toBeDefined()
+  await ui.press({ key: 'close' })
+  expect(closed).toMatchObject([{ id: 'replay' }])
 })
