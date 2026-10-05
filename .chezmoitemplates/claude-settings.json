@@ -85,7 +85,6 @@
       "mcp__hindsight__list_memories"
     ],
     "deny": [
-      "Bash(rm -rf *)",
       "Read(./.env)",
       "Read(./.env.*)",
       "Read(~/.ssh/infomaniak_vps)",
