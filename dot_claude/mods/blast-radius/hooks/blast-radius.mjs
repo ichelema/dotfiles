@@ -25,10 +25,23 @@ let held = null;
 // False in a `claude -p` run or under the SDK: nobody can press Proceed, so a
 // risky command is refused at once instead of after HOLD_LIMIT_MS.
 let isInteractive = true;
+// rm under ~/.claude/tmp (the agent's scratch folder) runs without a hold.
+// session.start adds HOME's absolute forms (E:/… and /e/… on MSYS2).
+const tmpPrefixes = ["~/.claude/tmp/", "$HOME/.claude/tmp/", "${HOME}/.claude/tmp/"];
+let isCaseless = false; // Windows paths: HOME may come lowercased (e:\msys64\home\sphynx)
 
 export function register(on) {
   on("session.start", async ($, e, next) => {
     isInteractive = e.isInteractive;
+    try {
+      const home = (await $.env.get("HOME"))?.replace(/\\/g, "/");
+      if (home) {
+        isCaseless = /^[A-Za-z]:/.test(home);
+        tmpPrefixes.push(`${home}/.claude/tmp/`, `${home.replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}/.claude/tmp/`);
+      }
+    } catch {
+      // only the ~ and $HOME forms are exempt
+    }
     return next(e);
   });
 
@@ -177,6 +190,14 @@ function classify(command) {
 // Words that can come before the real command without changing what it does.
 const PREFIXES = new Set(["command", "exec", "env", "nohup", "time", "then", "do", "else", "!"]);
 
+// ponytail: textual check; a symlink inside tmp followed by `rm -r link/` reaches outside it
+function isScratch(target, dir) {
+  // No \ → / here: unquoted, bash eats the backslashes, so such a path is held.
+  const fold = (s) => (isCaseless ? s.toLowerCase() : s);
+  const path = fold(/^(\/|~\/|\$|[A-Za-z]:)/.test(target) ? target : joinDir(dir, target));
+  return tmpPrefixes.map(fold).some((p) => path.startsWith(p) && path.length > p.length && !/\.\.|\$|`/.test(path.slice(p.length)));
+}
+
 /** One segment: a risk, { cd } for a folder change, or null. */
 function classifySegment(segment, dir, pushed) {
   {
@@ -225,6 +246,9 @@ function classifySegment(segment, dir, pushed) {
       const force = flags.some((f) => f === "--force" || (/^-[^-]/.test(f) && f.includes("f")));
       if (recursive || force) {
         const targets = args.filter((a) => !a.startsWith("-") || a === "-");
+        if (targets.length > 0 && targets.every((t) => isScratch(t, dir))) {
+          return null;
+        }
         return { kind: "rm", label: `rm ${flags.join(" ")}`.trim(), targets, dir };
       }
     }
