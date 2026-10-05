@@ -146,5 +146,13 @@
   "fileCheckpointingEnabled": true,
   "terminalProgressBarEnabled": true,
   "inputNeededNotifEnabled": false,
-  "agentPushNotifEnabled": true
+  "agentPushNotifEnabled": true{{ with env "TYPESAFE_API_KEY" }},
+  "pluginConfigs": {
+    "jev-skill-suggestion": { "options": {
+      "typesafeApiKey": {{ . | toJson }},
+      "provider": "typesafe",
+      "timeoutMs": 1500,
+      "gateThreshold": 0.5
+    } }
+  }{{ end }}
 }
