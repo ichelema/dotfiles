@@ -119,7 +119,8 @@
   "enableArtifact": false,
   "statusLine": {
     "type": "command",
-    "command": {{ if eq .chezmoi.os "windows" }}"/e/msys64/home/sphynx/.claude/statusline.sh"{{ else }}"~/.claude/statusline.sh"{{ end }}
+    "command": {{ if eq .chezmoi.os "windows" }}"/e/msys64/home/sphynx/.claude/statusline.sh"{{ else }}"~/.claude/statusline.sh"{{ end }},
+    "refreshInterval": 30
   },
   "enabledPlugins": {
     "pyright-lsp@claude-plugins-official": true,

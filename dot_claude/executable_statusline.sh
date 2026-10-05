@@ -153,7 +153,9 @@ eval "$(echo "$input" | jq -r '
   "builtin_five_hour_pct=" + ((.rate_limits.five_hour.used_percentage // "") | tostring),
   "builtin_five_hour_reset=" + ((.rate_limits.five_hour.resets_at // "") | tostring),
   "builtin_seven_day_pct=" + ((.rate_limits.seven_day.used_percentage // "") | tostring),
-  "builtin_seven_day_reset=" + ((.rate_limits.seven_day.resets_at // "") | tostring)
+  "builtin_seven_day_reset=" + ((.rate_limits.seven_day.resets_at // "") | tostring),
+  "cache_expires_at=" + (.prompt_cache.expires_at | if type == "number" then floor | tostring else "" end),
+  "cache_ttl=" + ((.prompt_cache.ttl // "") | @sh)
 ' 2>/dev/null | tr -d '\r')"
 # "Claude Sonnet 4.6 (1M context)" → "Claude Sonnet 4.6 1M" (bash builtin BASH_REMATCH, no subprocess)
 if [[ "$model_name" =~ \ *\(([0-9.]*[kKmM]*)\ context\) ]]; then
@@ -308,6 +310,22 @@ if [ "$cache_total" -gt 0 ]; then
 	fi
 	out+=" ${dim}|${reset} "
 	out+="${dim}cache${reset} ${cyan}$(format_tokens $cache_read)↓${reset}${dim}/${reset}${purple}$(format_tokens $cache_create)↑${reset} ${dim}(${reset}${hit_color}${hit_pct}%${reset}${dim})${reset}"
+	# TTL residuo: prompt_cache.expires_at dal JSON di stdin (Claude Code >= 2.1.251).
+	# Ogni richiesta rinnova la scadenza; null quando l'ultima risposta non aveva token in cache.
+	if [ -n "$cache_expires_at" ]; then
+		[ "$cache_ttl" = "1h" ] && ttl=3600 || ttl=300
+		printf -v ttl_now '%(%s)T' -1
+		ttl_left=$((cache_expires_at - ttl_now))
+		if [ "$ttl_left" -le 0 ]; then
+			out+=" ${red}⏳scaduta${reset}"
+		else
+			if [ "$ttl_left" -gt $((ttl / 2)) ]; then ttl_color="$green"
+			elif [ "$ttl_left" -gt $((ttl / 5)) ]; then ttl_color="$yellow"
+			else ttl_color="$red"; fi
+			[ "$ttl_left" -ge 60 ] && ttl_txt="$((ttl_left / 60))m" || ttl_txt="${ttl_left}s"
+			out+=" ${ttl_color}⏳${ttl_txt}${reset}"
+		fi
+	fi
 fi
 
 out+=" ${dim}|${reset} "
