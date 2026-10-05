@@ -87,8 +87,10 @@
     "deny": [
       {{- if eq .chezmoi.os "windows" }}
       "Bash(rm */c/*)",
-      "Bash(rm *C:*)",
-      "Bash(rm *c:*)",
+      "Bash(rm *C:/*)",
+      "Bash(rm *c:/*)",
+      "Bash(rm *C:\\*)",
+      "Bash(rm *c:\\*)",
       {{- end }}
       "Read(./.env)",
       "Read(./.env.*)",
