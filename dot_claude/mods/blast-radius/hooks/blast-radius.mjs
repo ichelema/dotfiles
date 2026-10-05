@@ -17,7 +17,7 @@
 
 const PANE_ID = "blast-radius";
 const POLL_SECONDS = "0.25";
-const HOLD_LIMIT_MS = 10 * 60 * 1000;
+const HOLD_LIMIT_MS = 5 * 60 * 1000;
 const LIST_MAX = 10;
 
 // The call being held, or null. One at a time: Bash calls in a turn run in order.
@@ -121,7 +121,7 @@ export function register(on) {
     }
     const why = {
       cancel: "the user pressed Cancel",
-      timeout: "no answer within 10 minutes",
+      timeout: "no answer within 5 minutes",
       interrupted: "the turn was interrupted",
       error: "Blast Radius hit an error while holding it",
     }[decision] ?? "no answer was recorded";

@@ -107,7 +107,7 @@ No environment variables or configuration.
 
 - Press `1` for Proceed or `2` for Cancel. You can also click a button, or Tab to it and press Enter.
 - In the band above the prompt, `1` or `2` works while the input is empty.
-- If nobody answers within 10 minutes, the command is refused.
+- If nobody answers within 5 minutes, the command is refused.
 - If you interrupt the turn (Esc), the command is refused.
 
 ## Notes / limitations
@@ -115,7 +115,7 @@ No environment variables or configuration.
 - It reads the command text. It doesn't parse shell fully: `$(...)`, aliases, `eval`, `bash -c "..."`, `xargs rm`, `find -delete`, scripts that call `rm`, and wrappers such as `timeout 5 rm`, `doas rm`, `time -p rm` or `env -i rm` aren't caught.
 - Only the first risky part of a command line is measured, and the pane shows the command on one line, cut off if it's long. Proceed runs the whole line as written.
 - It follows `cd`, `pushd`, `popd` and `git -C` on the same line. `cd -`, and a folder that doesn't exist, can't be measured; the pane says so and still holds the command. Otherwise it starts from the session's working folder.
-- In a narrow terminal the report is drawn in the band above the prompt, which only one mod can use at a time. If another mod that draws there (such as Replay Theater or Token Weather in this folder) takes the band, the Proceed and Cancel buttons may not show, and the command is refused after 10 minutes. Use a wider terminal, or turn the other mod off, when you rely on Blast Radius.
+- In a narrow terminal the report is drawn in the band above the prompt, which only one mod can use at a time. If another mod that draws there (such as Replay Theater or Token Weather in this folder) takes the band, the Proceed and Cancel buttons may not show, and the command is refused after 5 minutes. Use a wider terminal, or turn the other mod off, when you rely on Blast Radius.
 - One command is held at a time. A second risky call, from a subagent for example, waits until the first is answered.
 - It only watches the Bash tool. File edits and other tools aren't held.
 - The `rm` count is approximate: a path matched twice is counted twice, and a file name with a line break is not counted. The list shows the first 10 files. Counts come from `find` and sizes from `du -k`, so a size is the space on disk, to the nearest kilobyte. A very large tree can take a few seconds to measure.
