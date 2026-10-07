@@ -7,14 +7,15 @@ const play = ($: EngineInterface, wav: string) => {
   void $.process.run(['bash', `${root}/play-sound.sh`, wav]).catch(() => {})
 }
 
+// agent_id c'è solo sugli eventi dei subagenti: per loro niente suono.
 export const register: Register = on => {
   on('classic.Stop', ($, e, next) => {
-    play($, 'Windows_Proximity_Notification.wav')
+    if (!e.agent_id) play($, 'Windows_Proximity_Notification.wav')
     return next(e)
   })
 
   on('classic.Notification', ($, e, next) => {
-    if (e.notification_type === 'permission_prompt') play($, 'Windows_Exclamation.wav')
+    if (e.notification_type === 'permission_prompt' && !e.agent_id) play($, 'Windows_Exclamation.wav')
     return next(e)
   })
 }

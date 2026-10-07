@@ -134,7 +134,6 @@
   "language": "italiano",
   "spinnerTipsEnabled": false,
   "effortLevel": "high",
-  "advisorModel": "fable",
   "tui": "fullscreen",
   "showThinkingSummaries": true,
   "skipDangerousModePermissionPrompt": false,
@@ -146,8 +145,10 @@
   "fileCheckpointingEnabled": true,
   "terminalProgressBarEnabled": true,
   "inputNeededNotifEnabled": false,
-  "agentPushNotifEnabled": true{{ with env "TYPESAFE_API_KEY" }},
+  "agentPushNotifEnabled": true,
   "pluginConfigs": {
+    "prismantis@inline": { "options": { "theme": "nord" } },
+    "jev-skill-suggestion@inline": { "options": { "logDecisions": true } }{{ with env "TYPESAFE_API_KEY" }},
     "jev-skill-suggestion": { "options": {
       "typesafeApiKey": {{ . | toJson }},
       "provider": "typesafe",
@@ -155,6 +156,6 @@
       "gateThreshold": 0.5,
       "inject": "suggest",
       "neverSuggested": "trinity:dream,trinity:linear,trinity:nota_del_giorno,trinity:promote,trinity:reflect,trinity:ponytail,trinity:ponytail:ponytail,trinity:ponytail:ponytail-audit,trinity:ponytail:ponytail-debt,trinity:ponytail:ponytail-gain,trinity:ponytail:ponytail-help,trinity:ponytail:ponytail-review,trinity:workflow:0_create-issue,trinity:workflow:1_create-worktree,trinity:workflow:2_work-issue,trinity:workflow:3_independent-review,trinity:workflow:4_remove-worktree,trinity:workflow:5_review-fix-loop"
-    } }
-  }{{ end }}
+    } }{{ end }}
+  }
 }

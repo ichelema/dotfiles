@@ -12,6 +12,9 @@ test('suona a fine turno e solo sulla richiesta di permesso', async ($, on) => {
   await $.classic.Stop({ stop_hook_active: false } as never)
   await $.classic.Notification({ notification_type: 'permission_prompt', message: 'ok?' } as never)
   await $.classic.Notification({ notification_type: 'idle_prompt', message: 'idle' } as never)
+  // eventi dei subagenti: muti
+  await $.classic.Stop({ stop_hook_active: false, agent_id: 'a1' } as never)
+  await $.classic.Notification({ notification_type: 'permission_prompt', message: 'ok?', agent_id: 'a1' } as never)
 
   expect(played).toEqual(['Windows_Proximity_Notification.wav', 'Windows_Exclamation.wav'])
 })
