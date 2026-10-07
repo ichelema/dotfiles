@@ -645,6 +645,9 @@ export function decide(
     }
     if (shortlist.some((skill) => skill.name === rerank.winner)) {
       const fit = rerank.fits[rerank.winner]
+      if (fit !== undefined && fit < config.fitsThreshold) {
+        return { name: null, reason: `${rerank.winner} fits ${fit.toFixed(2)} < ${config.fitsThreshold}` }
+      }
       return {
         name: rerank.winner,
         reason: `rerank of ${shortlist.length}${fit === undefined ? '' : `, fits ${fit.toFixed(2)}`}`,

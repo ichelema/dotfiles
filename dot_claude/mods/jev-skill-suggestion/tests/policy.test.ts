@@ -183,6 +183,9 @@ test('the rerank can flip the winner, and its fits nouls can reject the whole sh
     name: null,
     reason: 'nothing fits, best 0.20 < 0.3',
   })
+  // A winner its own fits noul rejects is dropped, even when another candidate clears the bar.
+  const unfit = readRerank(rerankAnswer('commit', { powerpoint: 0.41, 'pptx-author': 0.04, commit: 0.1 }))
+  expect(decide(wide, unfit, skills, config)).toEqual({ name: null, reason: 'commit fits 0.10 < 0.3' })
   // A winner that was never on the shortlist is not trusted.
   const stray = readRerank(rerankAnswer('made-up', { powerpoint: 0.9 }))
   expect(decide(wide, stray, skills, config).name).toBeNull()
