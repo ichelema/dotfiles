@@ -1,12 +1,5 @@
 import type { EngineInterface, Register, SessionRateLimit } from 'claude-code'
 
-// Stato pubblicato dalla mod jev-skill-suggestion (stessa dichiarazione nel suo modulo).
-declare module 'claude-code' {
-  interface PluginState {
-    'jev-skill-suggestion': { status: string }
-  }
-}
-
 // Porta in-process di ~/.claude/statusline.sh: la mod calcola la riga e la mette in
 // CLAUDE_STATUSLINE; la statusline nativa la stampa e basta (niente jq). Saltati rispetto allo script:
 // il segmento extra_usage (serve l'API OAuth), il check aggiornamenti upstream
@@ -270,10 +263,9 @@ const draw = async ($: EngineInterface) => {
         },
         now,
       )
-    const jev = (await $.state.get({ plugin: 'jev-skill-suggestion', key: 'status' }).catch(() => undefined))?.value
     // La statusline nativa (settings.json) stampa questa variabile: niente script né jq a ogni refresh.
     // Una mod non può disegnare nella riga della statusline nativa, tra il prompt e -- INSERT --.
-    await $.env.set('CLAUDE_STATUSLINE', jev ? current + SEP + paint(C.dim, jev.replace(/^jev · /, 'jev: ')) : current)
+    await $.env.set('CLAUDE_STATUSLINE', current)
   } catch {
     // Un refresh fallito lascia la riga precedente: la statusline non deve mai rompere la sessione.
   }

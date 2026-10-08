@@ -82,12 +82,11 @@ test('a SessionStart scrive la riga con i dati della sessione', async ($, on) =>
       return { value: undefined } as never
     }),
   )
-  on('state.get', () => ({ value: { value: 'jev · no skill', version: 1 } }) as never)
   on('classic.SessionStart', () => ({}))
   await $.classic.SessionStart({ source: 'startup', session_id: 'abcdef1234', transcript_path: 'E:\\t.jsonl' } as never)
 
   expect(plain(await written)).toBe(
-    '[PONYTAIL] | Opus 5.5 High | Repo@feat/x (+5 -1) | Session: rinominata "bis" | 2k/200k (0%) | 5h - | 7d - | jev: no skill',
+    '[PONYTAIL] | Opus 5.5 High | Repo@feat/x (+5 -1) | Session: rinominata "bis" | 2k/200k (0%) | 5h - | 7d -',
   )
 })
 
