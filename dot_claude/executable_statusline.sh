@@ -237,7 +237,15 @@ if [ -f "$ponytail_flag" ]; then
         out+="${green}${p_badge}${reset} ${dim}|${reset} "
     fi
 fi
-out+="${blue}${model_name}${reset}"
+out+="${blue}${model_name}${reset} "
+case "$effort_level" in
+low) out+="${dim}Low${reset}" ;;
+medium) out+="${orange}Medium${reset}" ;;
+high) out+="${green}High${reset}" ;;
+xhigh) out+="${purple}XHigh${reset}" ;;
+max) out+="${red}Max${reset}" ;;
+*) out+="${green}${effort_level^}${reset}" ;;
+esac
 [ "$fast_mode" = "true" ] && out+=" ${yellow}⚡${reset}"
 
 # Current working directory (cwd already extracted in main jq eval above)
@@ -247,7 +255,11 @@ if [ -n "$cwd" ]; then
 	out+=" ${dim}|${reset} "
 	out+="${cyan}${display_dir}${reset}"
 	git_branch=""
-	if [ -e "${cwd}/.git" ]; then # fast check avoids git subprocess for non-repo dirs
+	git_root="$cwd" # walk up to the dir holding .git, so subdirs of a repo/worktree show the branch too
+	while [ -n "$git_root" ] && [ ! -e "$git_root/.git" ]; do
+		[ "$git_root" = "${git_root%/*}" ] && git_root="" || git_root="${git_root%/*}"
+	done
+	if [ -n "$git_root" ]; then # fast check avoids git subprocess for non-repo dirs
 		git_branch=$(git -C "${cwd}" rev-parse --abbrev-ref HEAD 2>/dev/null)
 	fi
 	if [ -n "$git_branch" ]; then
@@ -323,17 +335,6 @@ if [ "$cache_total" -gt 0 ]; then
 		fi
 	fi
 fi
-
-out+=" ${dim}|${reset} "
-out+="${dim}effort:${reset} "
-case "$effort_level" in
-low) out+="${dim}${effort_level}${reset}" ;;
-medium) out+="${orange}med${reset}" ;;
-high) out+="${green}${effort_level}${reset}" ;;
-xhigh) out+="${purple}${effort_level}${reset}" ;;
-max) out+="${red}${effort_level}${reset}" ;;
-*) out+="${green}${effort_level}${reset}" ;;
-esac
 
 # ===== Cross-platform OAuth token resolution (from statusline.sh) =====
 # Tries credential sources in order: env var → macOS Keychain → Linux creds file → GNOME Keyring
