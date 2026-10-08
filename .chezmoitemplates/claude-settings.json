@@ -120,7 +120,7 @@
   "enableArtifact": false,
   "statusLine": {
     "type": "command",
-    "command": {{ if eq .chezmoi.os "windows" }}"/e/msys64/home/sphynx/.claude/statusline.sh"{{ else }}"~/.claude/statusline.sh"{{ end }},
+    "command": "printf '%s' \"${CLAUDE_STATUSLINE:-Claude}\"",
     "refreshInterval": 30
   },
   "enabledPlugins": {
