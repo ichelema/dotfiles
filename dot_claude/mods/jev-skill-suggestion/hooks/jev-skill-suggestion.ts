@@ -213,6 +213,8 @@ export const register: Register = (on, options) => {
   // from one to the other is read from disk once per session, in whichever
   // hook first needs it.
   let displayToId: Map<string, string> | null = null
+  // Lo stesso elenco torna a ogni nuovo invio: il log ripete solo un testo nuovo.
+  let lastWithheld = ''
 
   on('prompt.attachment', { type: 'skill_listing' }, async ($, e, next) => {
     if (!announced) {
@@ -243,9 +245,11 @@ export const register: Register = (on, options) => {
             .map((skill) => skill.name)
             .join(', ')
         : 'none'
-      $.ui.log(
-        `[jev-skill-suggestion] withheld the skill listing (${skills.length} skills, ${e.text.length} characters); kept listed: ${keptNames}`,
-      )
+      const msg = `[jev-skill-suggestion] withheld the skill listing (${skills.length} skills, ${e.text.length} characters); kept listed: ${keptNames}`
+      if (msg !== lastWithheld) {
+        lastWithheld = msg
+        $.ui.log(msg)
+      }
     }
     // Answered without `next`: the engine's text never reaches the model.
     return { text: kept }
