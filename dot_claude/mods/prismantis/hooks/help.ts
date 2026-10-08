@@ -1,7 +1,7 @@
 export const showcaseText = (themes: readonly string[]): string => `
 # prismantis
 
-Colored markdown for Claude Code replies: **bold**, *italic*, ~~struck~~, \`inline code\`, a [link](https://github.com/NahumLitvin/prismantis), numbers like 99.9% and 250ms, paths like ~/src/app.ts.
+Colored markdown for Claude Code replies: **bold**, *italic*, ~~struck~~, \`inline code\`, a [link](https://github.com/NahumLitvin/prismantis) and a bare URL https://github.com/NahumLitvin/prismantis/issues, both clickable, numbers like 99.9% and 250ms, paths like ~/src/app.ts.
 
 ## Commands
 
@@ -9,6 +9,7 @@ Colored markdown for Claude Code replies: **bold**, *italic*, ~~struck~~, \`inli
 |---------|------|
 | \`/prismantis\` | This screen |
 | \`/prismantis theme <name>\` | Switch theme on the spot |
+| \`/prismantis copy\` | Copy the last reply, or \`copy code\` for its last code block |
 | \`/config\` | Edit any option |
 
 > [!NOTE]
@@ -49,6 +50,14 @@ Colored markdown for Claude Code replies: **bold**, *italic*, ~~struck~~, \`inli
   - [x] Tables and code
   - [ ] Diagrams on the desktop app
 - [ ] Ship the next release
+
+### Your prompts
+
+Scroll up: what you typed draws in a bubble. \`promptStyle\` switches to \`bar\`, \`chevron\` or \`off\` in \`/config\`.
+
+### Tool rows
+
+Tool calls draw as one line, dimmed on the right by default. Set \`toolStyle\` in \`/config\` to \`chat\`, \`tree-dim\`, \`tree-bold\` or \`classic\`.
 
 ### Quotes and rules
 
@@ -96,6 +105,7 @@ export const helpText = (themes: readonly string[]): string => `
 | Command | Does |
 |---------|------|
 | \`/prismantis theme <name>\` | Switch theme on the spot |
+| \`/prismantis copy\` | Copy the last reply, or \`copy code\` for its last code block |
 | \`/prismantis demo\` | Full showcase, every element and diagram |
 | \`/prismantis demo-rtl\` | Hebrew right-to-left showcase |
 
@@ -104,6 +114,8 @@ export const helpText = (themes: readonly string[]): string => `
 - Dark: ${themes.filter(t => !/latte|light|dawn/.test(t) && t !== 'mono').join(', ')}
 - Light: ${themes.filter(t => /latte|light|dawn/.test(t)).join(', ')}
 - Plain: mono, no color, only bold and dim
+
+Docs and issues: https://github.com/NahumLitvin/prismantis
 
 > [!TIP]
 > Any color slot beats the theme. Set \`headingColor\` or \`numberColor\` to a hex value in \`/config\`.

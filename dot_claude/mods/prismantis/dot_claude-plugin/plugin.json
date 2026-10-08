@@ -1,6 +1,6 @@
 {
   "name": "prismantis",
-  "version": "0.8.0",
+  "version": "0.12.0",
   "description": "Colorful, themeable rendering for Claude Code replies: tables, headings, code, numbers, paths and links.",
   "author": {
     "name": "Nahum Litvin",
@@ -17,6 +17,7 @@
     "colors",
     "terminal"
   ],
+  "types": "./types/index.d.ts",
   "userConfig": {
     "enabled": {
       "type": "boolean",
@@ -71,6 +72,20 @@
         "grid",
         "minimal"
       ]
+    },
+    "promptStyle": {
+      "type": "string",
+      "title": "Your prompt style",
+      "description": "How the prompts you type draw in the transcript. bubble: a rounded box in the accent color. bar: an accent bar on the left. chevron: a bold accent › before the text. off: Claude Code's own look.",
+      "default": "bubble",
+      "options": ["bubble", "bar", "chevron", "off"]
+    },
+    "toolStyle": {
+      "type": "string",
+      "title": "Tool row style",
+      "description": "How tool rows (Ran, Read, Edited) sit next to Claude's sentences. chat: tool rows dimmed on the right, Claude on the left. tree-dim: tucked under the sentence with ⎿ and dimmed. tree-bold: tree-dim plus one-line sentences in bold. classic: the original look.",
+      "default": "chat",
+      "options": ["chat", "tree-dim", "tree-bold", "classic"]
     },
     "taskStyle": {
       "type": "string",
