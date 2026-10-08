@@ -173,6 +173,12 @@ export const register: Register = (on, options) => {
   const excerptChars = number('excerptChars', 700)
   const timeoutMs = number('timeoutMs', 800)
   const logDecisions = flag('logDecisions', true)
+
+  // Grigio in coda alla riga del prompt, non tra gli avvisi (⚠) sopra la statusline.
+  let statusText: string | undefined
+  on('ui.render', { component: 'PromptHint' }, (_$, e, next) =>
+    statusText ? next({ ...e, props: { ...e.props, tail: ` · ${statusText.replace(/^jev · /, 'jev: ')}` } }) : next(e),
+  )
   const policy: PolicyConfig = {
     shortlist: Math.max(1, Math.round(number('shortlist', 3))),
     gateThreshold: number('gateThreshold', 0.3),
@@ -439,7 +445,10 @@ export const register: Register = (on, options) => {
       )
     }
     // A row in the transcript scrolls away; this line stays on screen.
-    if (logDecisions) $.ui.status(describeStatus(pick?.name ?? null))
+    if (logDecisions) {
+      statusText = describeStatus(pick?.name ?? null)
+      $.ui.invalidate('ui.render')
+    }
     if (logDecisions) {
       $.ui.log(
         pick
