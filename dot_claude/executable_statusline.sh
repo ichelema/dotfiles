@@ -1,6 +1,15 @@
 #!/bin/bash
 # Source: https://github.com/daniel3303/ClaudeCodeStatusLine
 # Single line: Model | tokens | %used | %remain | think | 5h bar @reset | 7d bar @reset | extra
+#
+# Ottimizzato per MSYS2: ogni $( ), pipe o comando esterno crea un processo Windows
+# (fork emulato + exec) che l'antivirus scansiona. Con più sessioni Claude Code aperte
+# la statusline arrivava a ~70 processi per render e saturava la CPU in kernel.
+# Regole di questo file:
+# - helper che scrivono in REPLY (printf -v) invece di essere chiamati dentro $( )
+# - un solo jq per render (stdin + cache usage via --arg)
+# - git branch letto da .git/HEAD; git diff e titolo sessione in cache su file
+# - età delle cache da un file .ts con l'epoch (read builtin) invece di stat
 
 set -f # disable globbing
 # Force C locale for numeric formatting: on locales that use comma as the decimal
@@ -9,7 +18,7 @@ set -f # disable globbing
 export LC_NUMERIC=C
 VERSION="1.4.4"
 
-input=$(cat)
+IFS= read -r -d '' input # bash builtin (no subprocess, unlike $(cat))
 
 if [ -z "$input" ]; then
 	printf "Claude"
@@ -28,87 +37,94 @@ white='\033[38;2;220;220;220m'
 dim='\033[38;2;150;157;171m' # light grey (was \033[2m faint — too dark to read on dark bg)
 reset='\033[0m'
 
-# Format token counts (e.g., 50k / 200k)
+printf -v now '%(%s)T' -1 # bash built-in epoch (no subprocess)
+state_dir="/tmp/claude"
+[ -d "$state_dir" ] || mkdir -p "$state_dir" 2>/dev/null
+
+# Format token counts (e.g., 50k / 200k) into REPLY — pure bash arithmetic
 format_tokens() {
-	local num=$1
+	local num=$1 v
 	if [ "$num" -ge 1000000 ]; then
-		awk "BEGIN {v=sprintf(\"%.1f\",$num/1000000)+0; if(v==int(v)) printf \"%dm\",v; else printf \"%.1fm\",v}"
+		v=$(((num + 50000) / 100000)) # tenths of a million, rounded
+		if [ $((v % 10)) -eq 0 ]; then
+			REPLY="$((v / 10))m"
+		else
+			REPLY="$((v / 10)).$((v % 10))m"
+		fi
 	elif [ "$num" -ge 1000 ]; then
-		awk "BEGIN {printf \"%.0fk\", $num / 1000}"
+		REPLY="$(((num + 500) / 1000))k"
 	else
-		printf "%d" "$num"
+		REPLY="$num"
 	fi
 }
 
-# Format number with commas (e.g., 134,938)
-format_commas() {
-	printf "%'d" "$1"
-}
-
-# Return color escape based on usage percentage
-# Usage: usage_color <pct>
+# Color escape for a usage percentage into REPLY. Usage: usage_color <pct>
 usage_color() {
 	local pct=$1
 	if [ "$pct" -ge 90 ]; then
-		echo "$red"
+		REPLY="$red"
 	elif [ "$pct" -ge 70 ]; then
-		echo "$orange"
+		REPLY="$orange"
 	elif [ "$pct" -ge 50 ]; then
-		echo "$yellow"
+		REPLY="$yellow"
 	else
-		echo "$green"
+		REPLY="$green"
 	fi
 }
 
-# Convert a Windows path (C:\foo\bar or C:/foo/bar) to an MSYS2 path (/c/foo/bar).
+# Convert a Windows path (C:\foo\bar or C:/foo/bar) to an MSYS2 path (/c/foo/bar) into REPLY.
 win_to_msys() {
-	local p
-	p=$(printf '%s' "$1" | tr '\\' '/') # backslashes → forward slashes
+	local p="${1//\\//}" # backslashes → forward slashes
 	if [[ "$p" == ?:* ]]; then
 		local drive="${p%%:*}" rest="${p#*:}"
-		printf '/%s%s' "${drive,,}" "$rest"
+		REPLY="/${drive,,}${rest}"
 	else
-		printf '%s' "$p"
+		REPLY="$p"
 	fi
 }
 
-# Truncate a string to N chars, appending … when cut. Usage: truncate_str <str> <max>
+# Truncate a string to N chars into REPLY, appending … when cut. Usage: truncate_str <str> <max>
 truncate_str() {
 	local s="$1" max="$2"
 	if [ "${#s}" -gt "$max" ]; then
-		printf '%s…' "${s:0:max}"
+		REPLY="${s:0:max}…"
 	else
-		printf '%s' "$s"
+		REPLY="$s"
 	fi
 }
 
-# Resolve a session's display name from its transcript .jsonl.
+# Read the epoch stored in <file>.ts into REPLY (0 when missing). Usage: read_ts <file>
+read_ts() {
+	REPLY=0
+	[ -f "$1.ts" ] && read -r REPLY <"$1.ts"
+	[[ "$REPLY" =~ ^[0-9]+$ ]] || REPLY=0
+}
+
+# Resolve a session's display name from its transcript .jsonl into REPLY.
 # Prefers the last custom-title (set by /rename or the first prompt); falls back
-# to the short session id. Usage: sess_title <transcript_path_msys> <session_id>
+# to the short session id. One grep process; last match picked in bash.
+# Usage: sess_title <transcript_path_msys> <session_id>
 sess_title() {
 	local tpath="$1" sid="$2" title=""
 	if [ -f "$tpath" ]; then
-		# grep the whole file (custom-title may not be near the tail) then jq the one line
-		title=$(grep '"type":"custom-title"' "$tpath" 2>/dev/null | tail -1 |
-			jq -r '.customTitle // empty' 2>/dev/null)
+		title=$(grep -o '"customTitle":"\([^"\\]\|\\.\)*"' "$tpath" 2>/dev/null)
+		title="${title##*$'\n'}"           # last match
+		title="${title#\"customTitle\":\"}" # strip key
+		title="${title%\"}"
+		title="${title//\\\"/\"}" # unescape \" and \\
+		title="${title//\\\\/\\}"
 	fi
 	title="${title% (Branch)}" # strip the suffix Claude Code appends to forked sessions
 	if [ -z "$title" ]; then
 		title="${sid:0:8}" # fallback: short id for never-renamed sessions
 	fi
-	printf '%s' "$title"
+	REPLY="$title"
 }
 
 # Resolve config directory: convert CLAUDE_CONFIG_DIR (Windows backslash path) to MSYS2 forward-slash path
 if [ -n "$CLAUDE_CONFIG_DIR" ]; then
-	_tmp=$(printf '%s' "$CLAUDE_CONFIG_DIR" | tr '\\' '/') # backslashes → forward slashes
-	if [[ "$_tmp" == ?:* ]]; then
-		_drive="${_tmp%%:*}"                     # extract drive letter
-		_rest="${_tmp#*:}"                       # path after the colon
-		claude_config_dir="/${_drive,,}${_rest}" # /c/msys64/home/...
-	else
-		claude_config_dir="$_tmp"
-	fi
+	win_to_msys "$CLAUDE_CONFIG_DIR"
+	claude_config_dir="$REPLY"
 else
 	claude_config_dir="$HOME/.claude"
 fi
@@ -132,13 +148,30 @@ version_gt() {
 	[ "$a3" -gt "$b3" ] 2>/dev/null && return 0
 	return 1
 }
+
+# ===== Usage API cache (shared across all Claude Code instances to avoid rate limits) =====
+# Loaded BEFORE the main jq so the same jq call parses it too.
+cache_key="${claude_config_dir//[^A-Za-z0-9]/_}" # bash builtin instead of echo|shasum(perl)|cut
+cache_file="$state_dir/statusline-usage-cache-${cache_key}.json"
+cache_max_age=180 # seconds between API calls
+
+usage_data=""
+[ -s "$cache_file" ] && IFS= read -r -d '' usage_data <"$cache_file"
+read_ts "$cache_file"
+needs_refresh=false
+[ $((now - REPLY)) -ge "$cache_max_age" ] && needs_refresh=true
+
 # ===== Extract all data from JSON (single jq call to avoid MSYS2 process-spawn overhead) =====
 # Notes:
 # - MSYS2 ships jq 1.8.1 which doesn't compile Oniguruma named captures (?<name>...) — the
 #   "(1M context)" → "1M" transform is therefore done with bash regex AFTER the eval.
-# - On MSYS2, jq emits CRLF line endings; tr -d '\r' strips them so `cache_create=0\r` doesn't
-#   poison arithmetic with $'0\r'.
-eval "$(echo "$input" | jq -r '
+# - On MSYS2, jq emits CRLF line endings; the \r are stripped in bash before eval so
+#   `cache_create=0\r` doesn't poison arithmetic with $'0\r'.
+# - $u is the usage API cache: parsed here so the fallback/extra_usage paths need no jq.
+#   ISO resets_at ("2026-10-08T17:59:59.761922+00:00", always UTC) → epoch via the first 19 chars.
+_vars=$(jq -r --arg u "$usage_data" '
+  def iso2epoch: if type == "string" and length >= 19 then (try (.[0:19] + "Z" | fromdateiso8601) catch "") else "" end;
+  ($u | try fromjson catch {} | if type == "object" then . else {} end) as $U |
   "model_name=" + ((.model.display_name // "Claude") | @sh),
   "model_id=" + ((.model.id // "") | @sh),
   "size=" + ((.context_window.context_window_size // 200000) | tostring),
@@ -155,8 +188,19 @@ eval "$(echo "$input" | jq -r '
   "builtin_seven_day_pct=" + ((.rate_limits.seven_day.used_percentage // "") | tostring),
   "builtin_seven_day_reset=" + ((.rate_limits.seven_day.resets_at // "") | tostring),
   "cache_expires_at=" + (.prompt_cache.expires_at | if type == "number" then floor | tostring else "" end),
-  "cache_ttl=" + ((.prompt_cache.ttl // "") | @sh)
-' 2>/dev/null | tr -d '\r')"
+  "cache_ttl=" + ((.prompt_cache.ttl // "") | @sh),
+  "api_valid=" + (if $U.five_hour != null then "true" else "false" end),
+  "api_five_hour_pct=" + (($U.five_hour.utilization // 0) | round | tostring),
+  "api_five_hour_reset=" + ($U.five_hour.resets_at | iso2epoch | tostring),
+  "api_seven_day_pct=" + (($U.seven_day.utilization // 0) | round | tostring),
+  "api_seven_day_reset=" + ($U.seven_day.resets_at | iso2epoch | tostring),
+  "extra_enabled=" + (($U.extra_usage.is_enabled // false) | tostring),
+  "extra_pct=" + (($U.extra_usage.utilization // 0) | round | tostring),
+  "extra_used=" + ((($U.extra_usage.used_credits // 0) / 100) | tostring),
+  "extra_limit=" + ((($U.extra_usage.monthly_limit // 0) / 100) | tostring)
+' <<<"$input" 2>/dev/null)
+eval "${_vars//$'\r'/}"
+unset _vars
 # "Claude Sonnet 4.6 (1M context)" → "Claude Sonnet 4.6 1M" (bash builtin BASH_REMATCH, no subprocess)
 if [[ "$model_name" =~ \ *\(([0-9.]*[kKmM]*)\ context\) ]]; then
 	model_name="${model_name/${BASH_REMATCH[0]}/ ${BASH_REMATCH[1]}}"
@@ -188,23 +232,20 @@ unset model_lower
 : "${cache_read:=0}"
 current=$((input_tokens + cache_create + cache_read))
 
-used_tokens=$(format_tokens $current)
-total_tokens=$(format_tokens $size)
+format_tokens "$current"
+used_tokens="$REPLY"
+format_tokens "$size"
+total_tokens="$REPLY"
 
 if [ "$size" -gt 0 ]; then
 	pct_used=$((current * 100 / size))
 else
 	pct_used=0
 fi
-pct_remain=$((100 - pct_used))
-
-used_comma=$(format_commas $current)
-remain_comma=$(format_commas $((size - current)))
 
 # Check reasoning effort — cache result to avoid jq subprocess on every render
 settings_path="$claude_config_dir/settings.json"
-_effort_cache="/tmp/claude/effort-level-cache.txt"
-mkdir -p /tmp/claude 2>/dev/null
+_effort_cache="$state_dir/effort-level-cache.txt"
 effort_level=""
 if [ -n "$stdin_effort" ]; then
 	effort_level="$stdin_effort"
@@ -212,9 +253,10 @@ elif [ -n "$CLAUDE_CODE_EFFORT_LEVEL" ]; then
 	effort_level="$CLAUDE_CODE_EFFORT_LEVEL"
 elif [ -f "$settings_path" ]; then
 	if [ -f "$_effort_cache" ] && [ "$_effort_cache" -nt "$settings_path" ]; then
-		effort_level=$(<"$_effort_cache")
+		read -r effort_level <"$_effort_cache"
 	else
 		effort_val=$(jq -r '.effortLevel // empty' "$settings_path" 2>/dev/null)
+		effort_val="${effort_val//$'\r'/}"
 		effort_level="${effort_val:-medium}"
 		echo "$effort_level" >"$_effort_cache"
 	fi
@@ -227,15 +269,17 @@ out=""
 # ===== Ponytail mode badge =====
 ponytail_flag="${claude_config_dir}/.ponytail-active"
 if [ -f "$ponytail_flag" ]; then
-    p_mode=$(head -n1 "$ponytail_flag" | tr -d '[:space:]')
-    if [ -n "$p_mode" ] && [ "$p_mode" != "off" ]; then
-        if [ "$p_mode" = "full" ]; then
-            p_badge="[PONYTAIL]"
-        else
-            p_badge="[PONYTAIL:$(printf '%s' "$p_mode" | tr '[:lower:]' '[:upper:]')]"
-        fi
-        out+="${green}${p_badge}${reset} ${dim}|${reset} "
-    fi
+	p_mode=""
+	read -r p_mode <"$ponytail_flag"
+	p_mode="${p_mode//[[:space:]]/}"
+	if [ -n "$p_mode" ] && [ "$p_mode" != "off" ]; then
+		if [ "$p_mode" = "full" ]; then
+			p_badge="[PONYTAIL]"
+		else
+			p_badge="[PONYTAIL:${p_mode^^}]"
+		fi
+		out+="${green}${p_badge}${reset} ${dim}|${reset} "
+	fi
 fi
 out+="${blue}${model_name}${reset} "
 case "$effort_level" in
@@ -259,12 +303,47 @@ if [ -n "$cwd" ]; then
 	while [ -n "$git_root" ] && [ ! -e "$git_root/.git" ]; do
 		[ "$git_root" = "${git_root%/*}" ] && git_root="" || git_root="${git_root%/*}"
 	done
-	if [ -n "$git_root" ]; then # fast check avoids git subprocess for non-repo dirs
-		git_branch=$(git -C "${cwd}" rev-parse --abbrev-ref HEAD 2>/dev/null)
+	if [ -n "$git_root" ]; then
+		# Branch from HEAD without a git process. Worktrees have a .git FILE ("gitdir: <path>").
+		git_dir="$git_root/.git"
+		if [ -f "$git_dir" ]; then
+			_line=""
+			read -r _line <"$git_dir"
+			_line="${_line#gitdir: }"
+			_line="${_line%$'\r'}"
+			if [[ "$_line" == /* || "$_line" == ?:* ]]; then
+				win_to_msys "$_line"
+				git_dir="$REPLY"
+			else
+				git_dir="$git_root/$_line"
+			fi
+		fi
+		_head=""
+		[ -f "$git_dir/HEAD" ] && read -r _head <"$git_dir/HEAD"
+		_head="${_head%$'\r'}"
+		if [[ "$_head" == "ref: refs/heads/"* ]]; then
+			git_branch="${_head#ref: refs/heads/}"
+		elif [ -n "$_head" ]; then
+			git_branch="HEAD" # detached, same text as `git rev-parse --abbrev-ref HEAD`
+		fi
 	fi
 	if [ -n "$git_branch" ]; then
 		out+="${dim}@${reset}${green}${git_branch}${reset}"
-		git_stat=$(git -C "${cwd}" diff --numstat 2>/dev/null | awk '{a+=$1; d+=$2} END {if (a+d>0) printf "+%d -%d", a, d}')
+		# Diff stat cached per repo root (git diff walks the whole tree — too costly per render)
+		gs_file="$state_dir/statusline-gitstat-${git_root//[^A-Za-z0-9]/_}.txt"
+		read_ts "$gs_file"
+		git_stat=""
+		if [ $((now - REPLY)) -ge 15 ]; then
+			printf '%s\n' "$now" >"$gs_file.ts"
+			_short=$(git -C "${cwd}" diff --shortstat 2>/dev/null)
+			_add=0 _del=0
+			[[ "$_short" =~ ([0-9]+)\ insertion ]] && _add="${BASH_REMATCH[1]}"
+			[[ "$_short" =~ ([0-9]+)\ deletion ]] && _del="${BASH_REMATCH[1]}"
+			[ $((_add + _del)) -gt 0 ] && git_stat="+${_add} -${_del}"
+			printf '%s' "$git_stat" >"$gs_file"
+		elif [ -f "$gs_file" ]; then
+			read -r git_stat <"$gs_file"
+		fi
 		[ -n "$git_stat" ] && out+=" ${dim}(${reset}${green}${git_stat%% *}${reset} ${red}${git_stat##* }${reset}${dim})${reset}"
 	fi
 fi
@@ -274,27 +353,51 @@ fi
 # the projects dir + session id (project hash = cwd with \ / : replaced by -).
 transcript_msys=""
 if [ -n "$transcript_path" ]; then
-	transcript_msys=$(win_to_msys "$transcript_path")
+	win_to_msys "$transcript_path"
+	transcript_msys="$REPLY"
 fi
 if [ ! -f "$transcript_msys" ] && [ -n "$session_id" ] && [ -n "$cwd" ]; then
-	proj_hash=$(printf '%s' "$cwd" | tr '\\/:' '-')
+	proj_hash="${cwd//[\/:]/-}"
 	transcript_msys="${claude_config_dir}/projects/${proj_hash}/${session_id}.jsonl"
 fi
 
 if [ -f "$transcript_msys" ]; then
-	# A forked (branch) session records its origin in forkedFrom.sessionId on line 1.
-	forked_from=$(head -1 "$transcript_msys" 2>/dev/null | jq -r '.forkedFrom.sessionId // empty' 2>/dev/null)
-	cur_title=$(sess_title "$transcript_msys" "$session_id")
+	# Titles cached per session for 60s: the transcript grows to MBs and the title rarely changes.
+	# Cache layout: line 1 forked_from, line 2 current title, line 3 parent title.
+	st_file="$state_dir/statusline-session-${session_id:-${transcript_msys//[^A-Za-z0-9]/_}}.txt"
+	read_ts "$st_file"
+	forked_from="" cur_title="" parent_title=""
+	if [ $((now - REPLY)) -ge 60 ] || [ ! -f "$st_file" ]; then
+		# A forked (branch) session records its origin in forkedFrom.sessionId on line 1.
+		_first=""
+		read -r _first <"$transcript_msys"
+		[[ "$_first" =~ \"forkedFrom\":\{[^}]*\"sessionId\":\"([^\"]+)\" ]] && forked_from="${BASH_REMATCH[1]}"
+		sess_title "$transcript_msys" "$session_id"
+		cur_title="$REPLY"
+		if [ -n "$forked_from" ]; then
+			# Parent transcript lives in the same dir.
+			sess_title "${transcript_msys%/*}/${forked_from}.jsonl" "$forked_from"
+			parent_title="$REPLY"
+		fi
+		printf '%s\n%s\n%s\n' "$forked_from" "$cur_title" "$parent_title" >"$st_file"
+		printf '%s\n' "$now" >"$st_file.ts"
+	else
+		{
+			read -r forked_from
+			read -r cur_title
+			read -r parent_title
+		} <"$st_file"
+	fi
 
 	out+=" ${dim}|${reset} "
 	if [ -n "$forked_from" ]; then
-		# Branch: show parent › branch. Parent transcript lives in the same dir.
-		parent_path="$(dirname "$transcript_msys")/${forked_from}.jsonl"
-		parent_title=$(sess_title "$parent_path" "$forked_from")
-		out+="${purple}Session:${reset} ${white}$(truncate_str "$parent_title" 22)${reset}"
-		out+="${dim} › ${reset}${green}$(truncate_str "$cur_title" 22)${reset}"
+		truncate_str "$parent_title" 22
+		out+="${purple}Session:${reset} ${white}${REPLY}${reset}"
+		truncate_str "$cur_title" 22
+		out+="${dim} › ${reset}${green}${REPLY}${reset}"
 	else
-		out+="${purple}Session:${reset} ${white}$(truncate_str "$cur_title" 30)${reset}"
+		truncate_str "$cur_title" 30
+		out+="${purple}Session:${reset} ${white}${REPLY}${reset}"
 	fi
 fi
 
@@ -316,14 +419,17 @@ if [ "$cache_total" -gt 0 ]; then
 	else
 		hit_color="$red"
 	fi
+	format_tokens "$cache_read"
+	_cr="$REPLY"
+	format_tokens "$cache_create"
+	_cc="$REPLY"
 	out+=" ${dim}|${reset} "
-	out+="${dim}cache${reset} ${cyan}$(format_tokens $cache_read)↓${reset}${dim}/${reset}${purple}$(format_tokens $cache_create)↑${reset} ${dim}(${reset}${hit_color}${hit_pct}%${reset}${dim})${reset}"
+	out+="${dim}cache${reset} ${cyan}${_cr}↓${reset}${dim}/${reset}${purple}${_cc}↑${reset} ${dim}(${reset}${hit_color}${hit_pct}%${reset}${dim})${reset}"
 	# TTL residuo: prompt_cache.expires_at dal JSON di stdin (Claude Code >= 2.1.251).
 	# Ogni richiesta rinnova la scadenza; null quando l'ultima risposta non aveva token in cache.
 	if [ -n "$cache_expires_at" ]; then
 		[ "$cache_ttl" = "1h" ] && ttl=3600 || ttl=300
-		printf -v ttl_now '%(%s)T' -1
-		ttl_left=$((cache_expires_at - ttl_now))
+		ttl_left=$((cache_expires_at - now))
 		if [ "$ttl_left" -le 0 ]; then
 			out+=" ${red}⏳scaduta${reset}"
 		else
@@ -338,6 +444,7 @@ fi
 
 # ===== Cross-platform OAuth token resolution (from statusline.sh) =====
 # Tries credential sources in order: env var → macOS Keychain → Linux creds file → GNOME Keyring
+# Runs only inside the async refresh subshell (at most once per cache_max_age).
 get_oauth_token() {
 	local token=""
 
@@ -402,27 +509,6 @@ if [ -n "$builtin_five_hour_pct" ] || [ -n "$builtin_seven_day_pct" ]; then
 	use_builtin=true
 fi
 
-# Cache setup — shared across all Claude Code instances to avoid rate limits
-claude_config_dir_hash=$(echo -n "$claude_config_dir" | shasum -a 256 2>/dev/null || echo -n "$claude_config_dir" | sha256sum 2>/dev/null)
-claude_config_dir_hash=$(echo "$claude_config_dir_hash" | cut -c1-8)
-cache_file="/tmp/claude/statusline-usage-cache-${claude_config_dir_hash}.json"
-cache_max_age=180 # seconds between API calls
-mkdir -p /tmp/claude
-
-needs_refresh=true
-usage_data=""
-
-# Always load cache — used as primary source for API path, and as fallback when builtin reports zero
-if [ -f "$cache_file" ] && [ -s "$cache_file" ]; then
-	cache_mtime=$(stat -c %Y "$cache_file" 2>/dev/null || stat -f %m "$cache_file" 2>/dev/null)
-	printf -v now '%(%s)T' -1 # bash built-in epoch (no subprocess)
-	cache_age=$((now - cache_mtime))
-	if [ "$cache_age" -lt "$cache_max_age" ]; then
-		needs_refresh=false
-	fi
-	usage_data=$(<"$cache_file") # bash built-in file read (no subprocess)
-fi
-
 # When builtin values are all zero AND reset timestamps are missing, it likely indicates
 # an API failure on Claude's side — fall through to cached data instead of displaying
 # misleading 0%. Genuine zero responses (after a billing reset) still include valid
@@ -430,8 +516,10 @@ fi
 effective_builtin=false
 if $use_builtin; then
 	# Trust builtin if any percentage is non-zero
-	if { [ -n "$builtin_five_hour_pct" ] && [ "$(printf '%.0f' "$builtin_five_hour_pct" 2>/dev/null)" != "0" ]; } ||
-		{ [ -n "$builtin_seven_day_pct" ] && [ "$(printf '%.0f' "$builtin_seven_day_pct" 2>/dev/null)" != "0" ]; }; then
+	_p5=0 _p7=0
+	[ -n "$builtin_five_hour_pct" ] && printf -v _p5 '%.0f' "$builtin_five_hour_pct" 2>/dev/null
+	[ -n "$builtin_seven_day_pct" ] && printf -v _p7 '%.0f' "$builtin_seven_day_pct" 2>/dev/null
+	if [ "$_p5" != "0" ] || [ "$_p7" != "0" ]; then
 		effective_builtin=true
 	fi
 	# Also trust if reset timestamps are present — genuine zero responses include valid reset times
@@ -445,9 +533,9 @@ fi
 
 # Refresh API cache when stale — runs regardless of builtin rate_limits because
 # extra_usage is only exposed through the OAuth usage endpoint (not stdin JSON).
-# Throttled to cache_max_age and stampede-locked via touch for shared panes.
+# Throttled to cache_max_age and stampede-locked via the .ts file for shared panes.
 if $needs_refresh; then
-	touch "$cache_file" # stampede lock: prevent parallel panes from fetching simultaneously
+	printf '%s\n' "$now" >"$cache_file.ts" # stampede lock: prevent parallel panes from fetching simultaneously
 	# Fetch asynchronously so the statusline renders immediately from cached data.
 	# The fresh response lands in the cache for the next render — no blocking on curl.
 	(
@@ -460,109 +548,25 @@ if $needs_refresh; then
 				-H "anthropic-beta: oauth-2025-04-20" \
 				-H "User-Agent: claude-code/2.1.34" \
 				"https://api.anthropic.com/api/oauth/usage" 2>/dev/null)
-			if [ -n "$_resp" ] && echo "$_resp" | jq -e '.five_hour' >/dev/null 2>&1; then
-				echo "$_resp" >"$cache_file"
-			else
-				[ -f "$cache_file" ] && [ ! -s "$cache_file" ] && rm -f "$cache_file"
+			if [[ "$_resp" == *'"five_hour"'* ]]; then
+				printf '%s\n' "$_resp" >"$cache_file"
 			fi
-		else
-			[ -f "$cache_file" ] && [ ! -s "$cache_file" ] && rm -f "$cache_file"
 		fi
 	) >/dev/null 2>&1 &
 	disown $! 2>/dev/null
 fi
 
-# Cross-platform ISO to epoch conversion
-# Converts ISO 8601 timestamp (e.g. "2025-06-15T12:30:00Z" or "2025-06-15T12:30:00.123+00:00") to epoch seconds.
-# Properly handles UTC timestamps and converts to local time.
-iso_to_epoch() {
-	local iso_str="$1"
-
-	# Try GNU date first (Linux) — handles ISO 8601 format automatically
-	local epoch
-	epoch=$(date -d "${iso_str}" +%s 2>/dev/null)
-	if [ -n "$epoch" ]; then
-		echo "$epoch"
-		return 0
-	fi
-
-	# BSD date (macOS) - handle various ISO 8601 formats
-	local stripped="${iso_str%%.*}"                # Remove fractional seconds (.123456)
-	stripped="${stripped%%Z}"                      # Remove trailing Z
-	stripped="${stripped%%+*}"                     # Remove timezone offset (+00:00)
-	stripped="${stripped%%-[0-9][0-9]:[0-9][0-9]}" # Remove negative timezone offset
-
-	# Check if timestamp is UTC (has Z or +00:00 or -00:00)
-	if [[ "$iso_str" == *"Z"* ]] || [[ "$iso_str" == *"+00:00"* ]] || [[ "$iso_str" == *"-00:00"* ]]; then
-		# For UTC timestamps, parse with timezone set to UTC
-		epoch=$(env TZ=UTC date -j -f "%Y-%m-%dT%H:%M:%S" "$stripped" +%s 2>/dev/null)
-	else
-		epoch=$(date -j -f "%Y-%m-%dT%H:%M:%S" "$stripped" +%s 2>/dev/null)
-	fi
-
-	if [ -n "$epoch" ]; then
-		echo "$epoch"
-		return 0
-	fi
-
-	return 1
-}
-
-# Format ISO reset time to compact local time
-# Usage: format_reset_time <iso_string> <style: time|datetime|date>
-format_reset_time() {
-	local iso_str="$1"
-	local style="$2"
-	{ [ -z "$iso_str" ] || [ "$iso_str" = "null" ]; } && return
-
-	# Parse ISO datetime and convert to local time (cross-platform)
-	local epoch
-	epoch=$(iso_to_epoch "$iso_str")
-	[ -z "$epoch" ] && return
-
-	# Format based on style
-	# Try GNU date first (Linux), then BSD date (macOS)
-	# Previous implementation piped BSD date through sed/tr, which always returned
-	# exit code 0 from the last pipe stage, preventing the GNU date fallback from
-	# ever executing on Linux.
-	local formatted=""
-	case "$style" in
-	time)
-		formatted=$(date -d "@$epoch" +"%H:%M" 2>/dev/null) ||
-			formatted=$(date -j -r "$epoch" +"%H:%M" 2>/dev/null)
-		;;
-	datetime)
-		formatted=$(date -d "@$epoch" +"%b %-d, %H:%M" 2>/dev/null) ||
-			formatted=$(date -j -r "$epoch" +"%b %-d, %H:%M" 2>/dev/null)
-		;;
-	*)
-		formatted=$(date -d "@$epoch" +"%b %-d" 2>/dev/null) ||
-			formatted=$(date -j -r "$epoch" +"%b %-d" 2>/dev/null)
-		;;
-	esac
-	[ -n "$formatted" ] && echo "$formatted"
-}
-
 sep=" ${dim}|${reset} "
 
 # Render extra_usage segment from API usage data (not available via stdin rate_limits).
 # Appends to the global $out. No-op when data is missing or is_enabled is false.
+# Values already parsed by the main jq (extra_*).
 render_extra_usage() {
-	local data="$1"
-	[ -z "$data" ] && return
-	local enabled
-	enabled=$(echo "$data" | jq -r '.extra_usage.is_enabled // false' 2>/dev/null)
-	[ "$enabled" != "true" ] && return
-
-	local pct used limit
-	pct=$(echo "$data" | jq -r '.extra_usage.utilization // 0' | awk '{printf "%.0f", $1}')
-	used=$(echo "$data" | jq -r '.extra_usage.used_credits // 0' | LC_NUMERIC=C awk '{printf "%.2f", $1/100}')
-	limit=$(echo "$data" | jq -r '.extra_usage.monthly_limit // 0' | LC_NUMERIC=C awk '{printf "%.2f", $1/100}')
-
-	if [ -n "$used" ] && [ -n "$limit" ] && [[ "$used" != *'$'* ]] && [[ "$limit" != *'$'* ]]; then
-		local color
-		color=$(usage_color "$pct")
-		out+="${sep}${white}extra${reset} ${color}\$${used}/\$${limit}${reset}"
+	[ "$extra_enabled" != "true" ] && return
+	local used limit
+	if printf -v used '%.2f' "$extra_used" 2>/dev/null && printf -v limit '%.2f' "$extra_limit" 2>/dev/null; then
+		usage_color "${extra_pct:-0}"
+		out+="${sep}${white}extra${reset} ${REPLY}\$${used}/\$${limit}${reset}"
 	else
 		out+="${sep}${white}extra${reset} ${green}enabled${reset}"
 	fi
@@ -572,9 +576,9 @@ if $effective_builtin; then
 	# ---- Use rate_limits data provided directly by Claude Code in JSON input ----
 	# resets_at values are Unix epoch integers in this source
 	if [ -n "$builtin_five_hour_pct" ]; then
-		five_hour_pct=$(printf "%.0f" "$builtin_five_hour_pct")
-		five_hour_color=$(usage_color "$five_hour_pct")
-		out+="${sep}${white}5h${reset} ${five_hour_color}${five_hour_pct}%${reset}"
+		printf -v five_hour_pct "%.0f" "$builtin_five_hour_pct"
+		usage_color "$five_hour_pct"
+		out+="${sep}${white}5h${reset} ${REPLY}${five_hour_pct}%${reset}"
 		if [ -n "$builtin_five_hour_reset" ] && [ "$builtin_five_hour_reset" != "null" ]; then
 			printf -v five_hour_reset "%(%H:%M)T" "$builtin_five_hour_reset"
 			[ -n "$five_hour_reset" ] && out+=" ${dim}@${five_hour_reset}${reset}"
@@ -582,9 +586,9 @@ if $effective_builtin; then
 	fi
 
 	if [ -n "$builtin_seven_day_pct" ]; then
-		seven_day_pct=$(printf "%.0f" "$builtin_seven_day_pct")
-		seven_day_color=$(usage_color "$seven_day_pct")
-		out+="${sep}${white}7d${reset} ${seven_day_color}${seven_day_pct}%${reset}"
+		printf -v seven_day_pct "%.0f" "$builtin_seven_day_pct"
+		usage_color "$seven_day_pct"
+		out+="${sep}${white}7d${reset} ${REPLY}${seven_day_pct}%${reset}"
 		if [ -n "$builtin_seven_day_reset" ] && [ "$builtin_seven_day_reset" != "null" ]; then
 			printf -v seven_day_reset "%(%b %e, %H:%M)T" "$builtin_seven_day_reset"
 			seven_day_reset="${seven_day_reset//  / }" # normalize "May  8" → "May 8" for single-digit days
@@ -593,30 +597,27 @@ if $effective_builtin; then
 	fi
 
 	# Render extra_usage from API cache (stdin rate_limits doesn't expose it)
-	render_extra_usage "$usage_data"
+	render_extra_usage
 	# Cache update omitted: the async background API fetch maintains the cache file,
 	# including extra_usage. Writing incomplete builtin data here would overwrite it.
-elif [ -n "$usage_data" ] && echo "$usage_data" | jq -e '.five_hour' >/dev/null 2>&1; then
-	# ---- Fall back: API-fetched usage data ----
-	# ---- 5-hour (current) ----
-	five_hour_pct=$(echo "$usage_data" | jq -r '.five_hour.utilization // 0' | awk '{printf "%.0f", $1}')
-	five_hour_reset_iso=$(echo "$usage_data" | jq -r '.five_hour.resets_at // empty')
-	five_hour_reset=$(format_reset_time "$five_hour_reset_iso" "time")
-	five_hour_color=$(usage_color "$five_hour_pct")
+elif [ "$api_valid" = "true" ]; then
+	# ---- Fall back: API-fetched usage data (parsed by the main jq; resets already epoch) ----
+	usage_color "$api_five_hour_pct"
+	out+="${sep}${white}5h${reset} ${REPLY}${api_five_hour_pct}%${reset}"
+	if [ -n "$api_five_hour_reset" ]; then
+		printf -v five_hour_reset "%(%H:%M)T" "$api_five_hour_reset"
+		out+=" ${dim}@${five_hour_reset}${reset}"
+	fi
 
-	out+="${sep}${white}5h${reset} ${five_hour_color}${five_hour_pct}%${reset}"
-	[ -n "$five_hour_reset" ] && out+=" ${dim}@${five_hour_reset}${reset}"
+	usage_color "$api_seven_day_pct"
+	out+="${sep}${white}7d${reset} ${REPLY}${api_seven_day_pct}%${reset}"
+	if [ -n "$api_seven_day_reset" ]; then
+		printf -v seven_day_reset "%(%b %e, %H:%M)T" "$api_seven_day_reset"
+		seven_day_reset="${seven_day_reset//  / }"
+		out+=" ${dim}@${seven_day_reset}${reset}"
+	fi
 
-	# ---- 7-day (weekly) ----
-	seven_day_pct=$(echo "$usage_data" | jq -r '.seven_day.utilization // 0' | awk '{printf "%.0f", $1}')
-	seven_day_reset_iso=$(echo "$usage_data" | jq -r '.seven_day.resets_at // empty')
-	seven_day_reset=$(format_reset_time "$seven_day_reset_iso" "datetime")
-	seven_day_color=$(usage_color "$seven_day_pct")
-
-	out+="${sep}${white}7d${reset} ${seven_day_color}${seven_day_pct}%${reset}"
-	[ -n "$seven_day_reset" ] && out+=" ${dim}@${seven_day_reset}${reset}"
-
-	render_extra_usage "$usage_data"
+	render_extra_usage
 else
 	# No valid usage data — show placeholders
 	out+="${sep}${white}5h${reset} ${dim}-${reset}"
@@ -624,42 +625,30 @@ else
 fi
 
 # ===== Update check (cached, 24h TTL) =====
-version_cache_file="/tmp/claude/statusline-version-cache.json"
+version_cache_file="$state_dir/statusline-version-cache.json"
 version_cache_max_age=86400 # 24 hours
 
-version_needs_refresh=true
 version_data=""
-
-if [ -f "$version_cache_file" ]; then
-	vc_mtime=$(stat -c %Y "$version_cache_file" 2>/dev/null || stat -f %m "$version_cache_file" 2>/dev/null)
-	printf -v vc_now '%(%s)T' -1 # bash built-in epoch (no subprocess)
-	vc_age=$((vc_now - vc_mtime))
-	if [ "$vc_age" -lt "$version_cache_max_age" ]; then
-		version_needs_refresh=false
-	fi
-	version_data=$(<"$version_cache_file") # bash built-in file read (no subprocess)
-fi
-
-if $version_needs_refresh; then
-	touch "$version_cache_file" 2>/dev/null
+[ -s "$version_cache_file" ] && IFS= read -r -d '' version_data <"$version_cache_file"
+read_ts "$version_cache_file"
+if [ $((now - REPLY)) -ge "$version_cache_max_age" ]; then
+	printf '%s\n' "$now" >"$version_cache_file.ts"
 	# Fetch asynchronously — version data is non-critical and can lag one render.
 	(
 		_vc=$(curl -s --max-time 5 \
 			-H "Accept: application/vnd.github+json" \
 			"https://api.github.com/repos/daniel3303/ClaudeCodeStatusLine/releases/latest" 2>/dev/null)
-		if [ -n "$_vc" ] && echo "$_vc" | jq -e '.tag_name' >/dev/null 2>&1; then
-			echo "$_vc" >"$version_cache_file"
-		elif [ ! -s "$version_cache_file" ]; then
-			rm -f "$version_cache_file" 2>/dev/null
+		if [[ "$_vc" == *'"tag_name"'* ]]; then
+			printf '%s\n' "$_vc" >"$version_cache_file"
 		fi
 	) >/dev/null 2>&1 &
 	disown $! 2>/dev/null
 fi
 
 update_line=""
-if [ -n "$version_data" ]; then
-	latest_tag=$(echo "$version_data" | jq -r '.tag_name // empty')
-	if [ -n "$latest_tag" ] && version_gt "$latest_tag" "$VERSION"; then
+if [[ "$version_data" =~ \"tag_name\"[[:space:]]*:[[:space:]]*\"([^\"]+)\" ]]; then
+	latest_tag="${BASH_REMATCH[1]}"
+	if version_gt "$latest_tag" "$VERSION"; then
 		update_line="\n${dim}Update available: ${latest_tag} → Tell Claude: \"Find my installed status bar and update it\"${reset}"
 	fi
 fi
