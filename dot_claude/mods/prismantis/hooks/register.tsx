@@ -1,9 +1,10 @@
+import { atom, memberOf, read, update } from 'claude-code'
 import type { EngineInterface, Register, RenderElement } from 'claude-code'
 
 import { parse } from './markdown'
 import { boxArt, mermaidText } from './mermaid'
 import type { Drawn } from './render'
-import { remember, renderBlocks, renderExpandedShell, renderToolGroup, renderToolRow, renderTurnDuration, renderUserPrompt, width } from './render'
+import { ERROR, remember, renderBlocks, renderExpandedShell, renderToolGroup, renderToolRow, renderTurnDuration, renderUserPrompt, width } from './render'
 import { helpText, rtlShowcaseText, showcaseText } from './help'
 import { PRESET_NAMES } from './presets'
 import type { Style } from './theme'
@@ -47,6 +48,9 @@ const applyRtl = async ($: EngineInterface, style: Style): Promise<Terminal | nu
 }
 
 const expandedCalls = new Set<string>()
+
+// local: toolStyle folded. Un risultato di tool è chiuso finché un clic non lo apre (una chiamata, un valore).
+const resultOpen = atom({ plugin: 'prismantis', key: 'resultOpen' } as const, false)
 
 const drawMarkdown = ($: EngineInterface, el: ReturnType<EngineInterface['ui']['resolve']>, style: Style, blocks: ReturnType<typeof parse>, columns: number, reply?: string): RenderElement[] => {
   const { Button } = el
@@ -98,6 +102,19 @@ export const register: Register = (on, options) => {
       if (!expandedCalls.has(e.props.tool_use_id)) return renderToolRow($.ui.resolve(e), fit(e.viewport), e.props, e.viewport?.columns)
       return e.props.tool === 'Bash' || e.props.tool === 'PowerShell' ? renderExpandedShell($.ui.resolve(e), fit(e.viewport), e.props) : next(e)
     })
+    if (style.toolStyle === 'folded') {
+      on('ui.render', { component: 'ToolResult' }, async ($, e, next) => {
+        const { Box, Text, Button } = $.ui.resolve(e)
+        const open = await read($, memberOf(resultOpen, e))
+        const bad = e.props.isErrored
+        const toggle = (
+          <Button key="fold" plain onPress={() => void update($, memberOf(resultOpen, e), v => !v)}>
+            <Text color={bad ? ERROR : style.theme.codeComment}>{`${open ? '▾' : '▸'} ${bad ? 'error' : 'output'}`}</Text>
+          </Button>
+        )
+        return open ? <Box flexDirection="column">{toggle}{await next(e)}</Box> : <Box paddingLeft={2}>{toggle}</Box>
+      })
+    }
   }
 
   on('session.start', async ($, e, next) => {

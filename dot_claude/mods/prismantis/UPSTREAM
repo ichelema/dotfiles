@@ -2,3 +2,8 @@ commit 9900aaa (0.12.0) da https://github.com/NahumLitvin/prismantis
 Patch locali (da riapplicare dopo un update):
 - hooks/register.tsx: HINT di diagramHints solo al primo prompt (flag `hinted`, reset su session.end/session.compact)
 - hooks/render.tsx copySource: niente bottone copy sulle liste
+- toolStyle `folded` (stile di skins): KINDS/kindOf e rami folded in renderToolRow/renderToolGroup (render.tsx), valore in theme.ts, help.ts, plugin.json
+- toolStyle `folded`, errori e fold: ERROR (rosso fisso) in render.tsx; gestore ToolResult con atom resultOpen e Button (clic apre il risultato) in register.tsx; types/index.d.ts dichiara l'atom per tsc
+- hooks/render.tsx renderExpandedShell: una chiamata fallita mostra il testo dell'errore (output stringa) e, con folded, pallino e righe in rosso
+- hooks/render.tsx folded: colori di stato (verde in esecuzione, grigio finito, rosso errore) con RUNNING/stateColor; KINDS senza colori per tipo
+- promptStyle `framed`: riquadro squadrato verde (bordo di Box) con Clawd intero a cavallo del bordo alto, in Braille su 2 righe (12x8 punti: occhi alti 2 punti, braccia alte 1 punto, 4 gambe) per ogni prompt: riga alta sul bordo, riga bassa accanto al testo, riquadro di una riga = 3 righe (render.tsx MASCOT/renderUserPrompt, theme.ts, help.ts, plugin.json). Un figlio absolute di un Box con bordo è tagliato fuori dall'area interna (e i trucchi flex per le righe alta e bassa non disegnano nulla): la mascotte è figlia di un contenitore senza bordo, con top 0 sulla riga del bordo

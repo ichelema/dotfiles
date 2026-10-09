@@ -127,7 +127,9 @@
     "pyright-lsp@claude-plugins-official": true,
     "typescript-lsp@claude-plugins-official": true,
     "ruby-lsp@claude-plugins-official": true,
-    "lua-lsp@claude-plugins-official": true
+    "lua-lsp@claude-plugins-official": true,
+    "prismantis@inline": true,
+    "skins@inline": false
   },
   "extraKnownMarketplaces": {},
   "outputStyle": "simple",
@@ -147,7 +149,7 @@
   "inputNeededNotifEnabled": false,
   "agentPushNotifEnabled": true,
   "pluginConfigs": {
-    "prismantis@inline": { "options": { "theme": "nord" } },
+    "prismantis@inline": { "options": { "theme": "nord", "tableStyle": "box", "toolStyle": "folded", "toolRows": true, "promptStyle": "framed", "headingStyle": "banner" } },
     "jev-skill-suggestion@inline": { "options": { "logDecisions": true } }{{ with env "TYPESAFE_API_KEY" }},
     "jev-skill-suggestion": { "options": {
       "typesafeApiKey": {{ . | toJson }},

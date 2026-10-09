@@ -612,6 +612,29 @@ const toolLayout = (el: ElementTable, style: Style, columns: number, label: stri
   )
 }
 
+// local: toolStyle folded. Come skins, il gruppo conta per tipo.
+const KINDS: [RegExp, string][] = [
+  [/^(Bash|PowerShell)$/, 'Run'],
+  [/^Read$/, 'Read'],
+  [/^(Write|Edit|MultiEdit|NotebookEdit)$/, 'Edit'],
+  [/^(Grep|Glob)$/, 'Search'],
+  [/^(WebFetch|WebSearch)$/, 'Web'],
+]
+
+const kindOf = (tool: string, fallback: string): string => KINDS.find(([re]) => re.test(tool))?.[1] ?? fallback
+
+// Nessun token del tema è rosso o verde (in nord codeFlag è azzurro): per errore e esecuzione colori fissi, quelli del terminale.
+export const ERROR = 'red'
+export const RUNNING = 'green'
+
+// promptStyle framed: Clawd intero nell'arancione di Claude, in Braille su 2 righe (12x8 punti, 6 punti di disegno centrati).
+// Da sopra: testa, occhi alti 2 punti, braccia alte 1 punto (2 punti per lato), una riga di corpo, 4 gambe separate da 1 punto.
+const MASCOT = ['⠀⡖⣶⣶⢲⠀', '⠉⠟⠟⠻⠻⠉']
+const MASCOT_COLOR = '#d77757'
+
+// folded: verde mentre gira, grigio a fine lavoro, rosso se fallisce.
+const stateColor = (t: Theme, failed: boolean, running: boolean) => (failed ? ERROR : running ? RUNNING : t.codeComment)
+
 export const renderToolRow = (el: ElementTable, style: Style, row: ToolRow, columns = 100): RenderElement => {
   const { Box, Text } = el
   const t = style.theme
@@ -624,6 +647,15 @@ export const renderToolRow = (el: ElementTable, style: Style, row: ToolRow, colu
   const isPath = target !== undefined && /^(~|\.{0,2}\/|[A-Za-z]:\\)/.test(target)
 
   const label = `${verb}${target === undefined ? "" : ` ${target}`}${row.isInterrupted ? " interrupted" : row.isErrored ? " failed" : ""}`
+  if (style.toolStyle === 'folded') {
+    const color = stateColor(t, row.isErrored, row.isRunning)
+    return toolLayout(el, style, columns, label, color, row.isRunning, (
+      <Text wrap="truncate-end">
+        <Text bold color={color}>{row.tool.replace(/^mcp__([^_]+)__/, '$1:')}</Text>
+        {target === undefined ? null : <Text color={row.isErrored ? ERROR : t.codeComment}>{`  ${target}`}</Text>}
+      </Text>
+    ))
+  }
   return toolLayout(el, style, columns, label, dot, row.isRunning, (
       <Text wrap="truncate-end" dimColor={toolDim(style)}>
         <Text bold={!toolDim(style)} dimColor={toolDim(style)}>{verb}</Text>
@@ -643,11 +675,14 @@ export const renderExpandedShell = (el: ElementTable, style: Style, row: ToolRow
   const t = style.theme
   const command = (field(row.input, 'command') ?? '').split('\n')
   const out = row.output !== null && typeof row.output === 'object' ? (row.output as Record<string, unknown>) : {}
+  // local: una chiamata fallita ha come output il testo letto dal modello, non { stdout, stderr }
+  const failedText = typeof row.output === 'string' ? lines(row.output) : []
   const stdout = lines(out.stdout)
-  const stderr = lines(out.stderr)
-  const shown = [...stdout.map(text => ({ text, color: undefined as string | undefined })), ...stderr.map(text => ({ text, color: t.codeFlag as string | undefined }))]
+  const stderr = failedText.length ? failedText : lines(out.stderr)
+  const bad = row.isErrored && style.toolStyle === 'folded'
+  const shown = [...stdout.map(text => ({ text, color: undefined as string | undefined })), ...stderr.map(text => ({ text, color: (bad ? ERROR : t.codeFlag) as string | undefined }))]
   const visible = shown.slice(0, OUTPUT_LINES)
-  const dot = row.isErrored ? t.codeFlag : row.isInterrupted ? t.codeComment : row.isRunning ? t.accent : t.number
+  const dot = style.toolStyle === 'folded' ? stateColor(t, bad, row.isRunning) : row.isErrored ? t.codeFlag : row.isInterrupted ? t.codeComment : row.isRunning ? t.accent : t.number
   return (
     <Box flexDirection="column">
       <Box flexDirection="row">
@@ -710,6 +745,25 @@ export const renderToolGroup = (el: ElementTable, style: Style, calls: readonly 
   const last = calls[calls.length - 1]
   const lastTarget = last ? field(last.input, 'command', 'file_path', 'notebook_path', 'path', 'pattern', 'url', 'query', 'description')?.split('\n')[0] : undefined
   const label = `${groupSummary(calls)}${failed ? ` · ${failed} failed` : ""}${lastTarget ? ` · last: ${lastTarget}` : ""}`
+  if (style.toolStyle === 'folded') {
+    const counts = new Map<string, { n: number; bad: boolean; running: boolean }>()
+    for (const call of calls) {
+      const name = kindOf(call.tool, 'Other')
+      const seen = counts.get(name)
+      counts.set(name, { n: (seen?.n ?? 0) + 1, bad: (seen?.bad ?? false) || call.isErrored, running: (seen?.running ?? false) || (isActive && call.isRunning) })
+    }
+    return toolLayout(el, style, columns, label, stateColor(t, failed > 0, running), running, (
+      <Text wrap="truncate-end">
+        {[...counts].map(([name, { n, bad, running: busy }], i) => (
+          <Text key={name}>
+            {i ? <Text color={t.codeComment}>{' · '}</Text> : null}
+            <Text bold color={stateColor(t, bad, busy)}>{name}</Text>
+            <Text color={t.codeComment}>{` ${n}`}</Text>
+          </Text>
+        ))}
+      </Text>
+    ))
+  }
   return toolLayout(el, style, columns, label, dot, running, (
       <Text wrap="truncate-end" dimColor={toolDim(style)}>
         <Text bold={!toolDim(style)} dimColor={toolDim(style)}>{groupSummary(calls)}</Text>
@@ -736,7 +790,7 @@ export const renderTurnDuration = ({ Text }: ElementTable, style: Style, word: s
 export const renderUserPrompt = (el: ElementTable, style: Style, text: string, columns: number): RenderElement => {
   const { Box, Text } = el
   const t = style.theme
-  const color = style.promptStyle === 'chevron' ? t.accent : t.heading
+  const color = style.promptStyle === 'chevron' ? t.accent : style.promptStyle === 'framed' ? t.codeText : t.heading
   const lines = text.split('\n').map(line => flowOf(style, [{ kind: 'text', text: line }], columns - 4))
   const rtl = lines.some(l => l?.base === 'R')
   const body = (
@@ -748,7 +802,20 @@ export const renderUserPrompt = (el: ElementTable, style: Style, text: string, c
     </Box>
   )
   if (style.promptStyle === 'bubble') {
-    return <Box borderStyle="round" borderColor={t.accent} paddingX={1} alignSelf={rtl ? 'flex-end' : 'flex-start'}>{body}</Box>
+    return <Box borderStyle="round" borderColor={t.accent} paddingX={1} width="100%">{body}</Box>
+  }
+  // local: promptStyle framed. Riquadro squadrato verde (bordo di Box) con Clawd a cavallo del bordo alto:
+  // la riga alta sulla riga del bordo, quella bassa sulla prima riga di testo (riquadro di una riga = 3 righe).
+  // Il contenitore esterno non ha bordo, così il figlio absolute (top 0) non è tagliato fuori dall'area interna.
+  if (style.promptStyle === 'framed') {
+    return (
+      <Box width={columns - 1} marginLeft={1} marginTop={1} marginBottom={1}>
+        <Box borderStyle="single" borderColor={t.codeString} paddingLeft={7} paddingRight={1} width="100%">{body}</Box>
+        <Box position="absolute" top={0} left={1} flexDirection="column">
+          {MASCOT.map((row, i) => <Text key={`m${i}`} color={MASCOT_COLOR}>{row}</Text>)}
+        </Box>
+      </Box>
+    )
   }
   const mark = <Text color={t.accent} bold>{style.promptStyle === 'bar' ? (rtl ? ' ▐' : '▌ ') : rtl ? ' ‹' : '› '}</Text>
   return <Box flexDirection="row" {...(rtl ? { justifyContent: 'flex-end' as const } : {})}>{rtl ? body : mark}{rtl ? mark : body}</Box>

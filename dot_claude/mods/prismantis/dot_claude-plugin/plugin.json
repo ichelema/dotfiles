@@ -76,16 +76,16 @@
     "promptStyle": {
       "type": "string",
       "title": "Your prompt style",
-      "description": "How the prompts you type draw in the transcript. bubble: a rounded box in the accent color. bar: an accent bar on the left. chevron: a bold accent › before the text. off: Claude Code's own look.",
+      "description": "How the prompts you type draw in the transcript. bubble: a rounded box in the accent color. bar: an accent bar on the left. chevron: a bold accent › before the text. framed: a full-width square box with a green border and the Claude Code mascot (two rows, in Braille) across its top edge. off: Claude Code's own look.",
       "default": "bubble",
-      "options": ["bubble", "bar", "chevron", "off"]
+      "options": ["bubble", "bar", "chevron", "off", "framed"]
     },
     "toolStyle": {
       "type": "string",
       "title": "Tool row style",
-      "description": "How tool rows (Ran, Read, Edited) sit next to Claude's sentences. chat: tool rows dimmed on the right, Claude on the left. tree-dim: tucked under the sentence with ⎿ and dimmed. tree-bold: tree-dim plus one-line sentences in bold. classic: the original look.",
+      "description": "How tool rows (Ran, Read, Edited) sit next to Claude's sentences. chat: tool rows dimmed on the right, Claude on the left. tree-dim: tucked under the sentence with ⎿ and dimmed. tree-bold: tree-dim plus one-line sentences in bold. classic: the original look. folded: one line per call on the left, the tool name colored by kind, and a group drawn as one node with counts per kind (Read 3 · Search 2). A failed call draws in red, and every tool result stays folded until you click it.",
       "default": "chat",
-      "options": ["chat", "tree-dim", "tree-bold", "classic"]
+      "options": ["chat", "tree-dim", "tree-bold", "classic", "folded"]
     },
     "taskStyle": {
       "type": "string",

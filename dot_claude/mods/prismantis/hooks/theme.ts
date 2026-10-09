@@ -16,8 +16,8 @@ export type Style = {
   headingStyle: 'bold' | 'underline' | 'uppercase' | 'banner'
   tableStyle: 'box' | 'rules' | 'grid' | 'minimal'
   taskStyle: 'checks' | 'ticks' | 'box' | 'progress'
-  promptStyle: 'bubble' | 'bar' | 'chevron' | 'off'
-  toolStyle: 'chat' | 'tree-dim' | 'tree-bold' | 'classic'
+  promptStyle: 'bubble' | 'bar' | 'chevron' | 'off' | 'framed'
+  toolStyle: 'chat' | 'tree-dim' | 'tree-bold' | 'classic' | 'folded'
   narration?: boolean
   highlightNumbers: boolean
   highlightPaths: boolean
@@ -50,8 +50,8 @@ export const resolveStyle = (options: PluginOptions): Style => {
     headingStyle: pick(options.headingStyle, ['bold', 'underline', 'uppercase', 'banner'] as const, 'banner'),
     tableStyle: pick(options.tableStyle, ['box', 'rules', 'grid', 'minimal'] as const, 'box'),
     taskStyle: pick(options.taskStyle, ['checks', 'ticks', 'box', 'progress'] as const, 'checks'),
-    promptStyle: pick(options.promptStyle, ['bubble', 'bar', 'chevron', 'off'] as const, 'bubble'),
-    toolStyle: pick(options.toolStyle, ['chat', 'tree-dim', 'tree-bold', 'classic'] as const, 'chat'),
+    promptStyle: pick(options.promptStyle, ['bubble', 'bar', 'chevron', 'off', 'framed'] as const, 'bubble'),
+    toolStyle: pick(options.toolStyle, ['chat', 'tree-dim', 'tree-bold', 'classic', 'folded'] as const, 'chat'),
     highlightNumbers: options.highlightNumbers !== false,
     highlightPaths: options.highlightPaths !== false,
     mermaid: options.mermaid !== false,
