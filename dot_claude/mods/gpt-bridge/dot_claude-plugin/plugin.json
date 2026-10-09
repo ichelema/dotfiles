@@ -1,0 +1,1 @@
+{ "name": "gpt-bridge", "version": "0.1.0", "description": "Subagente nativo con inferenza GPT via LiteLLM: la mod risponde al turn.step dell'agente chiamando il proxy", "author": { "name": "Ichelema" } }
