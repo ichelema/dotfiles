@@ -1,10 +1,10 @@
 # Blast Radius
 
-A Claude Code mod that holds a risky shell command and shows you what it would change before it runs. We're sharing it as a small, complete example of a mod that pauses a tool call and asks you to decide.
+A Claude Code mod that queues a risky shell command and shows you what it would change, so you run it by hand or drop it. Claude is never held: it gets a refusal at once and goes on with the task.
 
 ## What this shows
 
-When Claude calls Bash with one of the commands below, Blast Radius stops the call, works out what the command would touch, and opens a pane with two buttons: **Proceed** runs the command, **Cancel** refuses it. Claude sees the refusal and the reason.
+When Claude calls Bash with one of the commands below, Blast Radius refuses the call at once, works out what the command would touch, and adds it to a pane. Each queued command has two buttons: **Yes** runs it in `bash -c` from the folder Claude was in (the mod runs it, not Claude), **No** drops it. A row that ran leaves the list with a toast; a row that failed stays in red with the tail of its stderr until **Dismiss**. The pane closes when the list is empty. Claude sees the refusal with the queue number and the summary; it does not learn whether you pressed Yes.
 
 | Command | What the pane shows |
 |---|---|
@@ -20,11 +20,14 @@ Every other command runs as normal. If the command line moves first, with `cd di
 
 The patterns it demonstrates:
 
-- Holding a `tool.call` until the user answers, and returning `{ deny }` with a reason Claude can act on.
-- Drawing the same report in a `Pane`, or in the `AbovePrompt` band when the terminal is too narrow for a pane.
+- Refusing a `tool.call` at once with `{ deny }` and a reason Claude can act on, while a pane that outlives the hook keeps the queue.
+- Running a command from a Button's `onPress` with `$.process.run(["bash", "-c", ...])`, outside any hook budget.
+- Drawing the same queue in a `Pane`, or in the `AbovePrompt` band when the terminal is too narrow for a pane.
 - Measuring with `$.process.run`, passing paths as arguments so nothing in them runs as shell.
 
 ## Demo
+
+The screenshots below are from the earlier version, which held the call with Proceed and Cancel; the queue version draws one Yes/No pair per command instead.
 
 `rm -rf build` held, with the files it would delete:
 

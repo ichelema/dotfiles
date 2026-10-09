@@ -1,29 +1,29 @@
 // Copyright 2026 Anthropic PBC
 // SPDX-License-Identifier: Apache-2.0
 //
-// Blast Radius: holds a risky Bash command and shows what it would change.
+// Blast Radius: queues a risky Bash command and shows what it would change.
 //
-// tool.call (Bash): if the command is risky, work out its blast radius, open a
-// pane with Proceed and Cancel, and hold the call until one is pressed.
-// ui.render (Pane): draws the report. If the surface won't place the pane (a
-// narrow terminal), the same report is drawn in the AbovePrompt band instead.
-//
-// Holding: a hook has 10 s of its own time, but time spent inside a `$` call is
-// free. So the hold loop waits on a short `$.process.run(["sleep", ...])` until
-// a button's onPress sets the decision.
+// tool.call (Bash): if the command is risky, work out its blast radius, refuse
+// the call at once and add the command to a queue. The agent goes on working.
+// ui.render (Pane): draws the queue, one Yes/No pair per command. Yes runs the
+// command in bash from the mod itself, No drops it; either way the row leaves.
+// If the surface won't place the pane (a narrow terminal), the same queue is
+// drawn in the AbovePrompt band instead.
 //
 // The host reads `on(...)` and `$.noun.method(...)` from source, so they are
 // spelled literally, and helpers that take `$` are top-level functions.
 
 const PANE_ID = "blast-radius";
-const POLL_SECONDS = "0.25";
-const HOLD_LIMIT_MS = 5 * 60 * 1000;
 const LIST_MAX = 10;
+const RUN_LIMIT_MS = 10 * 60 * 1000; // ceiling of $.process.run
 
-// The call being held, or null. One at a time: Bash calls in a turn run in order.
-let held = null;
-// False in a `claude -p` run or under the SDK: nobody can press Proceed, so a
-// risky command is refused at once instead of after HOLD_LIMIT_MS.
+// Commands waiting for Yes/No, oldest first. The agent is never held: a risky
+// call is refused at once and lands here. Yes runs it in bash, No drops it.
+const queue = [];
+let nextId = 1;
+let where = "pane"; // "band" when the terminal is too narrow for the pane
+// False in a `claude -p` run or under the SDK: nobody can press Yes, so a
+// risky command is refused with no queue.
 let isInteractive = true;
 // rm under ~/.claude/tmp (the agent's scratch folder) runs without a hold.
 // session.start adds HOME's absolute forms (E:/… and /e/… on MSYS2).
@@ -46,103 +46,59 @@ export function register(on) {
   });
 
   on("tool.call", { tool: "Bash" }, async ($, e, next) => {
-    const risk = classify(String(e.command ?? ""));
+    const command = String(e.command ?? "");
+    const risk = classify(command);
     if (risk === null) {
       return next(e);
     }
     if (!isInteractive) {
       return { deny: `Blast Radius: ${risk.label} needs a person to confirm, and this session has none (claude -p / SDK). Do not retry it.` };
     }
-    // One hold at a time. If another risky call is already held (a subagent's,
-    // say), wait until it is answered. `held` is claimed with no await between
-    // the check and the claim, so two waiting calls can't both get through.
-    while (held !== null) {
-      if (next.signal.aborted) {
-        return { deny: "Blast Radius held this command and did not run it: the turn was interrupted. Do not retry it unless the user asks you to." };
-      }
-      await $.process.run(["sleep", POLL_SECONDS], { timeoutMs: 5000 });
-    }
-    const mine = { command: String(e.command), risk, report: null, decision: null, where: "pane" };
-    held = mine;
-
-    let opened = { isPlaced: false };
-    let decision;
-    let summary = risk.label;
-    try {
-      // Measure where the command will run: the session folder, moved by any
-      // `cd dir &&` or `git -C dir` earlier in the same command line.
-      const sessionCwd = await $.session.cwd();
-      const cwd = risk.dir ? await resolveDir($, sessionCwd, risk.dir) : sessionCwd;
-      mine.report = cwd === null
-        ? { summary: `${risk.label} in ${risk.dir}`, lines: [], note: `Couldn't find the folder ${risk.dir}, so I couldn't measure what this would change.` }
-        : await measure($, risk, cwd);
-      summary = mine.report.summary;
-
-      opened = await $.ui.open({ id: PANE_ID, title: "Blast Radius", focus: true, rows: paneRows(mine.report) });
-      if (!opened.isPlaced) {
-        mine.where = "band";
-      }
-      $.ui.invalidate("ui.render");
-
-      const startedAt = await $.clock.now();
-      while (mine.decision === null) {
-        if (next.signal.aborted) {
-          mine.decision = "interrupted";
-          break;
-        }
-        if ((await $.clock.now()) - startedAt > HOLD_LIMIT_MS) {
-          mine.decision = "timeout";
-          break;
-        }
-        await $.process.run(["sleep", POLL_SECONDS], { timeoutMs: 5000 });
-      }
-    } catch {
-      mine.decision = "error"; // anything unexpected refuses the command
-    } finally {
-      decision = mine.decision;
-      // Close this call's pane before releasing the hold, so the next call's
-      // pane can't be the one that gets closed.
-      try {
-        if (opened.isPlaced) {
-          await $.ui.close({ id: PANE_ID });
-        }
-      } catch {
-        // the pane is already gone
-      }
-      if (held === mine) {
-        held = null;
-      }
-      $.ui.invalidate("ui.render");
-    }
-
-    if (decision === "proceed") {
-      $.ui.toast("Blast Radius: running it");
-      return next(e);
-    }
-    const why = {
-      cancel: "the user pressed Cancel",
-      timeout: "no answer within 5 minutes",
-      interrupted: "the turn was interrupted",
-      error: "Blast Radius hit an error while holding it",
-    }[decision] ?? "no answer was recorded";
+    // Measure where the command will run: the session folder, moved by any
+    // `cd dir &&` or `git -C dir` earlier in the same command line.
+    const sessionCwd = await $.session.cwd();
+    const cwd = risk.dir ? await resolveDir($, sessionCwd, risk.dir) : sessionCwd;
+    const report = cwd === null
+      ? { summary: `${risk.label} in ${risk.dir}`, lines: [], note: `Couldn't find the folder ${risk.dir}, so I couldn't measure what this would change.` }
+      : await measure($, risk, cwd);
+    const item = { id: nextId++, command, cwd: sessionCwd, risk, report, running: false };
+    queue.push(item);
+    await showQueue($, queue.length === 1);
     return {
-      deny: `Blast Radius held this command and did not run it: ${why}. It would have: ${summary}. Do not retry it unless the user asks you to.`,
+      deny: `Blast Radius queued this command as #${item.id}: the user runs it by hand (Yes) or drops it (No). It would: ${report.summary}. Do not retry it and do not assume it ran; go on with the rest of the task.`,
     };
   });
 
   on("ui.render", { component: "Pane" }, ($, e, next) => {
-    if (e.requestId !== PANE_ID || held === null || held.report === null) {
+    if (e.requestId !== PANE_ID || queue.length === 0) {
       return next(e);
     }
-    return draw($.ui.resolve(e), held);
+    return draw($, $.ui.resolve(e));
   });
 
   on("ui.render", { component: "AbovePrompt" }, ($, e, next) => {
-    if (held === null || held.report === null || held.where !== "band") {
+    if (queue.length === 0 || where !== "band") {
       return next(e);
     }
-    return draw($.ui.resolve(e), held);
+    return draw($, $.ui.resolve(e));
   });
+}
+
+// Opens, retitles or closes the pane to match the queue. Focus only on the
+// first command, so later ones don't steal the keyboard while the user types.
+async function showQueue($, focus) {
+  if (queue.length === 0) {
+    try {
+      await $.ui.close({ id: PANE_ID });
+    } catch {
+      // already gone
+    }
+    where = "pane";
+  } else {
+    const opened = await $.ui.open({ id: PANE_ID, title: `Blast Radius (${queue.length})`, ...(focus ? { focus: true } : {}), rows: paneRows() });
+    where = opened.isPlaced ? "pane" : "band";
+  }
+  $.ui.invalidate("ui.render");
 }
 
 // ---- What counts as risky -------------------------------------------------
@@ -520,44 +476,98 @@ function size(bytes) {
 
 // ---- Drawing --------------------------------------------------------------
 
-function paneRows(report) {
-  return Math.min(24, 9 + report.lines.length + (report.more ? 1 : 0));
+function paneRows() {
+  const first = queue[0].report;
+  const failed = queue.reduce((n, it) => n + (it.failed ? 1 + it.failed.lines.length : 0), 0);
+  return Math.min(24, 3 + 4 * queue.length + failed + first.lines.length + (first.more ? 1 : 0) + (first.note ? 1 : 0));
 }
 
-function draw(t, state) {
-  const { Box, Text, Button } = t;
-  const { report } = state;
-  const list = report.lines.map((line, i) => Text({ key: `l${i}`, children: `  ${line}`, wrap: "truncate-end" }));
-  if (report.more) {
-    list.push(Text({ key: "more", dimColor: true, children: `  + ${report.more} more` }));
-  }
-  // The buttons answer the call this pane was drawn for, never whichever one is held now.
-  const decide = (choice) => () => {
-    if (state.decision === null) {
-      state.decision = choice;
+// Yes runs the command in bash from the folder the agent was in, No drops it
+// (Dismiss on a failed row is a No); a decided row leaves the list unless it
+// failed. A running row answers no second press.
+function decide($, item, choice) {
+  return async () => {
+    if (item.running) {
+      return;
     }
+    if (choice === "yes") {
+      item.running = true;
+      $.ui.invalidate("ui.render");
+      let outcome;
+      let stderr = "";
+      try {
+        const run = await $.process.run(["bash", "-c", item.command], { cwd: item.cwd, timeoutMs: RUN_LIMIT_MS });
+        outcome = run.exitCode === 0 ? "done" : `exit ${run.exitCode}`;
+        stderr = run.stderr.trim();
+        if (stderr !== "") {
+          $.ui.log(`#${item.id} stderr: ${stderr.slice(0, 500)}`);
+        }
+      } catch (error) {
+        outcome = `failed: ${String(error?.message ?? error).slice(0, 100)}`;
+      }
+      // Success leaves the list with a toast; a failure stays on the pane, in red,
+      // with the tail of stderr and a Dismiss button, so nothing is missed.
+      if (outcome === "done") {
+        $.ui.toast(`Blast Radius #${item.id} done: ${item.command}`);
+      } else {
+        item.running = false;
+        item.failed = { outcome, lines: stderr.split("\n").filter((l) => l !== "").slice(-5) };
+        $.ui.invalidate("ui.render");
+        return;
+      }
+    }
+    const i = queue.indexOf(item);
+    if (i >= 0) {
+      queue.splice(i, 1);
+    }
+    await showQueue($, false);
   };
+}
+
+function draw($, t) {
+  const { Box, Text } = t;
   return Box({
     flexDirection: "column",
     borderStyle: "round",
     borderColor: "yellow",
     paddingX: 1,
     children: [
-      Text({ key: "title", bold: true, color: "yellow", children: `⚠ Blast Radius · ${state.risk.label}` }),
-      Text({ key: "cmd", children: [Text({ dimColor: true, children: "Command  " }), Text({ bold: true, children: state.command })], wrap: "truncate-end" }),
-      Text({ key: "sum", children: [Text({ dimColor: true, children: "Would    " }), Text({ color: "red", bold: true, children: report.summary })] }),
-      Box({ key: "list", flexDirection: "column", marginTop: 1, children: list }),
-      report.note ? Text({ key: "note", dimColor: true, italic: true, children: report.note, wrap: "wrap" }) : null,
-      Box({
-        key: "buttons",
-        marginTop: 1,
-        gap: 2,
-        children: [
-          Button({ key: "proceed", label: "Proceed", hotkey: "1", plain: true, onPress: decide("proceed") }),
-          Button({ key: "cancel", label: "Cancel", hotkey: "2", plain: true, autoFocus: true, onPress: decide("cancel") }),
-          Text({ key: "hint", dimColor: true, children: "Claude is waiting on your answer" }),
-        ],
-      }),
+      Text({ key: "title", bold: true, color: "yellow", children: `⚠ Blast Radius · ${queue.length} waiting` }),
+      ...queue.map((item, i) => drawItem($, t, item, i === 0)),
+    ],
+  });
+}
+
+// The file list and the hotkeys go to the oldest command only, to keep the pane short.
+function drawItem($, { Box, Text, Button }, item, first) {
+  const { id, report } = item;
+  const list = first ? report.lines.map((line, i) => Text({ key: `l${id}:${i}`, children: `  ${line}`, wrap: "truncate-end" })) : [];
+  if (first && report.more) {
+    list.push(Text({ key: `more${id}`, dimColor: true, children: `  + ${report.more} more` }));
+  }
+  return Box({
+    key: `item${id}`,
+    flexDirection: "column",
+    marginTop: 1,
+    children: [
+      Text({ key: `cmd${id}`, children: [Text({ dimColor: true, children: `#${id}  ` }), Text({ bold: true, children: item.command })], wrap: "truncate-end" }),
+      Text({ key: `sum${id}`, children: [Text({ dimColor: true, children: "Would  " }), Text({ color: "red", bold: true, children: report.summary })] }),
+      ...list,
+      first && report.note ? Text({ key: `note${id}`, dimColor: true, italic: true, children: report.note, wrap: "wrap" }) : null,
+      item.failed ? Text({ key: `err${id}`, color: "red", bold: true, children: `✖ ${item.failed.outcome}` }) : null,
+      ...(item.failed ? item.failed.lines.map((line, i) => Text({ key: `e${id}:${i}`, color: "red", children: `  ${line}`, wrap: "wrap" })) : []),
+      item.running
+        ? Text({ key: `run${id}`, color: "yellow", children: "running in bash…" })
+        : item.failed
+          ? Button({ key: `dismiss${id}`, label: "Dismiss", plain: true, ...(first ? { hotkey: "1", autoFocus: true } : {}), onPress: decide($, item, "no") })
+          : Box({
+              key: `btn${id}`,
+              gap: 2,
+              children: [
+                Button({ key: `yes${id}`, label: "Yes", plain: true, ...(first ? { hotkey: "1" } : {}), onPress: decide($, item, "yes") }),
+                Button({ key: `no${id}`, label: "No", plain: true, ...(first ? { hotkey: "2", autoFocus: true } : {}), onPress: decide($, item, "no") }),
+              ],
+            }),
     ],
   });
 }
