@@ -34,6 +34,7 @@
     "extensionManager": {
       "config": {
         "@vanillagreen/pi-tool-renderer": {
+          "enabled": true,
           "alignAssistantMessages": false,
           "styledCodeBlocks": false,
           "registerBatchTool": true,
@@ -50,9 +51,7 @@
 {{- end }}
     {
       "source": "npm:pi-tool-display",
-      "extensions": [
-        "-index.ts"
-      ]
+      "extensions": []
     },
     "npm:pi-omplike-advisor",
     "npm:@juancrg90/nightfox-themes",
