@@ -137,7 +137,7 @@
   "spinnerTipsEnabled": false,
   "effortLevel": "high",
   "tui": "fullscreen",
-  "showThinkingSummaries": true,
+  "showThinkingSummaries": false,
   "skipDangerousModePermissionPrompt": false,
   "skipWorkflowUsageWarning": true,
   "theme": "custom:nord",
