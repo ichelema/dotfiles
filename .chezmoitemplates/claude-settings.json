@@ -129,7 +129,8 @@
     "ruby-lsp@claude-plugins-official": true,
     "lua-lsp@claude-plugins-official": true,
     "prismantis@inline": true,
-    "skins@inline": false
+    "skins@inline": false,
+    "replay@inline": false
   },
   "extraKnownMarketplaces": {},
   "outputStyle": "simple",
