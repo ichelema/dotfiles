@@ -13,6 +13,8 @@ export XDG_STATE_HOME="$HOME/.local/state"
 
 # --- Chrome DevTools Protocol ---
 export CDP_PORT_FILE='E:/msys64/home/Sphynx/.cache/chrome-cdp-profile/DevToolsActivePort'
+# Puppeteer (mermaid-cli) usa il Chrome di sistema invece di scaricare Chromium
+export PUPPETEER_EXECUTABLE_PATH='C:/Program Files/Google/Chrome/Application/chrome.exe'
 
 # --- Ripgrep dirs ---
 export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/ripgreprc"
