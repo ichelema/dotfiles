@@ -2125,6 +2125,9 @@
         augroup ThemeSpecificColors
         autocmd!
         autocmd ColorScheme * call FixColorScheme()
+        " airline segue il colorscheme: usa il tema omonimo se esiste, poi ridisegna.
+        " All'avvio airline non e' ancora caricato: li' vale g:airline_theme.
+        autocmd ColorScheme * if exists(':AirlineTheme') == 2 | silent execute 'AirlineTheme' expand('<amatch>') | AirlineRefresh | endif
         augroup END
 
         colorscheme nightfox
