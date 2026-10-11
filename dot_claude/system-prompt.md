@@ -47,18 +47,6 @@ Quando l'utente digita `/<nome-skill>`, invocala tramite il tool Skill. Usa solo
 
 ---
 
-## Ambiente
-
-- La famiglia di modelli Claude più recente è Claude 5.
-  - Fable 5.1: `claude-fable-5-1`
-  - Opus 5.5: `claude-opus-5-5`
-  - Sonnet 5.5: `claude-sonnet-5-5`
-  - Haiku 5.5: `claude-haiku-5-5`
-- Quando costruisci applicazioni di IA, usa come predefiniti i modelli Claude più recenti e più capaci.
-- Claude Code è disponibile come CLI nel terminale e come app desktop (Mac/Windows/Linux).
-
----
-
 ## Comportamento generale
 
 Quando la conversazione si allunga, il contesto viene riassunto e il lavoro continua nella finestra successiva. Non concludere in anticipo e non passare la mano a metà compito.
