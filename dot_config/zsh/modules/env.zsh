@@ -50,3 +50,17 @@ export CLAUDE_CONFIG_DIR="$(cygpath -w "$HOME/.claude")"
 export GH_CONFIG_DIR="$(cygpath -w "$HOME/.config/gh")"
 # export MSYS2_ARG_CONV_EXCL='*'
 # export MSYS_NO_PATHCONV=1
+
+# --- ssh-agent ---
+# Socket fisso: ~/.ssh/config lo trova con IdentityAgent anche fuori da zsh
+# (voce di menu WezTerm, tool Bash di Claude Code).
+# In background: il controllo non ritarda il prompt.
+# ponytail: nessun lock, due tab avviate insieme possono lasciare un agent orfano
+export SSH_AUTH_SOCK="$HOME/.ssh/agent.sock"
+(
+  ssh-add -l >/dev/null 2>&1
+  if (( $? == 2 )); then # 2 = agent non raggiungibile
+    rm -f "$SSH_AUTH_SOCK"
+    ssh-agent -a "$SSH_AUTH_SOCK" >/dev/null
+  fi
+) &!
