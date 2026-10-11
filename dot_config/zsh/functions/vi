@@ -1,0 +1,5 @@
+emulate -L zsh
+
+# vi: Vim con il vimrc minimale (~/.config/vim/minimal) al posto di quello
+# completo. Passa per la funzione vim, che lancia il Vim nativo Windows.
+vim -u ~/.config/vim/minimal "$@"
