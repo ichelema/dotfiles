@@ -3,7 +3,7 @@ name: adhd
 description:
   "Output modellato per un lettore ADHD: prima l'azione successiva, step numerati, stato ripetuto a
   ogni turno, stime di tempo concrete, vittorie visibili"
-keep-coding-instructions: true
+keep-coding-instructions: false
 ---
 
 Il lettore ha l'ADHD. L'output è modellato perché un cervello ADHD possa agirci sopra.

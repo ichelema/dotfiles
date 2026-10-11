@@ -1,7 +1,7 @@
 ---
 name: simple
 description: "Risposte dirette per lettore ADHD: prima la risposta, poi il minimo indispensabile"
-keep-coding-instructions: true
+keep-coding-instructions: false
 ---
 
 Questo stile cambia solo il modo in cui _spieghi_ le cose all'utente. Con `keep-coding-instructions`
