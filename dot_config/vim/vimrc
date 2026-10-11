@@ -406,7 +406,8 @@
     " Commentary {{{
         " Config {{{
             " plugin comment incluso in Vim (pack/dist/opt/comment), non piu' vim-commentary
-            packadd comment
+            " caricato dopo l'avvio: all'avvio costa ~20 ms
+            call timer_start(650, {-> execute('packadd comment')})
             " toggle-line = commenta la riga (come il vecchio :Commentary)
             nnoremap <silent><localleader>. <Plug>(comment-toggle-line)
             vnoremap <silent><localleader>. <Plug>(comment-toggle)
@@ -1637,6 +1638,8 @@
             " }}} Note
 
             " Config {{{
+                " eseguita al primo ':' (vedi Autocmd): all'avvio costa ~55 ms
+                function! s:wilder_setup() abort " {{{
                 call wilder#setup({
                     \ 'modes': [':'],
                     \ 'next_key': '<Up>',
@@ -1673,6 +1676,7 @@
                     \   'left': [' ', wilder#popupmenu_devicons()],
                     \   'right': [' ', wilder#popupmenu_scrollbar()],
                     \ })))
+                endfunction " }}}
             " }}} Config
 
             " Function {{{
@@ -1746,6 +1750,7 @@
             " Autocmd {{{
                 let s:wilder_started = 0
                 autocmd CmdlineLeave * let s:wilder_started = 0 | call wilder#main#stop()
+                au CmdlineEnter * ++once call s:wilder_setup()
                 if s:IsPlugged('nvim-yarp')
                     au CmdlineEnter * ++once call s:wilder_python_init()
                 else
@@ -1855,7 +1860,8 @@
         " timeoutlen: timeout insert key
         set tm=500
         " Set English and Italian language
-        set spell spelllang=it,en
+        " senza 'spell': caricare i dizionari qui costa ~80 ms e 'set nospell' sotto lo spegne comunque
+        set spelllang=it,en
         " Cerca la documentazione in italiano se presente altrimenti in inglese
         set helplang=it,en
         " Now, when using :sb, :sbnext, :sbprev instead of :b, :bnext, :bprev to switch buffers, Vim will check if

@@ -10,17 +10,11 @@ local nvim_win="/c/Appl/Neovim/bin/nvim.exe"
 # e l'fs watcher fallisce con ENOENT (nvim-tree, gitsigns, fugitive).
 local git_win="/c/Appl/cmder/vendor/git-for-windows/cmd"
 
-env \
-  -u XDG_CONFIG_HOME \
-  -u XDG_DATA_HOME \
-  -u XDG_STATE_HOME \
-  -u XDG_CACHE_HOME \
-  -u XDG_RUNTIME_DIR \
-  -u XDG_CONFIG_DIRS \
-  -u XDG_DATA_DIRS \
-  -u HOME \
-  -u SHELL \
-  -u PWD \
-  -u OLDPWD \
-  "PATH=$git_win:$PATH" \
-  "$nvim_win" "$@"
+# Subshell + exec al posto di env: stesso ambiente per nvim, un processo in meno
+# (su questo PC env costa ~65 ms a ogni avvio).
+(
+  unset XDG_CONFIG_HOME XDG_DATA_HOME XDG_STATE_HOME XDG_CACHE_HOME \
+    XDG_RUNTIME_DIR XDG_CONFIG_DIRS XDG_DATA_DIRS HOME SHELL PWD OLDPWD
+  export PATH="$git_win:$PATH"
+  exec "$nvim_win" "$@"
+)

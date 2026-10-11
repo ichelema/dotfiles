@@ -8,8 +8,9 @@ emulate -L zsh
 # di attesa all'avvio quando vim.exe nativo gira da terminale MSYS2.
 local vim_win="/c/Appl/Vim/vim.exe"
 
-env \
-  -u PWD \
-  -u OLDPWD \
-  -u SHELL \
-  "$vim_win" --not-a-term "$@"
+# Subshell + exec al posto di env: stesso ambiente per Vim, un processo in meno
+# (su questo PC env costa ~65 ms a ogni avvio).
+(
+  unset PWD OLDPWD SHELL
+  exec "$vim_win" --not-a-term "$@"
+)
