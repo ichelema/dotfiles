@@ -1,7 +1,7 @@
 # ~/.config/zsh/modules/aliases.zsh
 
 # --- Claude ---
-alias claude='env HOME="$(cygpath -w "$HOME")" USERPROFILE="$(cygpath -w "$HOME")" CLAUDE_CONFIG_DIR="$(cygpath -w "$HOME/.claude")" claude --disallowedTools "DesignSync,NotebookEdit,PowerShell,Artifact,ArtifactComments,ArtifactData,ArtifactCheck,SendFeedback"'
+alias claude='env HOME="$(cygpath -w "$HOME")" USERPROFILE="$(cygpath -w "$HOME")" CLAUDE_CONFIG_DIR="$(cygpath -w "$HOME/.claude")" claude --system-prompt-file "$(cygpath -w "$HOME/.claude/system-prompt.md")" --disallowedTools="DesignSync,NotebookEdit,PowerShell,Artifact,ArtifactComments,ArtifactData,ArtifactCheck,SendFeedback"'
 
 # --- Base aliases ---
 alias ll='ls -lah --color=auto'
