@@ -4,7 +4,7 @@ test('suona a fine turno e solo sulla richiesta di permesso', async ($, on) => {
   const played: string[] = []
   on('process.run', (_, e) => {
     played.push(String(e.argv.at(-1)))
-    return { exitCode: 0, stdout: '', stderr: '' } as never
+    return { value: { exitCode: 0, stdout: '', stderr: '' } } as never
   })
   on('classic.Stop', () => ({}))
   on('classic.Notification', () => ({}))
