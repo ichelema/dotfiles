@@ -54,14 +54,14 @@ test('senza flag ponytail né cache: niente badge né segmento cache', async () 
 })
 
 test('a SessionStart scrive la riga con i dati della sessione', async ($, on) => {
-  // Path POSIX: l'engine su Linux rifiuta 'E:/...'. Il confronto è per suffisso
-  // perché su Windows l'engine risolve il path con la lettera del disco corrente.
   const files: Record<string, string> = {
     'cfg/.ponytail-active': 'full\n',
     'AI/Repo/.git/HEAD': 'ref: refs/heads/feat/x\n',
   }
-  on('env.get', (_, e) => ({ value: e.name === 'HOME' ? '/e/home' : '/e/cfg' }) as never)
+  on('env.get', (_, e) => ({ value: e.name === 'HOME' ? 'E:\\home' : '/e/cfg' }) as never)
   on('fs.read', (_, e) => {
+    // Confronto per suffisso: su Windows l'engine passa E:\cfg\..., su Linux
+    // risolve E:/cfg/... sotto la cartella del plugin.
     const path = e.path.replace(/\\/g, '/')
     const text = files[Object.keys(files).find(k => path.endsWith(k)) ?? '']
     return (text === undefined ? { deny: `ENOENT ${e.path}` } : { value: text }) as never
@@ -72,7 +72,7 @@ test('a SessionStart scrive la riga con i dati della sessione', async ($, on) =>
   })
   on('clock.every', () => ({ value: undefined }) as never)
   on('clock.now', () => ({ value: 1_000_000 }) as never)
-  on('session.cwd', () => ({ value: '/e/AI/Repo' }) as never)
+  on('session.cwd', () => ({ value: 'E:\\AI\\Repo' }) as never)
   on('session.model', () => ({ value: 'claude-opus-5-5' }) as never)
   on('session.usage', () => ({ value: { startedAt: 0, context: { tokens: 1500, window: 200_000 }, rateLimits: [] } }) as never)
   on('settings.read', () => ({ value: { effortLevel: 'high' } }) as never)
@@ -85,7 +85,7 @@ test('a SessionStart scrive la riga con i dati della sessione', async ($, on) =>
     }),
   )
   on('classic.SessionStart', () => ({}))
-  await $.classic.SessionStart({ source: 'startup', session_id: 'abcdef1234', transcript_path: '/e/t.jsonl' } as never)
+  await $.classic.SessionStart({ source: 'startup', session_id: 'abcdef1234', transcript_path: 'E:\\t.jsonl' } as never)
 
   expect(plain(await written)).toBe(
     '[PONYTAIL] | Opus 5.5 High | Repo@feat/x (+5 -1) | Session: rinominata "bis" | 2k/200k (0%) | 5h - | 7d -',
