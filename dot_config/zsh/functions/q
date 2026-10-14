@@ -1,0 +1,11 @@
+# q — domanda veloce a Claude Haiku; risposta markdown resa con glow
+local key prompt
+key="$(chezmoi decrypt ~/.local/share/chezmoi/.secrets/anthropic-api-key.age)" || return
+
+prompt='Rispondi in italiano, in Markdown. Rispondi a domande pratiche di programmazione e uso del terminale.
+Metti sempre prima il codice o il comando, in un blocco con il tag del linguaggio (zsh, bash, python...).
+Dopo il codice, al massimo 3 righe di spiegazione. Niente introduzioni né conclusioni.'
+
+ANTHROPIC_API_KEY="$key" command claude -p "$*" \
+  --model claude-haiku-5-5 --effort low --tools "Read,Grep,Glob" --bare \
+  --system-prompt "$prompt" 2>/dev/null | glow -

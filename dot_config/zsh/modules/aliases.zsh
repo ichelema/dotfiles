@@ -2,6 +2,7 @@
 
 # --- Claude ---
 alias claude='env HOME="$(cygpath -w "$HOME")" USERPROFILE="$(cygpath -w "$HOME")" CLAUDE_CONFIG_DIR="$(cygpath -w "$HOME/.claude")" claude --system-prompt-file "$(cygpath -w "$HOME/.claude/system-prompt.md")" --disallowedTools="DesignSync,NotebookEdit,PowerShell,Artifact,ArtifactComments,ArtifactData,ArtifactCheck,SendFeedback"'
+alias q='noglob q'   # così "?" e "*" nella domanda non vengono espansi da zsh
 
 # --- Base aliases ---
 alias ll='ls -lah --color=auto'

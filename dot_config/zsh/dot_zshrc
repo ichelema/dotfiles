@@ -13,7 +13,7 @@ export ZSH_FUNCTIONS="$ZSH_CONFIG/functions"
 
 # --- Custom autoload functions ---
 fpath=("$ZSH_FUNCTIONS" $fpath)
-autoload -Uz copydir copyfile man fcd fv fcp fsvg open nvim vim vi fzf_history_widget
+autoload -Uz copydir copyfile man fcd fv fcp fsvg open nvim vim vi fzf_history_widget q
 
 # --- Module loader ---
 for _zsh_module in \
