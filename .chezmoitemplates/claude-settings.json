@@ -130,9 +130,17 @@
     "lua-lsp@claude-plugins-official": true,
     "prismantis@inline": true,
     "skins@inline": false,
-    "replay@inline": false
+    "replay@inline": false,
+    "filetree@claude-code-filetree": true
   },
-  "extraKnownMarketplaces": {},
+  "extraKnownMarketplaces": {
+    "claude-code-filetree": {
+      "source": {
+        "source": "github",
+        "repo": "data-goblin/claude-code-filetree"
+      }
+    }
+  },
   "outputStyle": "My",
   "language": "italiano",
   "spinnerTipsEnabled": false,
