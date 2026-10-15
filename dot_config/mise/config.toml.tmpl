@@ -3,11 +3,14 @@ bun = "latest"
 direnv = "2.37.1"
 gh = "latest"
 node = "lts"
+{{- if ne .chezmoi.os "linux" }}
 "npm:@mermaid-js/mermaid-cli" = "latest"
+{{- end }}
 python = "3.13"
 ruby = "4.0.7"
 usage = "latest"
 {{- if eq .chezmoi.os "linux" }}
+# "npm:@mermaid-js/mermaid-cli" = "latest"  # disattivato 2026-10-15: aube rifiuta chromium-bidi@157.0.8090-0 (trust downgrade), bloccava ogni mise run
 biome = "latest"
 hadolint = "latest"
 pnpm = "latest"
