@@ -1,1 +1,9 @@
-{ "name": "notify-sound", "version": "0.1.0", "description": "Suono a fine turno e su richiesta permesso" }
+{ 
+  "name": "notify-sound", 
+  "version": "0.1.0", 
+  "description": "Suono a fine turno e su richiesta permesso",
+  "author": {
+    "name": "Ichelema",
+    "url": ""
+  }
+}
