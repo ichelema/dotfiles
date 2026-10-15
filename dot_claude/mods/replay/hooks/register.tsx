@@ -79,6 +79,26 @@ const sideBySide = (a: string[], b: string[]): Row[] => {
   return rows
 }
 
+// One line of context around each change, as in upstream replay-theater: a
+// long Write shows where it changed, not the file's top. ⋯ marks a cut run.
+const MARK: Row = { left: '⋯', right: '⋯', isSame: true }
+
+const trimContext = (rows: Row[]): Row[] => {
+  if (rows.every(r => r.isSame)) return rows
+  const out: Row[] = []
+  let isSkipped = false
+  rows.forEach((r, k) => {
+    if (!r.isSame || rows[k - 1]?.isSame === false || rows[k + 1]?.isSame === false) {
+      if (isSkipped) out.push(MARK)
+      out.push(r)
+      isSkipped = false
+    } else isSkipped = true
+  })
+  if (isSkipped) out.push(MARK)
+
+  return out
+}
+
 // "Edit +3 −1": the tool and the lines it added and removed. A step kept
 // from before `kind` was recorded shows no tool.
 const summary = (s: Step) => {
@@ -263,7 +283,7 @@ export const register: Register = on => {
     const room = Math.max(4, (e.viewport?.rows ?? 24) - 7 - list.length)
     const half = Math.max(10, Math.floor((e.props.bodyColumns - 3) / 2))
     const delta = await deltaLines($, step, e.props.bodyColumns)
-    const allRows = delta ? [] : sideBySide(linesOf(step.before), linesOf(step.after))
+    const allRows = delta ? [] : trimContext(sideBySide(linesOf(step.before), linesOf(step.after)))
     const rows = allRows.slice(0, room)
     const hiddenLines = (delta?.length ?? allRows.length) - room
 

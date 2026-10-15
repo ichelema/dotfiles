@@ -105,6 +105,37 @@ test("delta's ANSI colours become Text colours", async ($, on) => {
   expect(await ui.find({ type: 'Text', text: /8;;/ })).toBeUndefined()
 })
 
+test('a Write keeps one line of context around the change and marks the cut runs', async ($, on) => {
+  const old = Array.from({ length: 40 }, (_, k) => `line ${k}`)
+  on('turn.complete', () => ({ text: '' }))
+  on('tool.call', () => ({ result: {} as never }))
+  on('fs.read', () => ({ value: old.join('\n') }) as never)
+  on('ui.open', () => ({ value: undefined }) as never)
+  on('clock.sleep', () => ({ value: undefined }) as never)
+
+  const changed = old.map((l, k) => (k === 30 ? 'changed' : l)).join('\n')
+  await $.tool.call({ tool: 'Write', tool_use_id: 'u1', file_path: 'mid.txt', content: changed })
+  await $.turn.complete({ reason: 'answer', answer: '', durationMs: 1, isAborted: false, turnId: 't1' })
+  await $.command.run({ command: 'replay', args: '' } as never)
+
+  const ui = await $.ui.mount({
+    plugin: 'replay',
+    surface: 'terminal',
+    component: 'Pane',
+    requestId: 'replay',
+    props: { title: 'Replay', isFocused: true, bodyColumns: 80, scroll: { offset: 0, bodyRows: 20 } } as never,
+  })
+  const texts = (await ui.findAll({ type: 'Text' })).map(t => t.text)
+  const header = texts.findIndex(t => /^1\/1 /.test(t))
+  expect(texts.slice(header + 1)).toEqual([
+    '⋯', ' │ ', '⋯',
+    'line 29', ' │ ', 'line 29',
+    'line 30', ' │ ', 'changed',
+    'line 31', ' │ ', 'line 31',
+    '⋯', ' │ ', '⋯',
+  ])
+})
+
 test('a long Write skips the LCS, says how many lines are cut, and Close closes', async ($, on) => {
   const old = Array.from({ length: 500 }, (_, k) => `line ${k}`).join('\n')
   const closed: unknown[] = []
