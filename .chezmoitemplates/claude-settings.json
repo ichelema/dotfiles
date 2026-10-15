@@ -159,6 +159,13 @@
   "agentPushNotifEnabled": true,
   "pluginConfigs": {
     "prismantis@inline": { "options": { "theme": "nord", "tableStyle": "box", "toolStyle": "folded", "toolRows": true, "promptStyle": "framed", "headingStyle": "banner" } },
+{{- if eq .chezmoi.os "windows" }}
+    "filetree@claude-code-filetree": { "options": {
+      "start": "off",
+      "column": "size",
+      "open": {{ `C:\Appl\Vim\vim.exe -u NONE -i NONE -N -es --cmd "exe 'silent !start C:\Appl\Vim\gvim.exe -u E:/msys64/home/Sphynx/.config/vim/minimal ' .. escape(nr2char(34) .. argv(0) .. nr2char(34), '%#!')" --cmd "qa!" {path}` | toJson }}
+    } },
+{{- end }}
     "jev-skill-suggestion@inline": { "options": { "logDecisions": true } }{{ with env "TYPESAFE_API_KEY" }},
     "jev-skill-suggestion": { "options": {
       "typesafeApiKey": {{ . | toJson }},
