@@ -164,6 +164,9 @@ function load_zsh_plugins {
         zsh-autosuggestions
         zsh-syntax-highlighting
         fzf-tab
+{{- if not (index . "vps") }}
+        fzf-tab-source
+{{- end }}
         direnv
         aliases       #     als mostra tutti gli alias per gruppo als -h per vedere opzioni
         alias-finder
@@ -293,7 +296,11 @@ fi
 
 # We are loading the prompt on start so users can see the prompt immediately
 # Powerlevel10k theme path
+{{ if index . "vps" -}}
 P10k_THEME=${P10k_THEME:-$ZDOTDIR/oh-my-zsh/custom/themes/powerlevel10k/powerlevel10k.zsh-theme}
+{{- else -}}
+P10k_THEME=${P10k_THEME:-/usr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme}
+{{- end }}
 [[ -r $P10k_THEME ]] && source $P10k_THEME
 
 [[ ! -f "$ZDOTDIR/.p10k.zsh" ]] || source "$ZDOTDIR/.p10k.zsh"
@@ -395,7 +402,9 @@ echo -ne '\e[5 q'
 #  ╔╦╗╦╔═╗╔═╗╦  ╔═╗╦ ╦  ╔═╗╔═╗╦╔═╔═╗╔╦╗╔═╗╔╗╔
 #   ║║║╚═╗╠═╝║  ╠═╣╚╦╝  ╠═╝║ ║╠╩╗║╣ ║║║║ ║║║║
 #  ═╩╝╩╚═╝╩  ╩═╝╩ ╩ ╩   ╩  ╚═╝╩ ╩╚═╝╩ ╩╚═╝╝╚╝
-
+{{ if not (index . "vps") -}}
+pokego --no-title -s -r 1,3,6
+{{ end }}
 
 export ZELLIJ_AUTO_EXIT=true
 # if [[ -z "$ZELLIJ" ]]; then
