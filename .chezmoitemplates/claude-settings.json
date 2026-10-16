@@ -112,6 +112,13 @@
   },
   "model": {{ if eq .chezmoi.os "linux" }}"opus"{{ else }}"opus[1m]"{{ end }},
   "disableClaudeAiConnectors": true,
+  "deniedMcpServers": [
+    { "serverName": "plugin:trinity:neovim" },
+    { "serverName": "plugin:trinity:debugger" },
+    { "serverName": "plugin:trinity:playwright" },
+    { "serverName": "plugin:trinity:ticktick" },
+    { "serverName": "plugin:trinity:obsidian_semantic_notes_vault" }
+  ],
   "skillOverrides": {
     "simplify": "off",
     "dataviz": "off",
