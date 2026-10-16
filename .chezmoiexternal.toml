@@ -5,7 +5,7 @@
     url = "git@github.com:ichelema/neovim_config.git"
     refreshPeriod = "2h"
 
-# Plugin zsh (config zsh solo Windows: su Linux li esclude .chezmoiignore)
+# Plugin zsh solo Windows: su Linux li esclude .chezmoiignore
 [".config/zsh/plugins/fast-syntax-highlighting"]
     type = "git-repo"
     url = "https://github.com/zdharma-continuum/fast-syntax-highlighting"

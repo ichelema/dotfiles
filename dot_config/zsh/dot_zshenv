@@ -1,0 +1,3 @@
+# Ponte: quando ZDOTDIR e' gia' nell'ambiente, zsh legge QUESTO file e
+# salta ~/.zshenv (dove stanno gli env e le API key). Lo carichiamo qui.
+[ -f "$HOME/.zshenv" ] && source "$HOME/.zshenv"

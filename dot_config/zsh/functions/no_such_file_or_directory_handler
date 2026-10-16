@@ -1,0 +1,7 @@
+# Overwrite no_such_file_or_directory_handler
+# Message when file or dir not found
+function no_such_file_or_directory_handler {
+    local red='\e[1;31m' reset='\e[0m'
+    printf "${red}zsh: no such file or directory: %s${reset}\n" "$1"
+    return 127
+}

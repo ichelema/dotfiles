@@ -1,0 +1,66 @@
+# Overwrite command_not_found_handler
+# Gestisce i comandi non trovati suggerendo pacchetti su sistemi Arch Linux usando pacman -F.
+function command_not_found_handler {
+    # Definisci i colori
+    local purple='\e[1;35m' bright='\e[0;1m' green='\e[1;32m' reset='\e[0m'
+    local red='\e[1;31m'
+
+    # Stampa il messaggio iniziale di comando non trovato
+    printf "${green}zsh${reset}: command ${purple}NOT${reset} found: ${bright}'%s'${reset}\n" "$1"
+
+    # Verifica se pacman è disponibile per cercare file/pacchetti
+    # Usiamo command -v per un controllo robusto e reindirizziamo l'output a /dev/null
+    if ! command -v pacman &>/dev/null; then
+        # Se pacman non è trovato, non possiamo suggerire pacchetti.
+        # Usciamo semplicemente con lo stato di errore standard.
+        return 127
+    fi
+
+    # Esegui pacman -F per cercare pacchetti che possiedono il file /usr/bin/$1
+    # L'opzione --machinereadable produce output con delimitatori null.
+    # Cattura l'output e reindirizza eventuali errori a /dev/null.
+    local pacman_output="$(/usr/bin/pacman -F --machinereadable -- "/usr/bin/$1" 2>/dev/null)"
+
+    # Dividi l'output (linee separate) in un array usando ${(f)}
+    # Nota: se pacman -F non trova nulla, pacman_output sarà vuoto, e entries sarà un array vuoto.
+    local entries=( ${(f)pacman_output} )
+
+    # Controlla se sono state trovate delle corrispondenze (se l'array non è vuoto)
+    if (( ${#entries[@]} > 0 )); then
+        # Stampa il messaggio che indica che il comando potrebbe essere fornito da pacchetti
+        printf "${bright}$1${reset} may be found in the following packages:\n"
+
+        local pkg="" # Variabile per tenere traccia del pacchetto corrente e stamparlo una sola volta
+        local fields # Array temporaneo per i campi di ogni riga di output
+        local repo pkgname pkgver filepath # Variabili per chiarezza
+
+        # Itera su ogni "entry" trovata da pacman -F
+        for entry in "${entries[@]}" ; do
+            # Dividi la riga machine-readable usando i delimitatori null ${(0)}
+            fields=( ${(0)entry} )
+
+            # Estrai i campi (formato: repo\0pkgname\0pkgver\0file_path)
+            repo="${fields[1]}"
+            pkgname="${fields[2]}"
+            pkgver="${fields[3]}"
+            filepath="${fields[4]}"
+
+            # Controlla se il pacchetto è diverso da quello dell'entry precedente.
+            # Questo serve a stampare le informazioni del pacchetto (repo/nome versione)
+            # solo una volta, anche se lo stesso pacchetto contiene più file che corrispondono.
+            if [[ "$pkg" != "$pkgname" ]]; then
+                printf "  ${purple}%s/${bright}%s ${green}%s${reset}\n" "$repo" "$pkgname" "$pkgver"
+                pkg="$pkgname" # Aggiorna il tracker del pacchetto corrente
+            fi
+
+            # Stampa il percorso del file all'interno del pacchetto
+             printf '    %s\n' "$filepath"
+        done
+    else
+        # Se pacman -F non ha trovato nessuna corrispondenza
+        printf "${bright}${green}[ ${1} ] ${purple}NOT${reset} found in the system and no package provides it.${reset}\n"
+    fi
+
+    # Ritorna sempre 127, lo stato di uscita standard per "comando non trovato"
+    return 127
+}

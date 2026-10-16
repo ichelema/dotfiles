@@ -1,0 +1,11 @@
+zf() {
+  local query="${*:-}"  # prende parametri se ci sono
+  local dir
+
+  dir=$(zoxide query -ls | awk '{$1=""; sub(/^ /, ""); print}' | \
+    fzf --query="$query" --height=40% --layout=reverse --info=inline \
+        --preview 'eza -T --icons --color=always --level=2 {} 2>/dev/null' \
+        --preview-window=right:60%) || return
+
+  cd "$dir"
+}

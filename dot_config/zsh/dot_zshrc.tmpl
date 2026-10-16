@@ -1,0 +1,1 @@
+{{ if eq .chezmoi.os "windows" }}{{ template "zsh/zshrc.windows" . }}{{ else }}{{ template "zsh/zshrc.linux" . }}{{ end }}

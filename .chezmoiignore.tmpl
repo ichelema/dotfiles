@@ -35,18 +35,48 @@ CLAUDE.md
 # Launcher di Claude Code Desktop: solo Windows
 .local/bin/claude_code_desktop.cmd
 .local/bin/claude_code_desktop_zsh.cmd
-# Config zsh MSYS2: su Linux resta quella locale
-.zshenv
-.config/zsh
-.config/zsh/**
+# zsh: moduli, plugin (external) e funzioni solo MSYS2/Windows
+.config/zsh/modules
+.config/zsh/modules/**
+.config/zsh/plugins
+.config/zsh/plugins/**
+.config/zsh/functions/copydir
+.config/zsh/functions/copyfile
+.config/zsh/functions/fcd
+.config/zsh/functions/fcp
+.config/zsh/functions/fsvg
+.config/zsh/functions/fv
+.config/zsh/functions/fzf_history_widget
+.config/zsh/functions/man
+.config/zsh/functions/nvim
+.config/zsh/functions/open
+.config/zsh/functions/q
+.config/zsh/functions/vi
+.config/zsh/functions/vim
 {{- end }}
 {{- if ne .chezmoi.os "linux" }}
 # mod sudo-popup e il suo askpass: solo Linux
 .claude/skills/sudo-popup
 .claude/skills/sudo-popup/**
 .local/bin/sudo-askpass.sh
+# zsh: oh-my-zsh/p10k, ponte ZDOTDIR, API key e funzioni solo Linux
+.config/zsh/.zshenv
+.config/zsh/.p10k.zsh
+.config/zsh/p10k.mise.zsh
+.config/zsh/api-keys.zsh
+.config/zsh/functions/command_not_found_handler
+.config/zsh/functions/_df
+.config/zsh/functions/_fuzzy_change_directory
+.config/zsh/functions/_fuzzy_edit_search_file
+.config/zsh/functions/_fuzzy_edit_search_file_content
+.config/zsh/functions/handle_init_error
+.config/zsh/functions/no_such_file_or_directory_handler
+.config/zsh/functions/rg
+.config/zsh/functions/y
+.config/zsh/functions/zf
 {{- end }}
 {{- if not (stat (joinPath .chezmoi.homeDir ".config/chezmoi/key.txt")) }}
 # segreti cifrati age: saltati finche' la chiave non e' copiata su questa macchina
 .litellm/master-key.txt
+.config/zsh/api-keys.zsh
 {{- end }}

@@ -1,0 +1,7 @@
+# Overwrite handle_init_error
+# Function to handle initialization errors
+function handle_init_error {
+    if [[ $? -ne 0 ]]; then
+        echo "Error during initialization. Please check your configuration."
+    fi
+}

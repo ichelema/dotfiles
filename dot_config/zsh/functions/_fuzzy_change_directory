@@ -1,0 +1,20 @@
+_fuzzy_change_directory() {
+    local initial_query="$1"
+    local selected_dir
+    local fzf_options=('--preview=ls -p {}' '--preview-window=right:60%')
+    fzf_options+=(--height "50%" --layout=reverse --preview-window right:60% --cycle)
+    local max_depth=7
+
+    if [[ -n "$initial_query" ]]; then
+        fzf_options+=("--query=$initial_query")
+    fi
+
+    #type -d
+    selected_dir=$(find . -maxdepth $max_depth \( -name .git -o -name node_modules -o -name .venv -o -name target -o -name .cache \) -prune -o -type d -print 2>/dev/null | fzf "${fzf_options[@]}")
+
+    if [[ -n "$selected_dir" && -d "$selected_dir" ]]; then
+        cd "$selected_dir" || return 1
+    else
+        return 1
+    fi
+}

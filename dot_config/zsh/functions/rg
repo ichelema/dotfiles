@@ -1,0 +1,11 @@
+rg() {
+    if [[ -t 1 && -t 0 ]]; then
+        if hash delta 2>/dev/null; then
+            command rg --json --smart-case "$@" | delta
+        else
+            command rg --pretty --smart-case "$@" | less
+        fi
+    else
+        command rg "$@"
+    fi
+}
