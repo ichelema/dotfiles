@@ -61,6 +61,8 @@ export PATH
 # Enable LSP for claude code
 export ENABLE_LSP_TOOL=1
 
+alias claude='claude --system-prompt-file "$HOME/.claude/system-prompt.md" --disallowedTools="DesignSync,NotebookEdit,PowerShell,Artifact,ArtifactComments,ArtifactData,ArtifactCheck,SendFeedback"'
+
 #  ╔═╗╦ ╦╔╦╗╔═╗╔═╗╔═╗╔╦╗╔═╗╦  ╔═╗╔╦╗╔═╗
 #  ╠═╣║ ║ ║ ║ ║║  ║ ║║║║╠═╝║  ║╣  ║ ║╣
 #  ╩ ╩╚═╝ ╩ ╚═╝╚═╝╚═╝╩ ╩╩  ╩═╝╚═╝ ╩ ╚═╝
