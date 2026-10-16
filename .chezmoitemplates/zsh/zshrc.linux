@@ -242,6 +242,7 @@ alias pa='$aurhelper -Ss' # list available package
 alias pc='$aurhelper -Sc' # remove unused cache
 alias cleanup="sudo pacman -Rsn $(pacman -Qtdq)" # Cleanup orphaned packages
 alias po='$aurhelper -Qtdq | $aurhelper -Rns -' # remove unused packages, also try > $aurhelper -Qqd | $aurhelper -Rsu --print -
+alias vc='code' # gui code editor
 alias ss="sudo"
 alias cat="bat --paging=never --style=plain --theme=base16-256" # bat senza pager e senza numeri di riga
 alias bat="bat --theme=base16-256"                              # bat completo: pager automatico + numeri di riga
@@ -249,6 +250,7 @@ alias jctl="journalctl -p 3 -xb" # Get the error messages from journalctl
 alias rip="expac --timefmt='%Y-%m-%d %T' '%l\t%n %v' | sort | tail -200 | nl" # Recent installed packages
 alias sv="sudo -E vim" # Vim with sudo
 alias sn="sudo -E nvim" # Neovim with sudo
+alias kitty="kitty --single-instance "
 
 alias ..='cd ..'
 alias ...='cd ../..'
