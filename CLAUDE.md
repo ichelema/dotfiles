@@ -46,7 +46,18 @@ su una VPS, `[data] vps = true`.
 - La chiave privata `~/.config/chezmoi/key.txt` **non è mai nel repo**: si copia a mano (scp) sulle
   altre macchine. Se si perde, i file cifrati non sono più recuperabili.
 - Finché la chiave manca, `.chezmoiignore.tmpl` salta i file cifrati invece di far fallire l'apply.
-- File cifrati oggi: `private_dot_litellm/encrypted_private_master-key.txt.age` (cartella 0700, file 0600, senza fine riga finale).
+- File cifrati oggi:
+  - `private_dot_litellm/encrypted_private_master-key.txt.age` → `~/.litellm/master-key.txt`
+    (cartella 0700, file 0600, senza fine riga finale).
+  - `dot_config/zsh/encrypted_private_api-keys.zsh.age` → `~/.config/zsh/api-keys.zsh` (0600, solo
+    Linux, caricato da `.zshenv`): gli `export` delle API key. Su Windows le stesse variabili sono
+    variabili utente. Contiene `TYPESAFE_API_KEY`, che il template di `settings.json` legge con
+    `env` durante l'apply: senza, il blocco `jev-skill-suggestion` sparisce.
+  - `.secrets/anthropic-api-key.age`: non è un target (chezmoi ignora i path che iniziano con
+    `.`); lo decifra a runtime la funzione zsh `q` con `chezmoi decrypt`.
+- Per aggiungere una riga a un file cifrato senza scrivere il testo in chiaro su disco:
+  `{ chezmoi decrypt F; printf 'export NOME="%s"\n' "$NOME"; } | chezmoi encrypt > F.nuovo`,
+  poi controlla `chezmoi decrypt F.nuovo` e sostituisci `F`.
 
 ## Cosa è gestito
 
