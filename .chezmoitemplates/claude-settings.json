@@ -162,6 +162,7 @@
   "editorMode": "vim",
   "verbose": false,
   "switchModelsOnFlag": true,
+  "idleCompaction": false,
   "fileCheckpointingEnabled": true,
   "terminalProgressBarEnabled": true,
   "inputNeededNotifEnabled": false,
