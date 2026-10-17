@@ -168,22 +168,22 @@
   "inputNeededNotifEnabled": false,
   "agentPushNotifEnabled": true,
   "pluginConfigs": {
-    "prismantis@inline": { "options": { "theme": "nord", "tableStyle": "box", "toolStyle": "folded", "toolRows": true, "promptStyle": "framed", "headingStyle": "banner" } },
+    "prismantis@inline": { "options": { "theme": "nord", "tableStyle": "box", "toolStyle": "folded", "toolRows": true, "toolOutput": "quiet", "promptStyle": "framed", "headingStyle": "banner" } },
     "filetree@claude-code-filetree": { "options": {
       "start": "off",
       "column": "size"
 {{- if eq .chezmoi.os "windows" }},
       "open": {{ `C:\Appl\Vim\vim.exe -u NONE -i NONE -N -es --cmd "exe 'silent !start C:\Appl\Vim\gvim.exe -u E:/msys64/home/Sphynx/.config/vim/minimal ' .. escape(nr2char(34) .. argv(0) .. nr2char(34), '%#!')" --cmd "qa!" {path}` | toJson }}
 {{- end }}
-    } },
-    "jev-skill-suggestion@inline": { "options": { "logDecisions": true } }{{ with env "TYPESAFE_API_KEY" }},
+    } }{{ with env "TYPESAFE_API_KEY" }},
     "jev-skill-suggestion": { "options": {
       "typesafeApiKey": {{ . | toJson }},
       "provider": "typesafe",
       "timeoutMs": 1500,
       "gateThreshold": 0.5,
       "inject": "suggest",
-      "neverSuggested": "trinity:dream,trinity:linear,trinity:nota_del_giorno,trinity:promote,trinity:reflect,trinity:ponytail,trinity:ponytail:ponytail,trinity:ponytail:ponytail-audit,trinity:ponytail:ponytail-debt,trinity:ponytail:ponytail-gain,trinity:ponytail:ponytail-help,trinity:ponytail:ponytail-review,trinity:workflow:0_create-issue,trinity:workflow:1_create-worktree,trinity:workflow:2_work-issue,trinity:workflow:3_independent-review,trinity:workflow:4_remove-worktree,trinity:workflow:5_review-fix-loop"
+      "logDecisions": false,
+      "neverSuggested": "trinity:dream,trinity:nota_del_giorno,trinity:promote,trinity:reflect,trinity:ponytail,trinity:ponytail:ponytail,trinity:ponytail:ponytail-audit,trinity:ponytail:ponytail-debt,trinity:ponytail:ponytail-gain,trinity:ponytail:ponytail-help,trinity:ponytail:ponytail-review,trinity:workflow:0_create-issue,trinity:workflow:1_create-worktree,trinity:workflow:2_work-issue,trinity:workflow:3_independent-review,trinity:workflow:4_remove-worktree,trinity:workflow:5_review-fix-loop"
     } }{{ end }}
   }
 }
