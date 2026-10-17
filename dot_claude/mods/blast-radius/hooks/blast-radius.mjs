@@ -28,6 +28,9 @@ let isInteractive = true;
 // rm under ~/.claude/tmp (the agent's scratch folder) runs without a hold.
 // session.start adds HOME's absolute forms (E:/… and /e/… on MSYS2).
 const tmpPrefixes = ["~/.claude/tmp/", "$HOME/.claude/tmp/", "${HOME}/.claude/tmp/"];
+// rm of .review-tmp/ inside a review worktree runs without a hold: Trinity's
+// reviewer (3_independent-review.md) deletes it before `git worktree remove`.
+const REVIEW_TMP = /(^|\/)\.claude\/worktrees\/review\+[^/]+\/\.review-tmp(\/|$)/;
 let isCaseless = false; // Windows paths: HOME may come lowercased (e:\msys64\home\sphynx)
 
 export function register(on) {
@@ -151,6 +154,9 @@ function isScratch(target, dir) {
   // No \ → / here: unquoted, bash eats the backslashes, so such a path is held.
   const fold = (s) => (isCaseless ? s.toLowerCase() : s);
   const path = fold(/^(\/|~\/|\$|[A-Za-z]:)/.test(target) ? target : joinDir(dir, target));
+  if (REVIEW_TMP.test(path) && !/\.\.|\$|`/.test(path)) {
+    return true;
+  }
   return tmpPrefixes.map(fold).some((p) => path.startsWith(p) && path.length > p.length && !/\.\.|\$|`/.test(path.slice(p.length)));
 }
 
