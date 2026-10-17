@@ -10,7 +10,7 @@
     "MCP_TIMEOUT": "60000",
     "ENABLE_CLAUDEAI_MCP_SERVERS": "false",
     "CLAUDE_CODE_PLUGIN_DIRS": "~/.claude/mods",
-{{- if ne .chezmoi.hostname "ov-beb073" }}
+{{- if not (index . "vps") }}
     "HINDSIGHT_SSH_TUNNEL": "hindsight-vps",
 {{- end }}
 {{- if eq .chezmoi.os "windows" }}

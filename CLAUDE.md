@@ -33,7 +33,12 @@ Su Windows contiene, oltre a `[edit]` (gvim `-f`) e `[merge]` (WinMerge):
   processo nativo trova prima la bash WSL di System32.
 - `encryption = "age"` + `[age] identity = "~/.config/chezmoi/key.txt"`, `recipient = "age1z0nc…r0fn"`.
 
-Su una macchina nuova vanno ricreati a mano il blocco `[age]` e, su Windows, `[interpreters.sh]`.
+Sulla VPS contiene anche `[data] vps = true`. I template riconoscono la VPS solo da questo flag
+(`index . "vps"`: `zshrc.linux`, `HINDSIGHT_SSH_TUNNEL` in `claude-settings.json`), mai
+dall'hostname: con un'altra VPS o un hostname nuovo basta il flag.
+
+Su una macchina nuova vanno ricreati a mano il blocco `[age]`, su Windows `[interpreters.sh]` e,
+su una VPS, `[data] vps = true`.
 
 ## Segreti (age)
 
