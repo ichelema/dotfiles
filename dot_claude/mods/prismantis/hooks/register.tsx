@@ -475,7 +475,10 @@ export const register: Register = (on, options) => {
     const reach = await linkReach($, probes)
     const linked = forSurface(fit(e.viewport), e.surface, reach)
     // local: percorsi cliccabili (hooks/filelink.ts), solo dove Claude Code accetta i link vscode://
-    const files = linked.editorLinks
+    // e il terminale li nasconde davvero: senza FORCE_HYPERLINK=1 (lo mette WezTerm) Claude Code
+    // scrive "testo URL" e le celle si allargano
+    const forced = (await $.env.get('FORCE_HYPERLINK').catch(() => undefined)) === '1'
+    const files = linked.editorLinks && forced
       ? await fileLinks({ exists: path => $.fs.exists(path) }, blocks, await $.session.cwd().catch(() => ''), style.home || ((await $.env.get('HOME').catch(() => undefined)) ?? ''))
       : undefined
     const surfaceStyle = files?.size ? { ...linked, fileLinks: files } : linked

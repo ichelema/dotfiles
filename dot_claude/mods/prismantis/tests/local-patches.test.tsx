@@ -121,14 +121,26 @@ test('filelink: fileTarget rende assoluto il percorso, con riga e colonna', asyn
   expect(fileHref({ path: '/home/me/x.ts' })).toBe('vscode://file/home/me/x.ts')
 })
 
+const filelinkText = '| File | Nota |\n|---|---|\n| `utils/open-file.lua:12` | apre |\n| `vim.lsp.enable` | no |'
+
+test('filelink: senza FORCE_HYPERLINK=1 nessun link ai file (Claude Code scriverebbe "testo URL")', async ($, on) => {
+  mock.env(on, {})
+  on('session.version', () => ({ value: { version: '2.1.302', base: '2.1.302' } }))
+  on('session.cwd', () => ({ value: 'E:\\AI\\proj' }))
+  on('fs.exists', () => ({ value: true }))
+  const ui = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'AssistantMessage', props: { text: filelinkText, isFirstOfReply: true }, viewport: { columns: 60, rows: 20 } })
+  expect(await ui.findAll({ type: 'Link' })).toHaveLength(0)
+  await ui.unmount()
+})
+
 test('filelink: in una tabella un `code` che porta a un file esistente diventa un link, gli altri no', async ($, on) => {
+  mock.env(on, { FORCE_HYPERLINK: '1' })
   on('session.version', () => ({ value: { version: '2.1.302', base: '2.1.302' } }))
   on('session.cwd', () => ({ value: 'E:\\AI\\proj' }))
   // l'ambiente passa il percorso nativo (E:\AI\...)
   on('fs.exists', (_$, e) => ({ value: e.path.replace(/\\/g, '/') === 'E:/AI/proj/utils/open-file.lua' }))
-  const text = '| File | Nota |\n|---|---|\n| `utils/open-file.lua:12` | apre |\n| `vim.lsp.enable` | no |'
   // 24 colonne: la cella del percorso va a capo, ogni pezzo resta un link
-  const ui = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'AssistantMessage', props: { text, isFirstOfReply: true }, viewport: { columns: 24, rows: 20 } })
+  const ui = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'AssistantMessage', props: { text: filelinkText, isFirstOfReply: true }, viewport: { columns: 24, rows: 20 } })
   const hrefs = (await ui.findAll({ type: 'Link' })).map(l => l.props.href)
   expect(hrefs.length).toBeGreaterThan(1)
   expect(hrefs.every(h => h === 'vscode://file/E:/AI/proj/utils/open-file.lua:12')).toBe(true)
