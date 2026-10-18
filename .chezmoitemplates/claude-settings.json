@@ -127,7 +127,7 @@
   "disableBundledSkills": true,
   "disableRemoteControl": false,
   "disableWorkflows": false,
-  "enableArtifact": false,
+  "enableArtifact": true,
   "statusLine": {
     "type": "command",
     "command": "printf '%s' \"${CLAUDE_STATUSLINE:-Claude}\"",
