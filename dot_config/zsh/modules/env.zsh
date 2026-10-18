@@ -22,6 +22,9 @@ export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/ripgreprc"
 # --- Yazi config dir (esplicito, anche se ridondante con XDG_CONFIG_HOME) ---
 export YAZI_CONFIG_HOME="$HOME/.config/yazi"
 
+# --- Zellij config dir: zellij.exe la ricava da %USERPROFILE%, che l'alias claude sposta ---
+[[ $OSTYPE == (msys|cygwin)* ]] && export ZELLIJ_CONFIG_DIR="C:/Users/en27553/AppData/Roaming/Zellij/config"
+
 # --- History ---
 HISTFILE="$ZSH_CONFIG/.histfile"
 HISTSIZE=10000
