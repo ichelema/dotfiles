@@ -1,0 +1,14 @@
+--glob=!node_modules/*
+--glob=!node_modules_custom/*
+--glob=!.git/*
+--glob=!doc/*
+--glob=!.rblcl/*
+--glob=!*/public/**
+--glob=!tags 
+--glob=!dist/* 
+--glob=!CHANGELOG.md 
+--glob=!.yardoc/*
+--threads=4
+--hidden
+# link OSC 8 su file e numeri di riga: in WezTerm CTRL+clic apre Neovim alla riga (utils/open-file.lua)
+--hyperlink-format=file://{host}{path}#{line}

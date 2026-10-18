@@ -1,0 +1,11 @@
+{{- if eq .chezmoi.os "windows" -}}
+#!/usr/bin/env bash
+# WezTerm portabile (C:\APPL\WezTerm) cerca la config accanto a wezterm.exe:
+# WEZTERM_CONFIG_FILE, che ha la precedenza, la porta in ~/.config/wezterm gestita da chezmoi.
+# setx la scrive nelle variabili utente di Windows: vale per i programmi avviati dopo.
+# Per tornare indietro: MSYS_NO_PATHCONV=1 reg delete "HKCU\Environment" /v WEZTERM_CONFIG_FILE /f
+set -euo pipefail
+cfg={{ joinPath .chezmoi.homeDir ".config/wezterm/wezterm.lua" | quote }}
+MSYS_NO_PATHCONV=1 setx WEZTERM_CONFIG_FILE "$cfg" >/dev/null
+echo "WEZTERM_CONFIG_FILE=$cfg"
+{{ end -}}

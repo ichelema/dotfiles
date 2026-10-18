@@ -42,7 +42,8 @@ export BAT_THEME="base16-256"
 export TTS_HOME='/Dati/Development/MODELLI_AI/'
 {{ end -}}
 export FZF_BASE=/usr/share/fzf
-export RIPGREP_CONFIG_PATH="$HOME/.ripgreprc"
+# stesso file di Windows, gestito da chezmoi (prima era ~/.ripgreprc, locale)
+export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/ripgreprc"
 # LESSOPEN="|lesspipe.sh %s"; export LESSOPEN
 
 {{ if not (index . "vps") -}}

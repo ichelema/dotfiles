@@ -27,6 +27,10 @@ CLAUDE.md
 .config/zsh/.histfile
 .config/zsh/.zcompdump*
 .config/zsh/**/*.bak*
+# wezterm, ripgrep, yazi: backup locali
+.config/wezterm/**/*.bak*
+.config/ripgrep/*.bak*
+.config/yazi/*.bak*
 {{- if ne .chezmoi.os "windows" }}
 # Versioni Windows-specifiche: su Linux restano quelle locali (README Trinity §13.1)
 .local/bin/litellm-proxy-run.py
@@ -79,4 +83,6 @@ CLAUDE.md
 # segreti cifrati age: saltati finche' la chiave non e' copiata su questa macchina
 .litellm/master-key.txt
 .config/zsh/api-keys.zsh
+# wezterm: IP del VPS e utente SSH; senza il file wezterm.lua parte senza connessioni SSH
+.config/wezterm/config/domains.lua
 {{- end }}
