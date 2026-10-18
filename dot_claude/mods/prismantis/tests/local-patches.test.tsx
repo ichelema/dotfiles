@@ -139,8 +139,9 @@ test('filelink: in una tabella un `code` che porta a un file esistente diventa u
   mock.env(on, { FORCE_HYPERLINK: '1' })
   on('session.version', () => ({ value: { version: '2.1.302', base: '2.1.302' } }))
   on('session.cwd', () => ({ value: 'E:\\AI\\proj' }))
-  // l'ambiente passa il percorso nativo (E:\AI\...)
-  on('fs.exists', (_$, e) => ({ value: e.path.replace(/\\/g, '/') === 'E:/AI/proj/utils/open-file.lua' }))
+  // l'ambiente passa il percorso nativo: E:\AI\... su Windows; su Linux E:/AI/... è relativo e arriva
+  // dopo la cartella corrente. Conta solo che chieda quel file
+  on('fs.exists', (_$, e) => ({ value: e.path.replace(/\\/g, '/').endsWith('E:/AI/proj/utils/open-file.lua') }))
   // 24 colonne: la cella del percorso va a capo, ogni pezzo resta un link
   const ui = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'AssistantMessage', props: { text: filelinkText, isFirstOfReply: true }, viewport: { columns: 24, rows: 20 } })
   const hrefs = (await ui.findAll({ type: 'Link' })).map(l => l.props.href)
