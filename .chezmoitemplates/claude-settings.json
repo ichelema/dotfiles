@@ -126,7 +126,7 @@
   },
   "disableBundledSkills": true,
   "disableRemoteControl": true,
-  "disableWorkflows": true,
+  "disableWorkflows": false,
   "enableArtifact": false,
   "statusLine": {
     "type": "command",
