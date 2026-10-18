@@ -160,7 +160,9 @@ I tasti principali compaiono nella barra in alto a destra.
 
 Questi tasti **non** sono usati da WezTerm e arrivano a zellij, Neovim e alla shell:
 
-`ALT+w` · `ALT+t` · `ALT+e` · `ALT+f` · `ALT+1…9` · `ALT+←/→/↑/↓` · `ALT+SHIFT+←/→/↑/↓` (usato dal sistema) · `CTRL+SHIFT+Space`
+`ALT+.` (leader di zellij su Windows) · `ALT+w` · `ALT+t` · `ALT+e` · `ALT+f` · `ALT+1…9` · `ALT+←/→/↑/↓` · `ALT+PageUp/PageDown` · `ALT+SHIFT+←/→/↑/↓` (usato dal sistema) · `CTRL+SHIFT+Space`
+
+Le scorciatoie di zellij su Windows sono in `C:\Users\en27553\AppData\Roaming\Zellij\config\README.md`.
 
 ## Dove modificare
 
