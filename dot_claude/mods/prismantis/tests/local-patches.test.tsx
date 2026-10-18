@@ -130,6 +130,8 @@ test('filelink: senza FORCE_HYPERLINK=1 nessun link ai file (Claude Code scriver
   on('fs.exists', () => ({ value: true }))
   const ui = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'AssistantMessage', props: { text: filelinkText, isFirstOfReply: true }, viewport: { columns: 60, rows: 20 } })
   expect(await ui.findAll({ type: 'Link' })).toHaveLength(0)
+  // la tabella la disegna prismantis (bottone copy), non il renderer di Claude Code
+  expect((await ui.findAll({ type: 'Button' })).map(b => b.props.label)).toContain('⧉ md')
   await ui.unmount()
 })
 
@@ -142,6 +144,7 @@ test('filelink: in una tabella un `code` che porta a un file esistente diventa u
   // 24 colonne: la cella del percorso va a capo, ogni pezzo resta un link
   const ui = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'AssistantMessage', props: { text: filelinkText, isFirstOfReply: true }, viewport: { columns: 24, rows: 20 } })
   const hrefs = (await ui.findAll({ type: 'Link' })).map(l => l.props.href)
+  expect((await ui.findAll({ type: 'Button' })).map(b => b.props.label)).toContain('⧉ md')
   expect(hrefs.length).toBeGreaterThan(1)
   expect(hrefs.every(h => h === 'vscode://file/E:/AI/proj/utils/open-file.lua:12')).toBe(true)
   await ui.unmount()
