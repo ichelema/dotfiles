@@ -114,11 +114,12 @@ const plainLink = (text: string, href: string): string => {
   return text === target || `http://${text}` === target ? target : `${text} (${target})`
 }
 
-const unlink = (nodes: Inline[], http: boolean, editor: boolean): Inline[] =>
-  nodes.map(n => (n.kind === 'link' && !isHyperlink(n.href, http, editor) ? { kind: 'text', text: plainLink(n.text, n.href) } : 'children' in n ? { ...n, children: unlink(n.children, http, editor) } : n))
+// local: files porta gli href dei percorsi (hooks/filelink.ts); qui, prima del ritorno a capo, così ogni pezzo di una cella resta cliccabile
+const unlink = (nodes: Inline[], http: boolean, editor: boolean, files?: Map<string, string>): Inline[] =>
+  nodes.map(n => (n.kind === 'link' && !isHyperlink(n.href, http, editor) ? { kind: 'text', text: plainLink(n.text, n.href) } : (n.kind === 'code' || n.kind === 'path') && files?.has(n.text) ? { ...n, href: files.get(n.text) } : 'children' in n ? { ...n, children: unlink(n.children, http, editor, files) } : n))
 
-const unlinkBlock = (block: Block, http: boolean, editor: boolean): Block => {
-  const plain = (nodes: Inline[]) => unlink(nodes, http, editor)
+const unlinkBlock = (block: Block, http: boolean, editor: boolean, files?: Map<string, string>): Block => {
+  const plain = (nodes: Inline[]) => unlink(nodes, http, editor, files)
   switch (block.kind) {
     case 'heading':
     case 'paragraph':
@@ -136,7 +137,9 @@ const unlinkBlock = (block: Block, http: boolean, editor: boolean): Block => {
 
 const unlinked = new WeakMap<Block, Block[]>()
 
-const drawable = (block: Block, http: boolean, editor: boolean): Block => {
+const drawable = (block: Block, http: boolean, editor: boolean, files?: Map<string, string>): Block => {
+  // local: con i percorsi cliccabili niente cache (la mappa cambia quando un file appare)
+  if (files?.size) return unlinkBlock(block, http, editor, files)
   const cached = unlinked.get(block) ?? []
   unlinked.set(block, cached)
   return (cached[+http + 2 * +editor] ??= unlinkBlock(block, http, editor))
@@ -205,7 +208,8 @@ const renderInline = (el: ElementTable, style: Style, nodes: Inline[], keyBase: 
       case 'strike':
         return <Text key={key} strikethrough dimColor>{renderInline(el, style, n.children, key)}</Text>
       case 'code':
-        return <Text key={key} color={t.inlineCode}>{n.text}</Text>
+        // local: href da hooks/filelink.ts, stesso testo e stesso colore
+        return n.href ? <el.Link key={key} href={n.href}><Text color={t.inlineCode}>{n.text}</Text></el.Link> : <Text key={key} color={t.inlineCode}>{n.text}</Text>
       case 'math':
         return <Text key={key} italic color={t.emphasis}>{n.text}</Text>
       case 'link':
@@ -213,7 +217,7 @@ const renderInline = (el: ElementTable, style: Style, nodes: Inline[], keyBase: 
       case 'number':
         return <Text key={key} color={t.number}>{n.text}</Text>
       case 'path':
-        return <Text key={key} color={t.path}>{n.text}</Text>
+        return n.href ? <el.Link key={key} href={n.href}><Text color={t.path}>{n.text}</Text></el.Link> : <Text key={key} color={t.path}>{n.text}</Text>
       case 'dim':
         return <Text key={key} dimColor>{n.text}</Text>
       case 'footnote':
@@ -760,7 +764,7 @@ export const renderBlocks = (el: ElementTable, style: Style, blocks: Block[], co
   const floating = (button: RenderElement | null, low = false) => (button ? <Box position="absolute" {...(low ? { bottom: 0 } : { top: 0 })} left={0} minWidth="100%" justifyContent="flex-end" display="none" hover={{ display: 'flex' }}>{button}</Box> : null)
   const reserved = (buttons: (RenderElement | null | undefined)[]): number =>
     buttons.reduce<number>((w, button) => (button?.type === 'Button' ? w + (w ? 1 : 0) + width(`[ ${button.props.label} ]`) : w), 0)
-  const shown = blocks.map(block => drawable(block, style.httpLinks, style.editorLinks))
+  const shown = blocks.map(block => drawable(block, style.httpLinks, style.editorLinks, style.fileLinks))
   const rtlTables = shown.map(block => style.reorder && block.kind === 'table' && isRtlTable(style, block))
   const buttons = blocks.map((block, b) => {
     const text = copySource(style, block)

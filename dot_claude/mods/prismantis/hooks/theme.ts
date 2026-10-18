@@ -36,6 +36,8 @@ export type Style = {
   htmlCopy: ClipboardBackend | null
   httpLinks: boolean
   editorLinks: boolean
+  // local: testo di un `code`/path -> href vscode://file/ (hooks/filelink.ts)
+  fileLinks?: Map<string, string>
   diagramHints: boolean
   rtl: 'auto' | Terminal | 'off'
   reorder: boolean

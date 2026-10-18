@@ -4,6 +4,7 @@ import { expect, mock, test } from 'claude-code/testing'
 
 import { FIGURE_HINT } from '../hooks/figure'
 import { HINT } from '../hooks/help'
+import { fileHref, fileTarget } from '../hooks/filelink'
 
 const call = (tool: string, input: unknown, id: string, isErrored = false) => ({ tool_use_id: id, tool, input, isRunning: false, isErrored, isInterrupted: false })
 const toolResult = (tool: string, output: unknown, id: string, isErrored = false) =>
@@ -101,5 +102,35 @@ test('lists get no copy button', async $ => {
   const ui = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'AssistantMessage', props: { text: '- one\n- two', isFirstOfReply: true }, viewport: { columns: 80, rows: 20 } })
   const labels = (await ui.findAll({ type: 'Button' })).map(b => b.props.label)
   expect(labels).not.toContain('⧉ copy')
+  await ui.unmount()
+})
+
+// local: percorsi cliccabili (hooks/filelink.ts)
+test('filelink: fileTarget rende assoluto il percorso, con riga e colonna', async () => {
+  const win = 'E:\\AI\\proj'
+  expect(fileTarget('utils/x.lua:12', win, '/e/msys64/home/me')).toEqual({ path: 'E:/AI/proj/utils/x.lua', line: '12', col: undefined })
+  expect(fileTarget('C:\\APPL\\w.lua:5:3', win, '')).toEqual({ path: 'C:/APPL/w.lua', line: '5', col: '3' })
+  expect(fileTarget('/e/AI/x.lua', win, '')?.path).toBe('E:/AI/x.lua')
+  expect(fileTarget('~/.zshrc', win, '/e/msys64/home/me')?.path).toBe('E:/msys64/home/me/.zshrc')
+  expect(fileTarget('../a/./b.md', win, '')?.path).toBe('E:/AI/a/b.md')
+  expect(fileTarget('/tmp/x.log', win, '')).toBeUndefined()
+  expect(fileTarget('/home/me/x.ts:4', '/srv/app', '/home/me')).toEqual({ path: '/home/me/x.ts', line: '4', col: undefined })
+  expect(fileTarget('git status', win, '')).toBeUndefined()
+  expect(fileTarget('foo', win, '')).toBeUndefined()
+  expect(fileHref({ path: 'E:/my dir/x.lua', line: '7' })).toBe('vscode://file/E:/my%20dir/x.lua:7')
+  expect(fileHref({ path: '/home/me/x.ts' })).toBe('vscode://file/home/me/x.ts')
+})
+
+test('filelink: in una tabella un `code` che porta a un file esistente diventa un link, gli altri no', async ($, on) => {
+  on('session.version', () => ({ value: { version: '2.1.302', base: '2.1.302' } }))
+  on('session.cwd', () => ({ value: 'E:\\AI\\proj' }))
+  // l'ambiente passa il percorso nativo (E:\AI\...)
+  on('fs.exists', (_$, e) => ({ value: e.path.replace(/\\/g, '/') === 'E:/AI/proj/utils/open-file.lua' }))
+  const text = '| File | Nota |\n|---|---|\n| `utils/open-file.lua:12` | apre |\n| `vim.lsp.enable` | no |'
+  // 24 colonne: la cella del percorso va a capo, ogni pezzo resta un link
+  const ui = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'AssistantMessage', props: { text, isFirstOfReply: true }, viewport: { columns: 24, rows: 20 } })
+  const hrefs = (await ui.findAll({ type: 'Link' })).map(l => l.props.href)
+  expect(hrefs.length).toBeGreaterThan(1)
+  expect(hrefs.every(h => h === 'vscode://file/E:/AI/proj/utils/open-file.lua:12')).toBe(true)
   await ui.unmount()
 })

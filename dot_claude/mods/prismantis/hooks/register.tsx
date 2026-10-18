@@ -18,6 +18,7 @@ import type { Style } from './theme'
 import { RANDOM_THEMES, pickTheme, resolveStyle } from './theme'
 import type { Terminal } from './rtl'
 import { TERMINALS, hasRtl } from './rtl'
+import { fileLinks, forgetFiles } from './filelink'
 
 const HINTED_ORIGINS = ['composer', 'bridge', 'plugin'] as const satisfies readonly PromptOrigin['kind'][]
 
@@ -424,6 +425,7 @@ export const register: Register = (on, options) => {
   })
 
   on('prompt.submit', async ($, e, next) => {
+    forgetFiles() // local: un file creato nel frattempo diventa cliccabile
     if (style.clock !== 'off' && (e.origin.kind === 'composer' || e.origin.kind === 'bridge')) {
       const at = await $.clock.now()
       await update($, sent, list => withRecord(list, { text: promptKey(e.text), at }))
@@ -471,7 +473,12 @@ export const register: Register = (on, options) => {
     const narration = style.toolStyle === 'tree-bold' && blocks.length === 1 && blocks[0]!.kind === 'paragraph'
     const math = await mathOfBlocks($, latex, e.surface, blocks)
     const reach = await linkReach($, probes)
-    const surfaceStyle = forSurface(fit(e.viewport), e.surface, reach)
+    const linked = forSurface(fit(e.viewport), e.surface, reach)
+    // local: percorsi cliccabili (hooks/filelink.ts), solo dove Claude Code accetta i link vscode://
+    const files = linked.editorLinks
+      ? await fileLinks({ exists: path => $.fs.exists(path) }, blocks, await $.session.cwd().catch(() => ''), style.home || ((await $.env.get('HOME').catch(() => undefined)) ?? ''))
+      : undefined
+    const surfaceStyle = files?.size ? { ...linked, fileLinks: files } : linked
     const open = await read($, unfolded)
     return (
       <Box key="msg" flexDirection="row">

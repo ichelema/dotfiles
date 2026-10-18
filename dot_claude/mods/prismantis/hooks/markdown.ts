@@ -3,11 +3,11 @@ export type Inline =
   | { kind: 'strong'; children: Inline[] }
   | { kind: 'emphasis'; children: Inline[] }
   | { kind: 'strike'; children: Inline[] }
-  | { kind: 'code'; text: string }
+  | { kind: 'code'; text: string; href?: string }
   | { kind: 'math'; text: string }
   | { kind: 'link'; text: string; href: string }
   | { kind: 'number'; text: string }
-  | { kind: 'path'; text: string }
+  | { kind: 'path'; text: string; href?: string }
   | { kind: 'dim'; text: string }
   | { kind: 'footnote'; text: string; note?: number }
 
