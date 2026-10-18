@@ -4,7 +4,7 @@
 --   status.lua    update-status
 --   pane_info.lua letture da tab e pane (processo, titolo, cwd, ssh)
 --   cells.lua     costruzione dei FormatItem
--- Test: cd /c/APPL/WezTerm && luajit test/tabline_test.lua
+-- Test: cd ~/.config/wezterm && luajit test/tabline_test.lua
 local wezterm = require('wezterm')
 
 local M = {}
