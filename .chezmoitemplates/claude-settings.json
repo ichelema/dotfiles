@@ -33,7 +33,7 @@
     "MCP_NEOVIM_DIR": "e:/ai/tools/mcp-neovim-server",
     "EDITOR": "e:\\msys64\\home\\Sphynx\\.local\\bin\\vim-claude.cmd",
     "CLAUDE_ENV_FILE": "e:/msys64/home/sphynx/.local/bin/claude-msys2-env.sh",
-    "TRINITY_PLUGIN_DIR": "E:/AI/Claude/Trinity"
+    "TRINITY_PLUGIN_DIR": "D:/AI/Claude/Trinity"
 {{- else }}
     "EDITOR": "nvim",
     "SUDO_ASKPASS": "/home/ichelema/.local/bin/sudo-askpass.sh",
