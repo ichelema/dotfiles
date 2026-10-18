@@ -8,7 +8,14 @@
 --glob=!dist/* 
 --glob=!CHANGELOG.md 
 --glob=!.yardoc/*
---threads=4
 --hidden
 # link OSC 8 su file e numeri di riga: in WezTerm CTRL+clic apre Neovim alla riga (utils/open-file.lua)
 --hyperlink-format=file://{host}{path}#{line}
+{{- if eq .chezmoi.os "linux" }}
+# Arch (VPS e lavoro): opzioni del vecchio ~/.ripgreprc
+--threads=8
+--max-filesize=5M
+--ignore-case
+{{- else }}
+--threads=4
+{{- end }}
