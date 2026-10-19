@@ -105,7 +105,12 @@ keymap = [
 	{ on = [ "f", "g" ], run = "search --via=rg", desc = "Cerca file per contenuto (rg)" },
 	{ on = [ "f", "f" ], run = "filter --smart",  desc = "Filtra i file" },
 	{ on = [ "f", "z" ], run = "plugin zoxide",   desc = "Salta a una cartella (zoxide)" },
-	{ on = [ "f", "F" ], run = "plugin fzf",     desc = "Salta a un file o cartella (fzf)" },
+	# Preview (plugin toggle-pane): reset = rapporto della config, preview visibile
+	{ on = [ "T", "t" ], run = "plugin toggle-pane min-preview", desc = "Preview: mostra/nascondi" },
+	{ on = [ "T", "m" ], run = "plugin toggle-pane max-preview", desc = "Preview: massimizza/ripristina" },
+	{ on = [ "T", "o" ], run = "plugin toggle-pane reset",       desc = "Preview: mostra" },
+	{ on = [ "T", "h" ], run = [ "plugin toggle-pane reset", "plugin toggle-pane min-preview" ], desc = "Preview: nascondi" },
+	{ on = [ "f", "F" ], run = "plugin fzf",    desc = "Salta a un file o cartella (fzf)" },
 
 	# Find
 	{ on = "/", run = "find --smart",            desc = "Find next file" },
