@@ -19,20 +19,20 @@
 {{- end }}
 {{- if eq .chezmoi.os "windows" }}
     "CLAUDE_CODE_AUTO_MODE_SERVER": "0",
-    "CLAUDE_CODE_GIT_BASH_PATH": "e:\\msys64\\usr\\bin\\bash.exe",
+    "CLAUDE_CODE_GIT_BASH_PATH": "d:\\msys64\\usr\\bin\\bash.exe",
     "MSYSTEM": "UCRT64",
     "CHERE_INVOKING": "1",
     "MSYS2_PATH_TYPE": "strict",
-    "HOME": "e:\\msys64\\home\\sphynx",
-    "OBSIDIAN_VAULT": "e:/obsidian/sinapsi",
+    "HOME": "d:\\msys64\\home\\sphynx",
+    "OBSIDIAN_VAULT": "d:/obsidian/sinapsi",
     "OBSIDIAN_VAULT_NAME": "sinapsi",
-    "NOTEBOOKLM_DATA": "e:/ai/tools/notebooklm-data",
-    "NOTEBOOKLM_LIB": "e:/ai/tools/notebooklm",
-    "MCP_EXCALIDRAW_DIR": "e:/msys64/home/sphynx/.local/opt/mcp_excalidraw",
-    "MCP_DEBUGGER_DIR": "e:/ai/tools/mcp-debugger",
-    "MCP_NEOVIM_DIR": "e:/ai/tools/mcp-neovim-server",
-    "EDITOR": "e:\\msys64\\home\\Sphynx\\.local\\bin\\vim-claude.cmd",
-    "CLAUDE_ENV_FILE": "e:/msys64/home/sphynx/.local/bin/claude-msys2-env.sh",
+    "NOTEBOOKLM_DATA": "d:/ai/tools/notebooklm-data",
+    "NOTEBOOKLM_LIB": "d:/ai/tools/notebooklm",
+    "MCP_EXCALIDRAW_DIR": "d:/msys64/home/sphynx/.local/opt/mcp_excalidraw",
+    "MCP_DEBUGGER_DIR": "d:/ai/tools/mcp-debugger",
+    "MCP_NEOVIM_DIR": "d:/ai/tools/mcp-neovim-server",
+    "EDITOR": "d:\\msys64\\home\\Sphynx\\.local\\bin\\vim-claude.cmd",
+    "CLAUDE_ENV_FILE": "d:/msys64/home/sphynx/.local/bin/claude-msys2-env.sh",
     "TRINITY_PLUGIN_DIR": "D:/AI/Claude/Trinity"
 {{- else }}
     "EDITOR": "nvim",
@@ -78,7 +78,7 @@
       "mcp__excalidraw__query_elements",
       "mcp__excalidraw__delete_element",
       "mcp__excalidraw__describe_scene",
-      "Edit(/e/obsidian/sinapsi/**)",
+      "Edit(/d/obsidian/sinapsi/**)",
       "Bash(start obsidian://adv-uri?vault=* *)",
       "Skill(double-commander-docs)",
       "mcp__obsidian_semantic_notes_vault__vault",
@@ -177,7 +177,7 @@
       "start": "off",
       "column": "size"
 {{- if eq .chezmoi.os "windows" }},
-      "open": {{ `C:\Appl\Vim\vim.exe -u NONE -i NONE -N -es --cmd "exe 'silent !start C:\Appl\Vim\gvim.exe -u E:/msys64/home/Sphynx/.config/vim/minimal ' .. escape(nr2char(34) .. argv(0) .. nr2char(34), '%#!')" --cmd "qa!" {path}` | toJson }}
+      "open": {{ `C:\Appl\Vim\vim.exe -u NONE -i NONE -N -es --cmd "exe 'silent !start C:\Appl\Vim\gvim.exe -u D:/msys64/home/Sphynx/.config/vim/minimal ' .. escape(nr2char(34) .. argv(0) .. nr2char(34), '%#!')" --cmd "qa!" {path}` | toJson }}
 {{- end }}
     } }{{ with env "TYPESAFE_API_KEY" }},
     "jev-skill-suggestion": { "options": {

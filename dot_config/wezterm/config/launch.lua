@@ -7,31 +7,31 @@ local cmd_cmder = {
 
 -- env.exe e non cmd.exe: HOME va in forma POSIX, perché env.exe non converte i percorsi Windows
 local zsh_ucrt64 = {
-   'D:\\msys64\\usr\\bin\\env.exe', '-C', '/e/AI/Claude/Trinity',
-   'USERPROFILE=E:\\msys64\\home\\Sphynx',
-   'MSYS2_ROOT=E:\\msys64',
+   'D:\\msys64\\usr\\bin\\env.exe', '-C', '/d/AI/Claude/Trinity',
+   'USERPROFILE=D:\\msys64\\home\\Sphynx',
+   'MSYS2_ROOT=D:\\msys64',
    'MSYSTEM=UCRT64',
    'CHERE_INVOKING=1',
    'MSYS2_PATH_TYPE=strict',
-   'HOME=/e/msys64/home/Sphynx',
+   'HOME=/d/msys64/home/Sphynx',
    'D:\\msys64\\usr\\bin\\zsh.exe', '--login', '-i',
 }
 
 local bash_msys = {
-   'E:\\msys64\\usr\\bin\\env.exe', '-C', '/e/AI/Claude/Trinity',
+   'D:\\msys64\\usr\\bin\\env.exe', '-C', '/d/AI/Claude/Trinity',
    'MSYSTEM=MSYS',
    'CHERE_INVOKING=1',
    'MSYS2_PATH_TYPE=inherit',
-   'E:\\msys64\\usr\\bin\\bash.exe', '--login', '-i',
+   'D:\\msys64\\usr\\bin\\bash.exe', '--login', '-i',
 }
 
 local zsh_msys = {
-   'E:\\msys64\\usr\\bin\\env.exe', '-C', '/e/AI/Claude/Trinity',
+   'D:\\msys64\\usr\\bin\\env.exe', '-C', '/d/AI/Claude/Trinity',
    'MSYSTEM=MSYS',
    'CHERE_INVOKING=1',
    'MSYS2_PATH_TYPE=inherit',
-   'HOME=/e/msys64/home/Sphynx',
-   'E:\\msys64\\usr\\bin\\zsh.exe', '--login', '-i',
+   'HOME=/d/msys64/home/Sphynx',
+   'D:\\msys64\\usr\\bin\\zsh.exe', '--login', '-i',
 }
 
 local infomaniak_zsh = {
@@ -67,7 +67,7 @@ if platform.is_win then
       { label = ' PowerShell v7', args = { 'C:\\Appl\\PowerShell\\pwsh.exe' } },
       { label = ' Nushell', args = { 'nu' } },
       -- zellij nativo; il layout di default (zsh.kdl) apre la zsh UCRT64
-      { label = 'Zellij', args = { 'E:/msys64/home/Sphynx/.local/bin/zellij.exe' },
+      { label = 'Zellij', args = { 'D:/msys64/home/Sphynx/.local/bin/zellij.exe' },
         set_environment_variables = { ZELLIJ_CONFIG_DIR = 'C:/Users/en27553/AppData/Roaming/Zellij/config' } },
       infomaniak('󰣀 SSH Infomaniak', infomaniak_zsh),
       infomaniak(' VPS Infomaniak + herdr', infomaniak_herdr),

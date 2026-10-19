@@ -17,10 +17,10 @@ Sintassi e comandi di chezmoi: skill globale `chezmoi`. Qui solo come è fatto *
 
 | Macchina | Destinazione chezmoi | Note |
 |---|---|---|
-| Windows aziendale (principale) | `E:\msys64\home\Sphynx` (home MSYS2) | chezmoi si lancia da MSYS2. `E:` è un `subst` di `D:` |
+| Windows aziendale (principale) | `D:\msys64\home\Sphynx` (home MSYS2) | chezmoi si lancia da MSYS2 |
 | Linux | `~` | Trinity in `/Dati/AI/Claude/Trinity` |
 
-Su Windows esistono **due home**: MSYS2 (`E:\msys64\home\Sphynx`: Claude Code, Pi, LiteLLM) e
+Su Windows esistono **due home**: MSYS2 (`D:\msys64\home\Sphynx`: Claude Code, Pi, LiteLLM) e
 quella di Windows (`C:\Users\en27553`: gvim, nvim, Git for Windows). chezmoi scrive solo nella
 prima; i programmi nativi ci arrivano tramite **junction** (`mklink /J`). Symlink e hardlink non
 sono utilizzabili: i symlink richiedono la Developer Mode, gli hardlink non attraversano i volumi.
@@ -29,7 +29,7 @@ sono utilizzabili: i symlink richiedono la Developer Mode, gli hardlink non attr
 
 Su Windows contiene, oltre a `[edit]` (gvim `-f`) e `[merge]` (WinMerge):
 - `[diff] pager = ""`: diff testuale. WinMerge come diff bloccava `chezmoi apply -v`.
-- `[interpreters.sh] command = "E:/msys64/usr/bin/bash.exe"`: path completo, perché `bash` da un
+- `[interpreters.sh] command = "D:/msys64/usr/bin/bash.exe"`: path completo, perché `bash` da un
   processo nativo trova prima la bash WSL di System32.
 - `encryption = "age"` + `[age] identity = "~/.config/chezmoi/key.txt"`, `recipient = "age1z0nc…r0fn"`.
 

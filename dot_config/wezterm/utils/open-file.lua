@@ -9,10 +9,10 @@ local platform = require('utils.platform')()
 local NVIM, YAZI, YAZI_ENV
 if platform.is_win then
    -- stesso avvio della funzione zsh `nvim`: ambiente MSYS2 ripulito, config Windows
-   NVIM = { 'E:/msys64/usr/bin/bash.exe', '/e/msys64/home/Sphynx/.local/bin/nvim-win.sh' }
+   NVIM = { 'D:/msys64/usr/bin/bash.exe', '/d/msys64/home/Sphynx/.local/bin/nvim-win.sh' }
    -- YAZI_CONFIG_HOME come in ~/.config/zsh/modules/env.zsh: WezTerm non passa da zsh
-   YAZI = 'E:/msys64/ucrt64/bin/yazi.exe'
-   YAZI_ENV = { YAZI_CONFIG_HOME = 'E:/msys64/home/Sphynx/.config/yazi' }
+   YAZI = 'D:/msys64/ucrt64/bin/yazi.exe'
+   YAZI_ENV = { YAZI_CONFIG_HOME = 'D:/msys64/home/Sphynx/.config/yazi' }
 else
    NVIM = { 'nvim' }
    YAZI = 'yazi'
@@ -39,7 +39,7 @@ local function windows_path(p)
       return p
    end
    p = p:gsub('\\', '/')
-   p = p:gsub('^/(%a)/', '%1:/') -- MSYS2: /e/AI -> e:/AI
+   p = p:gsub('^/(%a)/', '%1:/') -- MSYS2: /d/AI -> d:/AI
    p = p:gsub('^/(%a:)', '%1') -- file URI: /C:/x -> C:/x
    return p
 end
@@ -117,7 +117,7 @@ function M.on_open_uri(window, pane, uri)
    end
    -- vscode://file/<percorso>:<riga>: l'unico schema di file che Claude Code accetta nei link
    if uri:find('^vscode://file/') then
-      -- la barra dopo "file" è l'inizio del percorso: /home/x su Linux, /E:/x su Windows (diventa E:/x)
+      -- la barra dopo "file" è l'inizio del percorso: /home/x su Linux, /D:/x su Windows (diventa D:/x)
       local target = uri:sub(#'vscode://file' + 1)
          :gsub('%%(%x%x)', function(h) return string.char(tonumber(h, 16)) end)
          :gsub('^/(%a:)', '%1')

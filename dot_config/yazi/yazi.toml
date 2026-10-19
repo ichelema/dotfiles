@@ -32,7 +32,7 @@ ueberzug_offset = [ 0, 0, 0, 0 ]
 [opener]
 edit = [
     { run = "vim %s",                                     desc = "vim",  for = "windows", block = true },
-    { run = "bash '/e/msys64/home/Sphynx/.local/bin/nvim-win.sh' %s", desc = "nvim", for = "windows", block = true },
+    { run = "bash '/d/msys64/home/Sphynx/.local/bin/nvim-win.sh' %s", desc = "nvim", for = "windows", block = true },
     { run = "nvim %s",                                    desc = "nvim", for = "unix",    block = true },
 ]
 play = [

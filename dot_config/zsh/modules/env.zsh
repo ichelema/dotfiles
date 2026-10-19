@@ -12,7 +12,7 @@ export XDG_CACHE_HOME="$HOME/.cache"
 export XDG_STATE_HOME="$HOME/.local/state"
 
 # --- Chrome DevTools Protocol ---
-export CDP_PORT_FILE='E:/msys64/home/Sphynx/.cache/chrome-cdp-profile/DevToolsActivePort'
+export CDP_PORT_FILE='D:/msys64/home/Sphynx/.cache/chrome-cdp-profile/DevToolsActivePort'
 # Puppeteer (mermaid-cli) usa il Chrome di sistema invece di scaricare Chromium
 export PUPPETEER_EXECUTABLE_PATH='C:/Program Files/Google/Chrome/Application/chrome.exe'
 
@@ -40,7 +40,7 @@ setopt HIST_FCNTL_LOCK
 
 
 # --- MSYS optional toggles ---
-# export USERPROFILE="E:/msys64/home/Sphynx"
+# export USERPROFILE="D:/msys64/home/Sphynx"
 # Esportata (non solo nell'alias claude) così i processi figli la ereditano:
 # es. `ccr code` lancia il binario claude scavalcando l'alias → senza questo
 # userebbe la config default (C:\Users) priva di trust Trinity e di OBSIDIAN_*/TRINITY_PLUGIN_DIR

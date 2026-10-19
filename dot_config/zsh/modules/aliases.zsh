@@ -28,4 +28,4 @@ fi
 alias updatedb='updatedb --localpaths="/ /d/AI/Claude/Trinity" --prunepaths="/tmp /var/tmp /proc /dev /home/Sphynx/.local/share/nvim/undo /home/Sphynx/.local/share/nvim/view /home/Sphynx/vimfiles/files/undo /home/Sphynx/vimfiles/files/view"'
 
 # --- notebooklm (Google NotebookLM CLI, exe-free, proxy Eni) ---
-alias notebooklm='/e/AI/tools/notebooklm-data/notebooklm'
+alias notebooklm='/d/AI/tools/notebooklm-data/notebooklm'

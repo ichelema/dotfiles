@@ -5,11 +5,11 @@ Ambiente utilizzato
 {{ if eq .chezmoi.os "windows" -}}
 - msys2
 
-- Shell Zsh config in /e/msys64/home/Sphynx/.config/zsh
+- Shell Zsh config in /d/msys64/home/Sphynx/.config/zsh
 
 - Per task e gestione versioni Mise
 
-- Home directory in /e/msys64/home/Sphynx
+- Home directory in /d/msys64/home/Sphynx
 
 - Installazione pacchetti con pacman
 
@@ -218,7 +218,7 @@ Prima di considerare completato un file, esegui il validatore appropriato.
 - Ruby: `ruby -c file.rb`; per lo stile usa `rubocop file.rb`.
 - Python: `python -m py_compile file.py`; per lint usa `ruff check file.py`.
 - JavaScript: `node --check file.js`; per formattazione usa `prettier --check file.js`.
-- Nushell: `nu --ide-check 100 file.nu` (il binario nativo richiede percorsi Windows, ad esempio `E:/path/file.nu`).
+- Nushell: `nu --ide-check 100 file.nu` (il binario nativo richiede percorsi Windows, ad esempio `D:/path/file.nu`).
 - Perl: `perl -c file.pl`.
 - TOML: `taplo lint file.toml`.
 - C/C++: `gcc -fsyntax-only file.c` / `g++ -fsyntax-only file.cpp`.
@@ -281,9 +281,9 @@ Preferisci i comandi già disponibili nell'ambiente:
 - Per output tabulare, aggregazione o filtraggio su dati strutturati preferisci
   Nushell (`$HOME/.local/bin/nu -c "..."`) a pipe testuali — vedi la skill `nushell`.
   
-- Nei comandi Bash usa percorsi Unix/MSYS2, per esempio `/e/msys64/home/Sphynx`.
+- Nei comandi Bash usa percorsi Unix/MSYS2, per esempio `/d/msys64/home/Sphynx`.
 
-- I tool file `read`, `edit` e `write` sono eseguiti direttamente da Node.js, non dalla shell MSYS2. Con questi tool usa percorsi relativi al progetto oppure percorsi Windows assoluti con forward slash, per esempio `E:/msys64/home/Sphynx/file.md`.
+- I tool file `read`, `edit` e `write` sono eseguiti direttamente da Node.js, non dalla shell MSYS2. Con questi tool usa percorsi relativi al progetto oppure percorsi Windows assoluti con forward slash, per esempio `D:/msys64/home/Sphynx/file.md`.
 
 {{ else -}}
 - Per output tabulare, aggregazione o filtraggio su dati strutturati preferisci

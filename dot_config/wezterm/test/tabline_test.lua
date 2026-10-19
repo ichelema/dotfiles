@@ -1,6 +1,6 @@
 -- Test della tabline (events/tabline) con un finto modulo 'wezterm'.
 -- Uso, dalla cartella della config:  cd ~/.config/wezterm && luajit test/tabline_test.lua
--- Nota: il caso "cwd centrata" legge davvero il disco (E:/AI/Claude/Trinity deve essere un repo):
+-- Nota: il caso "cwd centrata" legge davvero il disco (D:/AI/Claude/Trinity deve essere un repo):
 -- dove il repo non c'è (Linux) il controllo viene saltato.
 
 local handlers = {}
@@ -89,9 +89,9 @@ local function pane(domain, proc, path, zoomed)
 end
 local function status(w, p) handlers['update-status'](w, p) return w.s end
 
-local s = status(win(nil, true), pane('local', [[C:\x\nvim.exe]], '/E:/AI/Claude/Trinity/', true))
+local s = status(win(nil, true), pane('local', [[C:\x\nvim.exe]], '/D:/AI/Claude/Trinity/', true))
 check('status sx: razzo leader + zoom, niente processo', s.left:find('<oct_rocket>') ~= nil and s.left:find('zoom') ~= nil and not s.left:find('nvim'))
-s = status(win(nil, false), pane('local', [[C:\x\nvim.exe]], '/E:/AI/Claude/Trinity/', true))
+s = status(win(nil, false), pane('local', [[C:\x\nvim.exe]], '/D:/AI/Claude/Trinity/', true))
 check('status dx: radice git con barra finale', s.right:find('Trinity') ~= nil)
 s = status(win(nil, false), pane('local', [[C:\x\ssh.exe]], '/C:/Users/en27553/Documents/', false))
 check('status dx: processo ssh + home come ~', s.right:find('<md_ssh> ssh') ~= nil and s.right:find('~/Documents') ~= nil)
@@ -113,18 +113,18 @@ local colors = {}
 local wez = package.loaded['wezterm']
 local fmt = wez.format
 wez.format = function(cells) for _, x in ipairs(cells) do if x.Foreground then colors[#colors + 1] = x.Foreground.Color end end return fmt(cells) end
-s = status(win(nil, false, 'lavoro'), pane('local', nil, '/E:/AI/Claude/Trinity/'))
+s = status(win(nil, false, 'lavoro'), pane('local', nil, '/D:/AI/Claude/Trinity/'))
 wez.format = fmt
 WS = nil
 check('workspace: |default|lavoro| in fondo', s.right:find('|default|lavoro| $') ~= nil)
 check('workspace: attivo Frost, altri grigi', table.concat(colors, ' '):find('#7B88A1 #4C566A #88C0D0') ~= nil)
 local mid = '<oct_file_directory> Trinity'
-local repo = io.open('E:/AI/Claude/Trinity/.git/HEAD')
+local repo = io.open('D:/AI/Claude/Trinity/.git/HEAD')
 if repo then
   repo:close()
   check('cwd centrata (cols=100, pulsanti=9)', 100 - 9 - #s.right == 50 - math.floor(#mid / 2) and s.right:sub(1, #mid) == mid)
 else
-  print('skip cwd centrata: E:/AI/Claude/Trinity non è un repo su questa macchina')
+  print('skip cwd centrata: D:/AI/Claude/Trinity non è un repo su questa macchina')
 end
 
 print(failed == 0 and 'PASS' or ('FAIL: ' .. failed .. ' controlli'))
