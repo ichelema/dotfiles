@@ -1,7 +1,7 @@
 emulate -L zsh
 
 # Lancia il Vim NATIVO Windows ripulendo PWD/SHELL (var MSYS). HOME resta quello
-# MSYS (E:\msys64\home\Sphynx): senza HOME Vim usa HOMEDRIVE (V:\) e non trova
+# MSYS (D:\msys64\home\Sphynx): senza HOME Vim usa HOMEDRIVE (V:\) e non trova
 # vimfiles (junction verso ~/.config/vim). -u SHELL fa usare cmd.exe (default)
 # invece di bash/zsh: fzf.vim richiede cmd.exe per convertire i path.
 # --not-a-term: sopprime "Vim: Warning: Output is not to a terminal" e i 2s

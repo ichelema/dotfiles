@@ -21,17 +21,17 @@ set MSYSTEM=UCRT64
 set CHERE_INVOKING=1
 set MSYS2_PATH_TYPE=strict
 
-set HOME=E:\msys64\home\Sphynx
-set CLAUDE_CONFIG_DIR=E:\msys64\home\Sphynx\.claude
-set CLAUDE_CODE_GIT_BASH_PATH=E:\msys64\usr\bin\bash.exe
+set HOME=D:\msys64\home\Sphynx
+set CLAUDE_CONFIG_DIR=D:\msys64\home\Sphynx\.claude
+set CLAUDE_CODE_GIT_BASH_PATH=D:\msys64\usr\bin\bash.exe
 
 rem CLAUDE_ENV_FILE definito in .claude/settings.json (env), non qui
 
-set PATH=E:\msys64\ucrt64\bin;E:\msys64\usr\local\bin;E:\msys64\usr\bin;E:\msys64\bin;E:\msys64\home\Sphynx\.local\bin;E:\msys64\home\Sphynx\.local\bin\lua-language-server\bin;C:\Windows\System32\WindowsPowerShell\v1.0;C:\Windows\System32;C:\Windows
+set PATH=D:\msys64\ucrt64\bin;D:\msys64\usr\local\bin;D:\msys64\usr\bin;D:\msys64\bin;D:\msys64\home\Sphynx\.local\bin;D:\msys64\home\Sphynx\.local\bin\lua-language-server\bin;C:\Windows\System32\WindowsPowerShell\v1.0;C:\Windows\System32;C:\Windows
 
 rem --- risoluzione path Claude Desktop (classico oppure Store/MSIX) ---
 set "CLAUDE_EXE=C:\Users\en27553\AppData\Local\AnthropicClaude\claude.exe"
 if exist "%CLAUDE_EXE%" goto :launch
 for /f "delims=" %%i in ('powershell -NoProfile -Command "@(Get-AppxPackage -Name *Claude*)[0].InstallLocation"') do set "CLAUDE_EXE=%%i\app\claude.exe"
 :launch
-start "" /D "E:\AI\Claude\Trinity" "%CLAUDE_EXE%"
+start "" /D "D:\AI\Claude\Trinity" "%CLAUDE_EXE%"

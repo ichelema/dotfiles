@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Installa i plugin yazi elencati in package.toml (gestito da chezmoi).
+# run_onchange: riparte quando cambia questo hash
+# package.toml: {{ include "dot_config/yazi/package.toml" | sha256sum }}
+# Dopo `ya pkg add/upgrade`: chezmoi re-add ~/.config/yazi/package.toml
+set -euo pipefail
+if ! command -v ya >/dev/null 2>&1; then
+  echo "SALTATO: ya non trovato, installa yazi e rilancia chezmoi apply" >&2
+  exit 0
+fi
+export YAZI_CONFIG_HOME={{ joinPath .chezmoi.homeDir ".config/yazi" | quote }}
+ya pkg install
