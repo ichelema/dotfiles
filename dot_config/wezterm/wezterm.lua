@@ -1,3 +1,7 @@
+-- Da Windows (senza XDG_CONFIG_HOME) WezTerm non cerca i moduli accanto a questo file
+local dir = require('wezterm').config_dir
+package.path = dir .. '/?.lua;' .. dir .. '/?/init.lua;' .. package.path
+
 local Config = require('config')
 
 require('events.tabline').setup()
