@@ -86,3 +86,7 @@ CLAUDE.md
 # wezterm: IP del VPS e utente SSH; senza il file wezterm.lua parte senza connessioni SSH
 .config/wezterm/config/domains.lua
 {{- end }}
+{{- if not (index . "vps") }}
+# notifiche ntfy degli hook di Claude Code: solo sul VPS
+.local/bin/claude-notifica
+{{- end }}

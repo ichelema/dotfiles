@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# claude-notifica <domanda|fine|annulla>: hook di Claude Code sul VPS, avvisi sul telefono con ntfy.
+#   domanda (PreToolUse AskUserQuestion): subito, con il testo della domanda
+#   fine    (Stop): solo se non arriva un nuovo prompt entro ATTESA secondi
+#   annulla (UserPromptSubmit, SessionEnd): cancella l'avviso "fine" in attesa
+# Il loop di hindsight-mod gira da systemd (INVOCATION_ID) e ha i suoi avvisi: qui niente.
+# Canale ntfy: lo stesso di `avviso`, in ~/.config/avviso/ntfy-topic (fuori da git).
+set -u
+[ -n "${INVOCATION_ID:-}" ] && exit 0
+canale=$(cat "$HOME/.config/avviso/ntfy-topic" 2>/dev/null) || exit 0
+ATTESA=${CLAUDE_NOTIFICA_ATTESA:-240}
+
+# invia <titolo> <priorità> <tag> <testo>: un invio fallito non ferma mai Claude
+invia() {
+  curl -fsS -m 10 -o /dev/null -H "Title: $1" -H "Priority: $2" -H "Tags: $3" \
+    --data-raw "${4:0:200}" "https://ntfy.sh/$canale" || true
+}
+
+input=$(cat)
+sid=$(jq -r '.session_id // "x"' <<<"$input")
+cwd=$(jq -r '.cwd // empty' <<<"$input")
+progetto=$(basename "${cwd:-$PWD}")
+file=$HOME/.local/state/claude-notifica/$sid
+
+case ${1:-} in
+  domanda)
+    q=$(jq -r '.tool_input.questions[0].question // .tool_input.question // "Claude ti fa una domanda"' <<<"$input")
+    invia "Claude: $progetto" high raising_hand "$q" ;;
+  fine)
+    mkdir -p "${file%/*}"
+    t=$(date +%s%N); printf '%s' "$t" > "$file"
+    export -f invia; export canale
+    # setsid e fd chiusi: lo hook ritorna subito e il timer sopravvive
+    setsid bash -c '
+      sleep "$1"
+      [ "$(cat "$2" 2>/dev/null)" = "$3" ] || exit 0
+      rm -f "$2"
+      invia "Claude: $4" default hourglass "aspetta una tua risposta ($(date +%H:%M))"
+    ' _ "$ATTESA" "$file" "$t" "$progetto" </dev/null >/dev/null 2>&1 &
+    ;;
+  annulla) rm -f "$file" ;;
+esac
+exit 0

@@ -115,6 +115,15 @@
     "defaultMode": "auto"
   },
   "model": {{ if eq .chezmoi.os "linux" }}"opus"{{ else }}"opus[1m]"{{ end }},
+{{- if index . "vps" }}
+  "hooks": {
+    "PreToolUse": [{ "matcher": "AskUserQuestion",
+      "hooks": [{ "type": "command", "command": "~/.local/bin/claude-notifica domanda" }] }],
+    "Stop": [{ "hooks": [{ "type": "command", "command": "~/.local/bin/claude-notifica fine" }] }],
+    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "~/.local/bin/claude-notifica annulla" }] }],
+    "SessionEnd": [{ "hooks": [{ "type": "command", "command": "~/.local/bin/claude-notifica annulla" }] }]
+  },
+{{- end }}
   "disableClaudeAiConnectors": true,
   "deniedMcpServers": [
     { "serverName": "plugin:trinity:neovim" },
