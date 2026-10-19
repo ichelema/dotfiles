@@ -47,14 +47,14 @@ check('tab: attiva #59657D, stacco col colore barra', bgs(c)[1] == '#59657D' and
 
 local t = vps_tab('x'); t.tab_title = 'vps'
 c = fmt_tab(t)
-check('tab: regola infomaniak (icona + colore)', txt(c):find(' 3 <md_server> vps  ') ~= nil and bgs(c)[1] == '#7EBED0')
+check('tab: regola infomaniak (icona, colori delle tab normali)', txt(c):find(' 3 <md_server> vps  ') ~= nil and bgs(c)[1] == '#3B4252')
 check('tab: hover vince sulla regola', bgs(fmt_tab(t, true))[1] == '#434C5E')
 t.tab_title = string.rep('a', 80)
 c = fmt_tab(t)
 check('tab: titolo lungo troncato', txt(c):find(string.rep('a', 15)) ~= nil and not txt(c):find(string.rep('a', 16)))
 
 c = fmt_tab(vps_tab('x', { { has_unseen_output = true } }))
-check('tab: su sfondo regola testo e pallino scuri', bgs(c)[1] == '#7EBED0' and fgs(c)[1] == '#2E3440' and fgs(c)[2] == '#2E3440')
+check('tab: VPS come le normali, pallino arancio', bgs(c)[1] == '#3B4252' and fgs(c)[1] == '#B1BDD3' and fgs(c)[2] == '#D08770')
 c = fmt_tab(local_tab(0, false, { { has_unseen_output = true } }))
 check('tab: inattiva Nord, pallino arancio', bgs(c)[1] == '#3B4252' and fgs(c)[1] == '#B1BDD3' and fgs(c)[2] == '#D08770')
 

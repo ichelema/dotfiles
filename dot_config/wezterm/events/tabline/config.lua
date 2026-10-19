@@ -45,7 +45,7 @@ return {
    -- regole per tab: vince la prima il cui pattern Lua corrisponde al domain
    -- bg/fg colorano solo le tab inattive, icon va prima del titolo
    rules = {
-      { domain = '^infomaniak$', bg = '#7EBED0', fg = '#2E3440', icon = nf.md_server },
+      { domain = '^infomaniak$', icon = nf.md_server }, -- colori delle tab normali
       { domain = '^ArchLinux$', bg = '#EBCB8B', fg = '#2E3440', icon = nf.linux_archlinux }, -- nord13
    },
 
