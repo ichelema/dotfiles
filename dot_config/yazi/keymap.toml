@@ -105,7 +105,7 @@ keymap = [
 	{ on = [ "f", "g" ], run = "search --via=rg", desc = "Cerca file per contenuto (rg)" },
 	{ on = [ "f", "f" ], run = "filter --smart",  desc = "Filtra i file" },
 	{ on = [ "f", "z" ], run = "plugin zoxide",   desc = "Salta a una cartella (zoxide)" },
-	{ on = [ "f", "j" ], run = "plugin fzf",      desc = "Salta a un file o cartella (fzf)" },
+	{ on = [ "f", "F" ], run = "plugin fzf",     desc = "Salta a un file o cartella (fzf)" },
 
 	# Find
 	{ on = "/", run = "find --smart",            desc = "Find next file" },
