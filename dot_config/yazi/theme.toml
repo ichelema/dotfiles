@@ -256,7 +256,7 @@ rules = [
 	{ url = "*", is = "dummy", bg = "red" },
 	{ url = "*/", is = "dummy", bg = "red" },
 	# Fallback
-	{ url = "*/", fg = "#4F6772" }
+	{ url = "*/", fg = "#7B8D95" }
 ]
 
 # : }}}
@@ -997,8 +997,8 @@ conds = [
 	{ if = "dummy", text = "", fg = "#f44336" },
 
 	# Fallback
-	{ if = "dir & hovered", text = "", fg = "#4F6772" },
-	{ if = "dir", text = "", fg = "#4F6772" },
+	{ if = "dir & hovered", text = "", fg = "#7B8D95" },
+	{ if = "dir", text = "", fg = "#7B8D95" },
 	{ if = "exec", text = "", fg = "#8bc34a" },
 	{ if = "!dir", text = "", fg = "#ffffff" },
 ]
