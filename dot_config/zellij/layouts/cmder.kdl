@@ -1,0 +1,8 @@
+layout {
+    pane size=1 borderless=true {
+        plugin location="zellij:compact-bar"
+    }
+    pane command="cmd.exe" {
+        args "/k C:/Appl/cmder/config/init.bat"
+    }
+}

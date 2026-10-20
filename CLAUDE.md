@@ -66,11 +66,13 @@ su una VPS, `[data] vps = true`.
 | Git | `dot_config/git/config.tmpl`, `ignore` | Path XDG (niente `~/.gitconfig`: se esiste ha la precedenza). Blocchi per OS: WinMerge/gvim, `sslCAInfo` aziendale solo se `C:/certs/cacert.pem` esiste, helper `gh` trovato con `lookPath` |
 | Vim | `dot_config/vim/` | vim-plug. `plugged/` e `files/*` (undo, view…) sono ignorati. I plugin non si installano da soli: `:PlugInstall` |
 | Neovim | `.chezmoiexternal.toml` | Repo esterno `ichelema/neovim_config` in `~/.config/nvim` |
+| Neovim nativo (solo Windows) | `dot_local/bin/executable_nvim-win.sh` | Lancia `C:\Appl\Neovim\bin\nvim.exe` senza le variabili MSYS2 (`HOME`, `XDG_*`, `SHELL`) e con git-for-windows in testa al `PATH`. Lo usano la funzione zsh `nvim`, yazi, WezTerm (`utils/open-file.lua`) e `scrollback_editor` di Zellij |
 | Claude Code | `dot_claude/`, `.chezmoitemplates/claude-settings.json` | `settings.json` è un modify-template (`dot_claude/modify_settings.json`): il contenuto viene da `.chezmoitemplates/claude-settings.json`, con blocchi per OS (`env`, `model`, comando di `statusLine`). Dal file sul disco conserva solo `model`, `modelSettings` e `fastMode`; ogni altra chiave scritta da Claude a runtime viene tolta al prossimo `apply`, quindi le modifiche da tenere vanno riportate nel template (`re-add` non funziona). Il ramo non-Windows di `env` contiene percorsi della macchina Linux principale (`/Dati/...`). Skill, hook e MCP vengono dal plugin Trinity, non da qui |
 | Pi agent | `dot_pi/agent/` | Solo config. Fuori: `auth.json`, `sessions/`, `npm/`, `git/`, `tmp/`, `node_modules`, `*.bak`. `AGENTS.md.tmpl` ha blocchi per OS (ambiente, validatori, percorsi). `settings.json` è un modify-template (`.chezmoitemplates/pi-settings.json`) che conserva `lastChangelogVersion`, `defaultModel`, `defaultProvider` scritti da Pi a runtime |
 | LiteLLM | `private_dot_litellm/`, `dot_local/bin/executable_litellm-*` | Config, moduli (`callbacks.py`, `responses_bridge.py`), test, launcher. `master-key.txt` cifrata; `logs/` locale. Dopo `apply` riavviare il proxy. Su Linux `litellm-proxy-run.py`, `litellm-start-proxy.sh` e `litellm-pg-ensure.py` sono ignorati (lì restano le versioni Linux locali) |
 | mise | `dot_config/mise/config.toml.tmpl` | Versioni globali dei runtime; base comune + blocco solo Linux |
 | zsh (solo Windows) | `dot_zshenv`, `dot_config/zsh/` (`.zshrc`, `modules/`, `functions/`) | Config MSYS2; su Linux è ignorata e resta quella locale. Plugin (`fast-syntax-highlighting`, `fzf-tab`, `zsh-autosuggestions`) come `git-repo` in `.chezmoiexternal.toml`. Fuori: `.histfile`, `.zcompdump*`, `*.bak*`. `mise.zsh` mette in `PATH` anche `~/.local/bin/lua-language-server/bin` (serve al plugin `lua-lsp`) |
+| Zellij | `dot_config/zellij/` | `config.kdl.tmpl` e `layouts/zsh.kdl.tmpl` hanno un blocco per OS: su Windows la zsh MSYS2 tramite `env.exe` e `scrollback_editor` con `nvim-win.sh`, con i percorsi di MSYS2 ricavati da `.chezmoi.homeDir`; su Linux `NewPane` e `nvim +`. Plugin which-key: sorgente Rust in `plugins/zellij-which-key/` (storia in `task.md` e `tasks/`) e `.wasm` compilato nel repo: dopo una build, `chezmoi re-add` del `.wasm`. Fuori: `target/`, `*.bak*`. `layouts/cmder.kdl` solo Windows. Su Windows Zellij legge `%APPDATA%\Zellij\config`, junction verso `~/.config/zellij` |
 | Claude Desktop (solo Windows) | `dot_local/bin/executable_claude_code_desktop*.cmd` | Launcher con PATH e env MSYS2. CRLF conservati da `.gitattributes` (`*.cmd -text`): non modificarli con `sed -i` di MSYS2, che toglie i `\r` |
 | Ruby REPL, ctags | `dot_irbrc`, `dot_irbrc_rails`, `dot_pryrc`, `dot_ctags` | Solo config: le cronologie (`.irb_history`, `.pry_history`) restano locali |
 
@@ -78,7 +80,8 @@ su una VPS, `[data] vps = true`.
 
 - `.chezmoiscripts/run_onchange_after_windows-junctions.sh.tmpl` (solo Windows): crea le junction
   `C:\Users\en27553\vimfiles` e `~/vimfiles` → `~/.config/vim`, `C:\Users\en27553\.config\git` →
-  `~/.config/git`, `%LOCALAPPDATA%\nvim` → `~/.config/nvim`. Se al posto della junction trova una
+  `~/.config/git`, `%LOCALAPPDATA%\nvim` → `~/.config/nvim`, `%APPDATA%\Zellij\config` →
+  `~/.config/zellij`. Se al posto della junction trova una
   cartella reale la salta: spostarla in `.bak` e rilanciare `apply`.
 
 ## Note

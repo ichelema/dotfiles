@@ -1,6 +1,6 @@
 {{- if eq .chezmoi.os "windows" -}}
 #!/usr/bin/env bash
-# I programmi nativi Windows (gvim, nvim, Git for Windows) leggono la config da
+# I programmi nativi Windows (gvim, nvim, Git for Windows, Zellij) leggono la config da
 # C:\Users\<utente>, chezmoi la scrive nella home MSYS2: le junction collegano i
 # due posti. Junction e non symlink: non richiedono admin/Developer Mode.
 set -euo pipefail
@@ -18,6 +18,7 @@ link() { # link <percorso-junction> <cartella-reale>
 
 home={{ .chezmoi.homeDir | quote }}
 local_appdata={{ env "LOCALAPPDATA" | replace "\\" "/" | quote }}
+appdata={{ env "APPDATA" | replace "\\" "/" | quote }}
 # Da LOCALAPPDATA, non da HOMEDRIVE/HOMEPATH: sul PC aziendale quelli possono
 # puntare alla home di rete (V:), dove le junction non si possono creare.
 win_home="${local_appdata%/AppData/Local}"
@@ -25,6 +26,8 @@ win_home="${local_appdata%/AppData/Local}"
 link "$win_home/vimfiles"    "$home/.config/vim"
 link "$win_home/.config/git" "$home/.config/git"
 link "$local_appdata/nvim"   "$home/.config/nvim"
+# Zellij nativo legge %APPDATA%\Zellij\config quando ZELLIJ_CONFIG_DIR manca
+link "$appdata/Zellij/config" "$home/.config/zellij"
 # vim nativo lanciato da MSYS2 eredita USERPROFILE=home MSYS2 e cerca qui
 link "$home/vimfiles"        "$home/.config/vim"
 {{ end -}}

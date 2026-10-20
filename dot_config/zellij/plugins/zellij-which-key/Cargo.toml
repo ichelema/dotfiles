@@ -1,0 +1,8 @@
+[package]
+name = "zellij-which-key"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# stessa versione di zellij.exe: l'API dei plugin cambia tra le versioni
+zellij-tile = "=0.45.1"

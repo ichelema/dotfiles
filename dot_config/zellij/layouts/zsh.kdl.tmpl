@@ -1,0 +1,46 @@
+{{- /* percorsi di MSYS2 per il blocco Windows: vedi config.kdl.tmpl */ -}}
+{{- $home := .chezmoi.homeDir -}}
+{{- $msys := $home | dir | dir -}}
+{{- $homeWin := $home | replace "/" "\\\\" -}}
+{{- $msysWin := $msys | replace "/" "\\\\" -}}
+{{- $homeSh := printf "/%s%s" (substr 0 1 $home | lower) (substr 2 -1 $home) -}}
+layout {
+    // pane size=1 borderless=true {
+    //     plugin location="zellij:compact-bar" {
+    //      tooltip "F1"
+    //     }
+    // }
+    pane size=1 borderless=true {
+        plugin location="zellij:tab-bar"
+    }
+{{- if eq .chezmoi.os "windows" }}
+    pane command="{{ $msys }}/usr/bin/env.exe" {
+        args "USERPROFILE={{ $homeWin }}" \
+             "MSYS2_ROOT={{ $msysWin }}" \
+             "MSYSTEM=UCRT64" \
+             "CHERE_INVOKING=1" \
+             "MSYS2_PATH_TYPE=strict" \
+             "HOME={{ $homeSh }}" \
+             "{{ $msys }}/usr/bin/zsh.exe" "--login" "-i"
+    }
+{{- else }}
+    pane
+{{- end }}
+}
+// layout {
+//     pane size=1 borderless=true {
+//         plugin location="tab-bar"
+//     }
+//     pane command="D:/msys64/usr/bin/env.exe" {
+//         args "USERPROFILE=E:\\msys64\\home\\Sphynx" \
+//              "MSYS2_ROOT=E:\\msys64" \
+//              "MSYSTEM=UCRT64" \
+//              "CHERE_INVOKING=1" \
+//              "MSYS2_PATH_TYPE=strict" \
+//              "HOME=/e/msys64/home/Sphynx" \
+//              "D:/msys64/usr/bin/zsh.exe" "--login" "-i"
+//     }
+//     pane size=1 borderless=true {
+//         plugin location="status-bar"
+//     }
+// }
