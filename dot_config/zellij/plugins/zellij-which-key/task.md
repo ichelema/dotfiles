@@ -23,6 +23,8 @@ Prima di cambiare una parte, leggi il file della task che l'ha introdotta.
   `bind "Alt ."` nel blocco `scroll` di `<config>/config.kdl`: il leader risponde anche con il pannello scorso in alto.
 - [x] **T3 — Config in chezmoi** (chiusa il 2026-10-20) → [tasks/T3-chezmoi.md](tasks/T3-chezmoi.md)
   Config e plugin nel repo dei dotfiles, con un blocco per Windows e uno per Linux; su Windows una junction collega `%APPDATA%\Zellij\config` a `<config>`.
+- [x] **T4 — Cornici durante la ricerca** (chiusa il 2026-10-20) → [tasks/T4-cornici-ricerca.md](tasks/T4-cornici-ricerca.md)
+  Il guardiano accende le cornici dei pannelli nei modi EnterSearch e Search e le spegne all'uscita: Zellij scrive il testo cercato solo nella cornice.
 
 ## Punti aperti (non pianificati)
 

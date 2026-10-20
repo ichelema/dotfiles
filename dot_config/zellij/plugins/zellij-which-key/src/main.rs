@@ -6,6 +6,9 @@
 //!
 //! Come timeoutlen di which-key, il guardiano apre il riquadro solo se resti in un modo
 //! per `timeoutlen` ms (configurazione del plugin, default 300; 0 = subito).
+//!
+//! Durante la ricerca il guardiano accende le cornici dei pannelli: Zellij scrive il testo
+//! cercato solo nella cornice, e con `pane_frames false` non si vedrebbe.
 
 mod grid;
 
@@ -41,6 +44,8 @@ struct WhichKey {
     pending_timers: usize,
     // l'ultimo cambio di modo vuole il riquadro
     armed: bool,
+    // stile delle cornici prima della ricerca; Some = cornici accese dal guardiano
+    frames_before_search: Option<PaneFrameStyle>,
 }
 
 register_plugin!(WhichKey);
@@ -139,6 +144,21 @@ impl WhichKey {
         }
         if !changed {
             return false;
+        }
+        // cornici solo durante la ricerca: Zellij scrive il testo cercato nella cornice.
+        // Il guardiano è in background e riceve pane_frame_style None (Zellij lo compila
+        // solo per i plugin delle tab): None vale "spente", come pane_frames false.
+        let searching = matches!(mode, InputMode::EnterSearch | InputMode::Search);
+        if searching && self.frames_before_search.is_none() {
+            let style = self.mode_info.pane_frame_style.unwrap_or(PaneFrameStyle::None);
+            self.frames_before_search = Some(style);
+            if style != PaneFrameStyle::Full {
+                set_pane_frame_style(PaneFrameStyle::Full);
+            }
+        } else if !searching {
+            if let Some(style) = self.frames_before_search.take() {
+                set_pane_frame_style(style);
+            }
         }
         // dalla base parte solo il leader: Alt+PgUp entra in scroll senza riquadro
         let after_leader = old.unwrap_or(base) != base || mode == InputMode::Normal;

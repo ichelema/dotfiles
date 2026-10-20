@@ -127,6 +127,11 @@ Regola: dove WezTerm usa `CTRL+ALT+tasto`, Zellij usa `ALT+tasto`.
 
 Durante la ricerca: `n` / `p` risultato successivo / precedente, `c` maiuscole e minuscole, `w` ricerca circolare, `o` parola intera.
 
+Mentre cerchi, i pannelli hanno la cornice: in alto vedi `Enter search...`, poi il testo che scrivi (`SEARCHING: …`).
+Zellij scrive la ricerca solo nella cornice, e a riposo le cornici sono spente (`pane_frames false`): le accende e le spegne il plugin del riquadro dei tasti.
+Quando la cornice compare o sparisce, i pannelli cambiano dimensione di 2 righe e 2 colonne.
+In un pannello quasi vuoto, uscire con `q`, `Esc` o `Invio` può ripetere le prime 2 righe sullo schermo; con `CTRL+c` no.
+
 Per copiare, seleziona il testo con il mouse: Zellij lo copia negli appunti quando rilasci il tasto.
 
 ## Differenze da WezTerm
@@ -157,6 +162,7 @@ Storico delle modifiche e task aperte: `plugins/zellij-which-key/task.md`.
 - Una volta aperto, segue i modi successivi (`p`, `t`, `w`, `c`, la ricerca) senza ritardo. Si chiude quando torni alla base.
 - `timeoutlen` sta nel blocco del plugin in `config.kdl`; con `0` il riquadro compare subito.
 - Non compare con `ALT+PageUp`/`ALT+PageDown`, né mentre scrivi una ricerca o il nome di una tab.
+- Durante la ricerca il plugin accende le cornici dei pannelli, per mostrare il testo cercato: vedi la sezione "Scroll e ricerca".
 - Non mostra i tasti diretti (`ALT+…`): fanno la stessa cosa in ogni modo.
 - I tasti con la stessa descrizione stanno su una riga, per esempio `← h  allarga ←`.
 - Le descrizioni sono automatiche. Per cambiarne una, aggiungi una riga nel blocco del plugin in `load_plugins` (`config.kdl`), per esempio `"normal n" "split a destra (zsh)"`. Il formato è `"<modo> <tasto>" "<testo>"`, con il tasto scritto come in `bind`.

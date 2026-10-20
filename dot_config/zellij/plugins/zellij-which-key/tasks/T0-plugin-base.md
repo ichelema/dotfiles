@@ -2,7 +2,7 @@
 
 Chiusa il 2026-10-19. Zellij 0.45.1 su Windows, configurazione "Unlock First": base `locked`, leader `Alt+.` → `normal`.
 `<config>` = `C:/Users/en27553/AppData/Roaming/Zellij/config`.
-Modifiche successive: [T1](T1-timeoutlen.md) (ritardo del riquadro), [T2](T2-leader-in-scroll.md) (`Alt+.` nel modo scroll).
+Modifiche successive: [T1](T1-timeoutlen.md) (ritardo del riquadro), [T2](T2-leader-in-scroll.md) (`Alt+.` nel modo scroll), [T3](T3-chezmoi.md) (config in chezmoi), [T4](T4-cornici-ricerca.md) (cornici durante la ricerca).
 
 ## Obiettivo
 
