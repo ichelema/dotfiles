@@ -163,18 +163,44 @@ Storico delle modifiche e task aperte: `plugins/zellij-which-key/task.md`.
 - Le modifiche al blocco valgono dalla sessione successiva.
 - La prima volta Zellij chiede i permessi del plugin: rispondi `y`.
 
-Per ricompilare dopo una modifica al codice serve il pacchetto pacman `mingw-w64-ucrt-x86_64-rust-wasm`:
+### Modificare il plugin
+
+Per usare il plugin non serve compilarlo: il `.wasm` è nel repo dei dotfiles.
+Per cambiare il codice serve Rust con il target `wasm32-wasip1`.
+
+| Macchina | Cosa serve | Stato al 2026-10-20 |
+|---|---|---|
+| PC Windows (MSYS2 UCRT64) | `rustc`/`cargo` UCRT64 e il pacchetto pacman `mingw-w64-ucrt-x86_64-rust-wasm` (stessa versione di `rustc`) | installati (1.98.1); crate già scaricati in `~/.cargo/registry` |
+| Linux con rustup | `rustup target add wasm32-wasip1` | non controllato |
+| Arch con i pacchetti | `pacman -S rust rust-wasm` | non controllato |
+
+Controlla l'ambiente:
+
+```bash
+rustc --version && ls "$(rustc --print sysroot)/lib/rustlib" | grep wasm32-wasip1
+```
+
+Ciclo dopo una modifica:
 
 ```bash
 cd ~/.config/zellij/plugins/zellij-which-key
 CARGO_HTTP_CHECK_REVOKE=false cargo build --release
 cp target/wasm32-wasip1/release/zellij-which-key.wasm ../zellij-which-key.wasm
 chezmoi status   # file cambiati rispetto al repo dei dotfiles
-chezmoi re-add ~/.config/zellij/plugins/zellij-which-key.wasm   # più i sorgenti cambiati
+chezmoi re-add ~/.config/zellij/plugins/zellij-which-key.wasm ~/.config/zellij/plugins/zellij-which-key/src/*.rs
 ```
 
-`CARGO_HTTP_CHECK_REVOKE=false` serve per il proxy aziendale, che blocca il controllo di revoca dei certificati.
-`chezmoi re-add` ricopia nel repo dei dotfiles i file cambiati sul disco: poi fai il commit nel repo (`chezmoi cd`).
+- `src/*.rs` e il `.wasm` non sono template: modificali in `~/.config/zellij` e riportali nel repo con `chezmoi re-add`. Poi fai il commit nel repo (`chezmoi cd`).
+- `CARGO_HTTP_CHECK_REVOKE=false` serve solo dietro il proxy aziendale, che blocca il controllo di revoca dei certificati.
+- La cartella `target/` contiene i file intermedi della build (circa 380 MB) e chezmoi la ignora. Senza `target/` la prima build ricompila 132 crate in circa 4,5 minuti; le successive durano circa 7 secondi.
+- Sul PC Windows la `target/` della build precedente è in `%APPDATA%\Zellij\config.pre-chezmoi.bak\plugins\zellij-which-key\target`. Per riusarla:
+
+  ```bash
+  mv /c/Users/en27553/AppData/Roaming/Zellij/config.pre-chezmoi.bak/plugins/zellij-which-key/target ~/.config/zellij/plugins/zellij-which-key/
+  ```
+
+- Il `.wasm` vale per Zellij 0.45.1 (`zellij-tile = "=0.45.1"` in `Cargo.toml`). Con un'altra versione di Zellij cambia la versione in `Cargo.toml` e ricompila.
+- Architettura, regole del contenuto e prove dal vivo: `plugins/zellij-which-key/task.md` e `tasks/`. Leggi `tasks/T0-plugin-base.md` prima di cambiare il codice.
 
 ## Note
 
