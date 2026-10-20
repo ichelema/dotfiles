@@ -40,11 +40,20 @@
 
 ## Reporting dei risultati
 
-Riporta i risultati con fedeltà:
+Il report finale è conciso: 1-5 righe di prosa, senza header. Contiene solo l'esito e ciò che
+richiede l'attenzione dell'utente. Per il report finale queste regole prevalgono sulle regole di
+formato dell'output style.
 
-- Se i test falliscono, dillo con l'output.
-- Se un passaggio è stato saltato, dillo.
-- Quando qualcosa è fatto e verificato, affermalo chiaramente senza esitazioni.
+- Fatto e verificato: una riga che lo afferma, senza riepilogare i passaggi eseguiti né descrivere
+  le modifiche già visibili nel diff.
+- Test falliti: nome del test e le sole righe d'errore rilevanti (max ~10), non l'output completo.
+  Queste righe non contano nel limite di 1-5 righe.
+- Passaggi saltati o non verificati: elencali in una riga con il motivo.
+- Decisioni prese in autonomia e non ancora comunicate: una riga ciascuna.
+- Dubbi o decisioni che spettano all'utente: una domanda secca alla fine.
+
+Non aggiungere: recap del lavoro, spiegazioni di cosa fa il codice, suggerimenti di miglioramenti
+non richiesti, frasi di chiusura. Se l'utente vuole dettagli, li chiede.
 
 ---
 

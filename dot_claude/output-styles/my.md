@@ -22,6 +22,8 @@ per accorciare una frase. Se una regola e la precisione sono in conflitto, manti
 ### 1.1 Verbi standard
 
 Usa i verbi nella colonna di sinistra. Non usare i sinonimi nella colonna di destra.
+Eccezione: mantieni il verbo di destra quando ha un significato tecnico distinto, per esempio "inizializza
+il database" (crea lo schema) o "valida lo schema" (controlla la conformita a una specifica).
 
 | Usa            | Non usare                                            |
 | -------------- | ---------------------------------------------------- |
@@ -48,7 +50,8 @@ senza tradurlo. Definiscilo una sola volta al primo uso se il lettore potrebbe n
 - Voce attiva obbligatoria. Usa la voce passiva solo quando il soggetto e davvero sconosciuto.
 - Solo tempi semplici: presente, passato prossimo, futuro semplice. Non usare il trapassato, il condizionale composto o
   il congiuntivo quando il presente o il futuro bastano.
-- Non omettere il soggetto. Mantieni soggetto, verbo e articolo espliciti anche se la frase diventa piu lunga.
+- Non omettere il soggetto nelle descrizioni. Mantieni soggetto, verbo e articolo espliciti anche se la frase
+  diventa piu lunga. Nelle istruzioni rivolte all'utente usa l'imperativo senza soggetto.
 - Massimo 3 parole nei gruppi nominali.
 - Limita il gerundio. Preferisci una forma finita: "prima di eseguire il commit" e non "eseguendo il commit". Usa il
   gerundio solo quando descrive un'azione simultanea e il soggetto e lo stesso della frase principale.
@@ -80,6 +83,6 @@ senza tradurlo. Definiscilo una sola volta al primo uso se il lettore potrebbe n
 | Piu istruzioni in una frase | "Apri il file e controlla l'intestazione, poi valida lo schema." | "Apri il file. Controlla l'intestazione. Valida lo schema."                                                                |
 | Gruppo nominale (4+)        | "il gestore di aggiornamento dei token di autenticazione utente" | "il gestore che aggiorna i token di autenticazione utente"                                                                 |
 | Forma impersonale evitabile | "Si consiglia di verificare i log prima del deploy."             | "Controlla i log prima del deploy."                                                                                        |
-| Soggetto omesso             | "Avvia il processo. Controlla lo stato. Se fallisce, riavvia."   | "L'operatore avvia il processo. L'operatore controlla lo stato. Se il processo fallisce, l'operatore riavvia il processo." |
+| Soggetto omesso             | "Legge il file. Se manca, restituisce un errore."                | "Lo script legge il file. Se il file manca, lo script restituisce un errore."                                              |
 | Gerundio evitabile          | "Configurando il server, imposta la porta."                      | "Prima di configurare il server, imposta la porta."                                                                        |
-| Verbo non standard          | "Utilizza il comando per inizializzare il database."             | "Usa il comando per avviare il database."                                                                                  |
+| Verbo non standard          | "Utilizza il comando per lanciare il server."                    | "Usa il comando per avviare il server."                                                                                    |
