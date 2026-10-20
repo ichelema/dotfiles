@@ -1,10 +1,14 @@
 // local: test delle patch locali (vedi UPSTREAM). Rilancia con `claude plugin test` dopo ogni update upstream.
 import type { On } from 'claude-code'
+import type { Engine } from 'claude-code/testing'
 import { expect, mock, test } from 'claude-code/testing'
 
 import { FIGURE_HINT } from '../hooks/figure'
-import { HINT } from '../hooks/help'
+import { HINT, ISSUE_HINT, setupParts, setupText } from '../hooks/help'
 import { fileHref, fileTarget } from '../hooks/filelink'
+import { PRESET_NAMES } from '../hooks/presets'
+import { width } from '../hooks/render'
+import { resolveStyle } from '../hooks/theme'
 
 const call = (tool: string, input: unknown, id: string, isErrored = false) => ({ tool_use_id: id, tool, input, isRunning: false, isErrored, isInterrupted: false })
 const toolResult = (tool: string, output: unknown, id: string, isErrored = false) =>
@@ -76,6 +80,22 @@ test('framed: the prompt draws in a square box with the mascot', { options: { pr
   await ui.unmount()
 })
 
+// local: versione del test upstream "/prismantis setup draws each sample in its own style" con framed e folded
+test('setup: framed and folded are steps too, each sample drawn in its own style', async $ => {
+  const mount = async (at: number) =>
+    $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'CommandOutput', props: { command: 'prismantis', args: 'setup', text: `Tables set to box.\n\n${setupText(setupParts(PRESET_NAMES, at))}`, isErrored: false }, viewport: { columns: 100, rows: 40 } })
+  const prompts = await mount(3)
+  expect(setupParts(PRESET_NAMES, 3).options.map(o => o.value)).toEqual(['bubble', 'bar', 'chevron', 'off', 'framed'])
+  expect(await prompts.findAll({ type: 'Text', text: /fix the failing test/ })).toHaveLength(5)
+  expect(await prompts.find({ type: 'Text', text: /^⠀⡖⣶⣶⢲⠀$/ })).toBeTruthy()
+  await prompts.unmount()
+  const tools = await mount(4)
+  expect(setupParts(PRESET_NAMES, 4).options.map(o => o.value)).toEqual(['chat', 'tree-dim', 'tree-bold', 'classic', 'folded'])
+  expect(await tools.find({ type: 'Text', text: /⎿/ })).toBeTruthy()
+  expect(await tools.findAll({ type: 'Text', text: /^Read$/ })).toHaveLength(5)
+  await tools.unmount()
+})
+
 test('bubble: the prompt bubble takes the full width', async $ => {
   const ui = await $.ui.mount({ plugin: 'prismantis', component: 'UserMessage', props: { text: 'ciao', origin: { kind: 'composer' } as never, isExpanded: true }, viewport: { columns: 80, rows: 10 }, surface: 'terminal' })
   expect((await ui.findAll({ type: 'Box' })).find(b => b.props.borderStyle === 'round')?.props.width).toBe('100%')
@@ -98,11 +118,74 @@ test('diagramHints: the hint goes with the first prompt only', async ($, on) => 
   expect(seen[1] ?? []).not.toContain(FIGURE_HINT)
 })
 
+// local: issueHint è tolto per scelta e non va reimplementato. Se un merge futuro lo rimette, questi test falliscono
+const contextsOf = async ($: Engine, on: On, prompts: number) => {
+  const seen: (readonly string[] | undefined)[] = []
+  mock.env(on, {})
+  on('prompt.submit', (_, e) => {
+    seen.push(e.context)
+    return { text: e.text, context: e.context }
+  })
+  for (let i = 0; i < prompts; i++) await $.prompt.submit({ text: `p${i}`, wait: false, origin: { kind: 'composer' } })
+  return seen
+}
+
+test('issueHint: tolto, ISSUE_HINT non arriva mai al modello e le note dei diagrammi vanno una volta', async ($, on) => {
+  const seen = await contextsOf($, on, 21)
+  expect(seen).toHaveLength(21)
+  expect(seen[0]).toEqual(expect.arrayContaining([HINT, FIGURE_HINT]))
+  expect(seen.some(context => context?.includes(ISSUE_HINT))).toBe(false)
+  for (const context of seen.slice(1)) expect(context ?? []).toEqual([])
+  expect(resolveStyle({}).issueHint).toBe(false)
+})
+
+test('issueHint: tolto, anche con diagramHints spento nessuna nota arriva al modello', { options: { diagramHints: false } }, async ($, on) => {
+  const seen = await contextsOf($, on, 11)
+  expect(seen).toHaveLength(11)
+  for (const context of seen) expect(context ?? []).toEqual([])
+})
+
 test('lists get no copy button', async $ => {
   const ui = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'AssistantMessage', props: { text: '- one\n- two', isFirstOfReply: true }, viewport: { columns: 80, rows: 20 } })
   const labels = (await ui.findAll({ type: 'Button' })).map(b => b.props.label)
   expect(labels).not.toContain('⧉ copy')
   await ui.unmount()
+})
+
+// local: versione dei due test upstream "copyButtonStyle hover …" senza il bottone delle liste
+const hoverMount = (text: string) => ({ plugin: 'prismantis', surface: 'terminal' as const, component: 'AssistantMessage' as const, props: { text, isFirstOfReply: true }, viewport: { columns: 120, rows: 40 } })
+type FloatNode = { type?: string; props?: Record<string, unknown>; children?: unknown[] }
+const floatKids = (node: FloatNode) => (node.children ?? []).filter((child): child is FloatNode => !!child && typeof child === 'object')
+const floatLabels = (node: FloatNode): string[] => (node.type === 'Button' ? [String(node.props?.label)] : floatKids(node).flatMap(floatLabels))
+const floatRoom = (node: FloatNode, room = 0): { labels: string[]; needs: number; room: number }[] => {
+  if (node.props?.position === 'absolute' && node.props.display === 'none') {
+    const labels = floatLabels(node)
+    return [{ labels, needs: labels.reduce((w, label) => w + (w ? 1 : 0) + width(`[ ${label} ]`), 0), room }]
+  }
+  const here = typeof node.props?.minWidth === 'number' ? node.props.minWidth : room
+  return floatKids(node).flatMap(child => floatRoom(child, here))
+}
+
+test('lists get no copy button: hover reserves every other floating button\'s width', { options: { copyButtonStyle: 'hover' } }, async $ => {
+  const ui = await $.ui.mount(hoverMount('| a |\n|---|\n| 1 |\n\n```\nx\n```\n\n- y\n\n> z\n\n> [!NOTE]\n> w\n\n> ```\n> q\n> ```\n\n- item\n  ```\n  v\n  ```\n\n```mermaid\nflowchart LR\n  A --> B\n```'))
+  const floats = floatRoom((await ui.drawn()) as FloatNode).filter(f => !f.labels.includes('⧉ copy reply'))
+  expect(floats.length).toBe(8)
+  for (const float of floats) expect({ ...float, fits: float.room >= float.needs }).toMatchObject({ fits: true })
+  await ui.unmount()
+})
+
+test('lists get no copy button: hover anchors right-to-left quotes, alerts and tables at the left', { options: { copyButtonStyle: 'hover', rtl: 'warp' } }, async $ => {
+  const anchors = async (text: string) => {
+    const ui = await $.ui.mount(hoverMount(text))
+    const floats = (await ui.findAll({ type: 'Box' })).filter(b => b.props.position === 'absolute' && b.props.display === 'none' && b.text !== '⧉ copy reply')
+    await ui.unmount()
+    return floats.map(b => (b.props.left === 0 && b.props.right === undefined ? 'left' : b.props.right === 0 && b.props.left === undefined ? 'right' : 'both'))
+  }
+  expect(await anchors('- שלום עולם\n- עוד פריט')).toEqual([])
+  expect(await anchors('> שלום עולם')).toEqual(['left'])
+  expect(await anchors('> [!NOTE]\n> שלום עולם')).toEqual(['left'])
+  expect(await anchors('| שם | ערך |\n|---|---|\n| אחד | שתיים |')).toEqual(['left'])
+  expect(await anchors('> hello')).toEqual(['right'])
 })
 
 // local: percorsi cliccabili (hooks/filelink.ts)
@@ -148,5 +231,30 @@ test('filelink: in una tabella un `code` che porta a un file esistente diventa u
   expect((await ui.findAll({ type: 'Button' })).map(b => b.props.label)).toContain('⧉ md')
   expect(hrefs.length).toBeGreaterThan(1)
   expect(hrefs.every(h => h === 'vscode://file/E:/AI/proj/utils/open-file.lua:12')).toBe(true)
+  await ui.unmount()
+})
+
+// local: filelink unito ai percorsi cliccabili di upstream (f6459c2)
+const mergedLinks = (on: On, exists: (path: string) => boolean) => {
+  mock.env(on, { FORCE_HYPERLINK: '1', HOME: 'E:\\home\\me' })
+  on('session.version', () => ({ value: { version: '2.1.302', base: '2.1.302' } }))
+  on('session.cwd', () => ({ value: 'E:\\AI\\proj' }))
+  on('session.root', () => ({ value: 'E:\\AI\\proj' }))
+  on('fs.exists', (_$, e) => ({ value: exists(e.path.replace(/\\/g, '/')) }))
+}
+
+test('filelink: in prosa un percorso a un file esistente prende vscode://, uno mancante il file:// di upstream', async ($, on) => {
+  mergedLinks(on, path => path.endsWith('E:/AI/proj/utils/open-file.lua'))
+  const ui = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'AssistantMessage', props: { text: 'Vedi ./utils/open-file.lua oppure ./utils/missing.lua ora', isFirstOfReply: true }, viewport: { columns: 100, rows: 20 } })
+  const hrefs = (await ui.findAll({ type: 'Link' })).map(l => l.props.href)
+  expect(hrefs).toEqual(['vscode://file/E:/AI/proj/utils/open-file.lua', 'file:///E:/AI/proj/utils/missing.lua'])
+  await ui.unmount()
+})
+
+test('folded: una riga di tool ha il link file:// di upstream al suo file', { options: { toolStyle: 'folded' } }, async ($, on) => {
+  mergedLinks(on, () => false)
+  const ui = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'ToolUse', props: call('Read', { file_path: 'E:\\AI\\proj\\src\\main.ts' }, 't1') })
+  expect((await ui.findAll({ type: 'Link' })).map(l => l.props.href)).toEqual(['file:///E:/AI/proj/src/main.ts'])
+  expect(await ui.find({ type: 'Text', text: /^Read$/ })).toBeTruthy()
   await ui.unmount()
 })

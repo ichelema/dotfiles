@@ -19,6 +19,9 @@ declare module 'claude-code' {
       unfolded: string[]
       sent: { text: string; at: number }[]
       turnEnds: { durationMs: number; at: number }[]
+      setupAt: number
+      setupFocus: string
+      setupLand: string
       drawn: StateFamily<number>
       // local: toolStyle folded. Se il risultato di una chiamata di tool è aperto (un valore per chiamata).
       resultOpen: StateFamily<boolean>
