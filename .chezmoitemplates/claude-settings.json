@@ -14,6 +14,7 @@
     "MCP_TIMEOUT": "60000",
     "ENABLE_CLAUDEAI_MCP_SERVERS": "false",
     "CLAUDE_CODE_PLUGIN_DIRS": "~/.claude/mods",
+    "CLAUDE_CODE_TMPDIR": "{{ .chezmoi.homeDir }}/.claude/tmp",
 {{- if not (index . "vps") }}
     "HINDSIGHT_SSH_TUNNEL": "hindsight-vps",
 {{- end }}
