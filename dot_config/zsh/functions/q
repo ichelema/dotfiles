@@ -1,11 +1,17 @@
 # q — domanda veloce a Claude Haiku; risposta markdown resa con glow
-local key prompt
+local key prompt home cwd
 key="$(chezmoi decrypt ~/.local/share/chezmoi/.secrets/anthropic-api-key.age)" || return
 
-prompt='Rispondi in italiano, in Markdown. Rispondi a domande pratiche di programmazione e uso del terminale.
+# su MSYS2 claude è un eseguibile Windows: gli servono path D:/...; su Linux cygpath non c'è
+home="${$(cygpath -m "$HOME" 2>/dev/null):-$HOME}"
+cwd="${$(cygpath -m "$PWD" 2>/dev/null):-$PWD}"
+
+prompt="Rispondi in italiano, in Markdown. Rispondi a domande pratiche di programmazione e uso del terminale.
 Metti sempre prima il codice o il comando, in un blocco con il tag del linguaggio (zsh, bash, python...).
-Dopo il codice, al massimo 3 righe di spiegazione. Niente introduzioni né conclusioni.'
+Dopo il codice, al massimo 3 righe di spiegazione. Niente introduzioni né conclusioni.
+Hai i tool Read, Grep e Glob: se la domanda riguarda file locali (config, dotfile in ~),
+leggili tu prima di rispondere, invece di proporre un comando. Home: $home, cartella corrente: $cwd."
 
 ANTHROPIC_API_KEY="$key" command claude -p "$*" \
   --model claude-haiku-5-5 --effort low --tools "Read,Grep,Glob" --bare \
-  --system-prompt "$prompt" 2>/dev/null | glow -
+  --add-dir "$home" --system-prompt "$prompt" 2>/dev/null | glow -
