@@ -74,9 +74,18 @@ Come in T0, con tre differenze:
 - Dopo `Ctrl+q` la sessione è EXITED: basta `zellij delete-session wk-test`, senza `--force`.
 - L'utente può guardare la finestra di prova e rispondere lui ai prompt: rileggi lo schermo prima di mandare tasti.
 
+## VPS Infomaniak (2026-10-20)
+
+- Arch Linux, Zellij 0.45.1, shell di login `/usr/bin/zsh`: `NewPane` apre la zsh senza `default_shell`.
+- Aveva una config scritta a mano il 2026-09-28: leader `Ctrl g`, base `normal`, `Ctrl w` per i pannelli, compact-bar. L'utente ha scelto di sostituirla con quella del repo.
+- Backup sulla VPS: `~/.config/zellij/config.kdl.pre-chezmoi.bak` e `layouts/zsh.kdl.pre-chezmoi.bak` (chezmoi li ignora).
+- Passi: `chezmoi git -- pull --ff-only`, `chezmoi diff`, `chezmoi apply`. SSH da MSYS2 con `SSH_AUTH_SOCK=~/.ssh/agent.sock`, l'agent con la chiave `infomaniak_vps`.
+- Verifica: `chezmoi status` vuoto; `zellij setup --check` Well defined; `config.kdl` e `zsh.kdl` identici al render Linux fatto su Windows; `.wasm` con lo stesso sha256.
+
 ## Limiti noti
 
-- Linux e VPS non provati: la config arriva con `chezmoi update`. Prima controlla `zellij --version` (plugin per 0.45.1) ed esegui `chezmoi diff`, perché un `~/.config/zellij` esistente viene sostituito.
+- Macchina Linux principale: config non ancora applicata. Prima di `chezmoi update` controlla `zellij --version` (plugin per 0.45.1) ed esegui `chezmoi diff`, perché un `~/.config/zellij` esistente viene sostituito.
+- VPS: non provata dal vivo (riquadro, `n`/`h`, `Alt+.` → `e` con `nvim +`).
 - Se un programma rimette una cartella reale al posto della junction, Zellij legge quella. Lo script non ricrea la junction da solo: chezmoi riesegue uno script `run_onchange_` solo quando cambia il suo testo.
 - `config.kdl` e `zsh.kdl` sono template, quindi `chezmoi re-add` non li aggiorna: una modifica fatta nella destinazione va riportata nel source.
 - `config.pre-chezmoi.bak` resta in `%APPDATA%\Zellij`, finché l'utente non decide di cancellarla.

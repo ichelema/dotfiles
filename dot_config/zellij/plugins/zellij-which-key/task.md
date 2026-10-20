@@ -29,4 +29,5 @@ Prima di cambiare una parte, leggi il file della task che l'ha introdotta.
 - `<config>/README.md`, riga 20: descrive i nomi dei modi nella barra della compact-bar. Dipende dalla scelta tra tab-bar e compact-bar in `<config>/layouts/zsh.kdl`.
 - Tab con il layout `cmder.kdl`: non provata dal vivo dopo la rimozione di `tooltip "F1"`.
 - Nel modo Ricerca `Alt+.` non ha azione: da lì serve prima `Esc` (scelta di T2).
-- Linux e VPS: la config non è ancora applicata. Prima di `chezmoi update` controlla `zellij --version` (il plugin è compilato per 0.45.1) ed esegui `chezmoi diff` (un `~/.config/zellij` esistente viene sostituito). Al primo avvio Zellij chiede il permesso del plugin.
+- VPS Infomaniak: config applicata il 2026-10-20 (vedi T3), non ancora provata dal vivo; al primo avvio Zellij chiede il permesso del plugin.
+- Macchina Linux principale: config non ancora applicata. Prima di `chezmoi update` controlla `zellij --version` (il plugin è compilato per 0.45.1) ed esegui `chezmoi diff` (un `~/.config/zellij` esistente viene sostituito).
