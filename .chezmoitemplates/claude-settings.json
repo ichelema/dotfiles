@@ -182,7 +182,7 @@
   "inputNeededNotifEnabled": false,
   "agentPushNotifEnabled": true,
   "pluginConfigs": {
-    "prismantis@inline": { "options": { "theme": "nord", "tableStyle": "box", "toolStyle": "folded", "toolRows": true, "toolOutput": "quiet", "promptStyle": "framed", "headingStyle": "banner", "diffStyle": "bar" } },
+    "prismantis@inline": { "options": { "theme": "nord", "tableStyle": "box", "toolStyle": "hide", "toolRows": true, "toolOutput": "quiet", "promptStyle": "framed", "headingStyle": "banner", "diffStyle": "bar" } },
     "filetree@claude-code-filetree": { "options": {
       "start": "off",
       "column": "size"
