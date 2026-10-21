@@ -1,0 +1,7 @@
+{
+  "name": "turn-forget",
+  "version": "0.1.0",
+  "description": "/forget 7-8 toglie dal contesto della conversazione i turni indicati, senza riassunto; /forget senza argomenti li elenca numerati",
+  "license": "MIT",
+  "keywords": ["mod", "function-hooks", "context", "turns"]
+}
