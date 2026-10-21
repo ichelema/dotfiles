@@ -530,6 +530,8 @@ const drawSetup = ($: EngineInterface, el: ReturnType<EngineInterface['ui']['res
   const md = (style: Style, text: string, id: string) => <el.Box key={id} flexDirection="column" rowGap={1}>{drawMarkdown($, el, style, parse(text, { numbers: style.highlightNumbers, paths: style.highlightPaths }), columns)}</el.Box>
   const sample = (style: Style, value: string, id: string): RenderElement[] => {
     if (key === 'promptStyle') return [value === 'off' ? <el.Text key={id} dimColor>{'> fix the failing test'}</el.Text> : <el.Box key={id}>{renderUserPrompt(el, style, 'fix the failing test', columns)}</el.Box>]
+    // local: toolStyle hide, l'esempio è la sola frase
+    if (key === 'toolStyle' && value === 'hide') return [md(style, 'Reading the config.', `${id}s`)]
     if (key === 'toolStyle') return [md({ ...style, narration: style.toolStyle === 'tree-bold' }, 'Reading the config.', `${id}s`), <el.Box key={id}>{renderToolRow(el, style, { tool: 'Read', input: { file_path: 'src/config.ts' }, isRunning: false, isErrored: false, isInterrupted: false }, columns)}</el.Box>]
     if (key === 'toolOutput') return toolOutputSample(el, style, value, id, columns)
     if (key === 'diffStyle') return diffSample(el, style, id, columns)
@@ -583,6 +585,14 @@ export const register: Register = (on, options) => {
   }
   let firstEdit: string | undefined
   if (options.toolRows !== false) {
+    // local: toolStyle hide. Registrati prima degli altri, così sono i più esterni: riga, gruppo e
+    // risultato non disegnano niente (errori e diff compresi); con ctrl+o (isExpanded) passano.
+    if (style.toolStyle === 'hide') {
+      const nothing = ({ Box }: ReturnType<EngineInterface['ui']['resolve']>) => <Box />
+      on('ui.render', { component: 'ToolUse' }, async ($, e, next) => (e.props.isExpanded ? next(e) : nothing($.ui.resolve(e))))
+      on('ui.render', { component: 'ToolGroup' }, async ($, e, next) => (e.props.isExpanded ? next(e) : nothing($.ui.resolve(e))))
+      on('ui.render', { component: 'ToolResult' }, async ($, e, next) => (e.props.isExpanded ? next(e) : nothing($.ui.resolve(e))))
+    }
     on('ui.render', { component: 'ToolGroup' }, async ($, e, next) => {
       await locate($, style)
       for (const call of e.props.calls) noteCommand(call.tool_use_id, call.tool, call.input)

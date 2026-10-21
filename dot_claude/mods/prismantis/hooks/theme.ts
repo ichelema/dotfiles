@@ -23,7 +23,7 @@ export type Style = {
   taskStyle: 'checks' | 'ticks' | 'box' | 'progress'
   promptStyle: 'bubble' | 'bar' | 'chevron' | 'off' | 'framed'
   clock: Clock
-  toolStyle: 'chat' | 'tree-dim' | 'tree-bold' | 'classic' | 'folded'
+  toolStyle: 'chat' | 'tree-dim' | 'tree-bold' | 'classic' | 'folded' | 'hide'
   toolOutput: 'full' | 'quiet'
   narration?: boolean
   inside?: 'quote' | 'alert'
@@ -86,7 +86,7 @@ export const resolveStyle = (options: PluginOptions): Style => {
     taskStyle: pick(options.taskStyle, ['checks', 'ticks', 'box', 'progress'] as const, 'checks'),
     promptStyle: pick(options.promptStyle, ['bubble', 'bar', 'chevron', 'off', 'framed'] as const, 'bubble'),
     clock: pick(options.clock, ['off', '24h', '12h'] as const, 'off'),
-    toolStyle: pick(options.toolStyle, ['chat', 'tree-dim', 'tree-bold', 'classic', 'folded'] as const, 'chat'),
+    toolStyle: pick(options.toolStyle, ['chat', 'tree-dim', 'tree-bold', 'classic', 'folded', 'hide'] as const, 'chat'),
     toolOutput: pick(options.toolOutput, ['full', 'quiet'] as const, 'full'),
     diffStyle: pick(options.diffStyle, ['card', 'full', 'marks', 'bar'] as const, 'card'),
     pieStyle: pick(options.pieStyle, ['round', 'bars'] as const, 'round'),

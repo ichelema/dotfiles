@@ -91,9 +91,9 @@
     "toolStyle": {
       "type": "string",
       "title": "Tool row style",
-      "description": "How tool rows (Ran, Read, Edited) sit next to Claude's sentences. chat: tool rows dimmed on the right, Claude on the left. tree-dim: tucked under the sentence with ⎿ and dimmed. tree-bold: tree-dim plus one-line sentences in bold. classic: the original look. folded: one line per call on the left, the tool name colored by kind, and a group drawn as one node with counts per kind (Read 3 · Search 2). A failed call draws in red, and every tool result stays folded until you click it.",
+      "description": "How tool rows (Ran, Read, Edited) sit next to Claude's sentences. chat: tool rows dimmed on the right, Claude on the left. tree-dim: tucked under the sentence with ⎿ and dimmed. tree-bold: tree-dim plus one-line sentences in bold. classic: the original look. folded: one line per call on the left, the tool name colored by kind, and a group drawn as one node with counts per kind (Read 3 · Search 2). A failed call draws in red, and every tool result stays folded until you click it. hide: no tool rows at all, neither the call nor its result, errors and diffs included; ctrl+o still shows them.",
       "default": "chat",
-      "options": ["chat", "tree-dim", "tree-bold", "classic", "folded"]
+      "options": ["chat", "tree-dim", "tree-bold", "classic", "folded", "hide"]
     },
     "toolOutput": {
       "type": "string",

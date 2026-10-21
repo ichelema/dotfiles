@@ -83,6 +83,25 @@ test('folded con quiet: l\'output Bash di un gruppo resta chiuso finché il clic
   await group.unmount()
 })
 
+test('hide: riga, gruppo e risultato di un tool non disegnano niente; con ctrl+o passano al disegno normale', { options: { toolStyle: 'hide' } }, async ($, on) => {
+  engine(on)
+  const failed = call('Bash', { command: 'make' }, 'h-1', true)
+  const row = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'ToolUse', props: failed })
+  expect(await row.find({ type: 'Text' })).toBeUndefined()
+  await row.unmount()
+  const group = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'ToolGroup', props: { calls: [call('Read', { file_path: '/tmp/a' }, 'h-2'), { ...call('Bash', { command: 'make' }, 'h-3'), output: { stdout: 'built', stderr: '' } }], isActive: false, isExpanded: false } })
+  expect(await group.find({ type: 'Text' })).toBeUndefined()
+  await group.unmount()
+  for (const result of [toolResult('Bash', { stdout: 'built' }, 'h-4'), toolResult('Edit', patch, 'h-5'), toolResult('Bash', 'Exit code 1', 'h-6', true)]) {
+    const ui = await $.ui.mount(result)
+    expect(await ui.find({ type: 'Text' })).toBeUndefined()
+    await ui.unmount()
+  }
+  const expanded = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'ToolGroup', props: { calls: [failed], isActive: false, isExpanded: true } })
+  expect(await expanded.find({ type: 'Text', text: /^engine$/ })).toBeDefined()
+  await expanded.unmount()
+})
+
 test('framed: the prompt draws in a square box with the mascot', { options: { promptStyle: 'framed' } }, async $ => {
   const ui = await $.ui.mount({ plugin: 'prismantis', component: 'UserMessage', props: { text: 'ciao', origin: { kind: 'composer' } as never, isExpanded: true }, viewport: { columns: 80, rows: 10 }, surface: 'terminal' })
   expect((await ui.findAll({ type: 'Box' })).some(b => b.props.borderStyle === 'single')).toBe(true)
@@ -101,7 +120,7 @@ test('setup: framed and folded are steps too, each sample drawn in its own style
   expect(await prompts.find({ type: 'Text', text: /^⠀⡖⣶⣶⢲⠀$/ })).toBeTruthy()
   await prompts.unmount()
   const tools = await mount(7)
-  expect(setupParts(PRESET_NAMES, 7).options.map(o => o.value)).toEqual(['chat', 'tree-dim', 'tree-bold', 'classic', 'folded'])
+  expect(setupParts(PRESET_NAMES, 7).options.map(o => o.value)).toEqual(['chat', 'tree-dim', 'tree-bold', 'classic', 'folded', 'hide'])
   expect(await tools.find({ type: 'Text', text: /⎿/ })).toBeTruthy()
   expect(await tools.findAll({ type: 'Text', text: /^Read$/ })).toHaveLength(5)
   await tools.unmount()
