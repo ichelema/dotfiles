@@ -72,6 +72,17 @@ test('folded: an expanded shell call that failed shows its error text in red', {
   await ui.unmount()
 })
 
+test('folded con quiet: l\'output Bash di un gruppo resta chiuso finché il clic non lo apre', { options: { toolStyle: 'folded', toolOutput: 'quiet' } }, async $ => {
+  const ran = { ...call('Bash', { command: 'make' }, 'q-1'), output: { stdout: 'built', stderr: '' } }
+  const group = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'ToolGroup', props: { calls: [call('Read', { file_path: '/tmp/a' }, 'q-0'), ran], isActive: false, isExpanded: false } })
+  expect(await group.find({ type: 'Text', text: /^▸ output$/ })).toBeDefined()
+  expect(await group.find({ type: 'Text', text: /^built$/ })).toBeUndefined()
+  await group.press({ key: 'result-fold' })
+  expect(await group.find({ type: 'Text', text: /^▾ output$/ })).toBeDefined()
+  expect(await group.find({ type: 'Text', text: /^built$/ })).toBeDefined()
+  await group.unmount()
+})
+
 test('framed: the prompt draws in a square box with the mascot', { options: { promptStyle: 'framed' } }, async $ => {
   const ui = await $.ui.mount({ plugin: 'prismantis', component: 'UserMessage', props: { text: 'ciao', origin: { kind: 'composer' } as never, isExpanded: true }, viewport: { columns: 80, rows: 10 }, surface: 'terminal' })
   expect((await ui.findAll({ type: 'Box' })).some(b => b.props.borderStyle === 'single')).toBe(true)

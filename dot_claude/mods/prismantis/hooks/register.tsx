@@ -21,6 +21,7 @@ import type { Terminal } from './rtl'
 import { ROW_MARK_TEXT, TERMINALS, hasRtl, opensLatin } from './rtl'
 import { fileLinks, forgetFiles } from './filelink'
 import { ERROR } from './render'
+import type { FoldResult } from './render'
 
 const HINTED_ORIGINS = ['composer', 'bridge', 'plugin'] as const satisfies readonly PromptOrigin['kind'][]
 
@@ -590,7 +591,25 @@ export const register: Register = (on, options) => {
         for (const call of e.props.calls) if (call.tool_use_id) rememberCall(expandedCalls, call.tool_use_id, 500)
         return next(e)
       }
-      return renderToolGroup($.ui.resolve(e), forSurface(fit(e.viewport), e.surface, await linkReach($, probes, style)), e.props.calls, e.props.isActive, e.viewport?.columns)
+      const el = $.ui.resolve(e)
+      // local: toolStyle folded con quiet. L'output Bash di un gruppo è disegnato inline e non passa da
+      // ToolResult: lo piega qui, con lo stesso resultOpen della chiamata (requestId di ToolResult = tool_use_id).
+      let fold: FoldResult | undefined
+      if (style.toolStyle === 'folded') {
+        const calls = e.props.calls
+        const open = await Promise.all(calls.map(c => (c.tool_use_id ? read($, memberOf(resultOpen, { requestId: c.tool_use_id })) : true)))
+        fold = (i, result) => {
+          const id = calls[i]?.tool_use_id
+          if (!id) return result
+          const toggle = (
+            <el.Button key="result-fold" plain onPress={() => void update($, memberOf(resultOpen, { requestId: id }), v => !v)}>
+              <el.Text color={style.theme.codeComment}>{`${open[i] ? '▾' : '▸'} output`}</el.Text>
+            </el.Button>
+          )
+          return open[i] ? <el.Box flexDirection="column">{toggle}{result}</el.Box> : <el.Box paddingLeft={2}>{toggle}</el.Box>
+        }
+      }
+      return renderToolGroup(el, forSurface(fit(e.viewport), e.surface, await linkReach($, probes, style)), e.props.calls, e.props.isActive, e.viewport?.columns, fold)
     })
     on('ui.render', { component: 'ToolUse' }, async ($, e, next) => {
       await locate($, style)

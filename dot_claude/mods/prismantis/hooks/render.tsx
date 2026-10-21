@@ -2385,7 +2385,10 @@ export const groupSummary = (calls: readonly { tool: string }[]): string => {
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
-const quietToolGroup = (el: ElementTable, style: Style, calls: readonly (ToolRow & { output?: unknown })[], isActive: boolean, columns: number): RenderElement => {
+// local: toolStyle folded con quiet. fold avvolge l'output Bash di una chiamata del gruppo (indice della chiamata).
+export type FoldResult = (i: number, result: RenderElement) => RenderElement
+
+const quietToolGroup = (el: ElementTable, style: Style, calls: readonly (ToolRow & { output?: unknown })[], isActive: boolean, columns: number, fold?: FoldResult): RenderElement => {
   const t = style.theme
   const failed = calls.filter(c => c.isErrored)
   const running = isActive && calls.some(c => c.isRunning)
@@ -2394,7 +2397,7 @@ const quietToolGroup = (el: ElementTable, style: Style, calls: readonly (ToolRow
   const label = labels.map(pieceText).join(' · ')
   const reasons = failed.map((c, i) => renderFailure(el, style, c.output, `r${i}`)).filter((r): r is RenderElement => r !== undefined)
   const isShell = (c: ToolRow) => c.tool === 'Bash' || c.tool === 'PowerShell'
-  const results = calls.flatMap((c, i) => (c.isErrored || c.output === undefined || !isShell(c) || isReadOnlyCall(c.tool, c.input) ? [] : [<el.Box key={`o${i}`}>{renderShellResult(el, style, c.output)}</el.Box>]))
+  const results = calls.flatMap((c, i) => (c.isErrored || c.output === undefined || !isShell(c) || isReadOnlyCall(c.tool, c.input) ? [] : [<el.Box key={`o${i}`}>{fold ? fold(i, renderShellResult(el, style, c.output)) : renderShellResult(el, style, c.output)}</el.Box>]))
   const row = toolLayout(el, style, columns, label, dot, running, (
     <el.Text wrap="truncate-end" dimColor={toolDim(style)}>{drawPieces(el, style, labels.flatMap((l, i) => (i ? [{ text: ' · ' }, ...l] : l)))}</el.Text>
   ))
@@ -2408,8 +2411,8 @@ const quietToolGroup = (el: ElementTable, style: Style, calls: readonly (ToolRow
   )
 }
 
-export const renderToolGroup = (el: ElementTable, style: Style, calls: readonly (ToolRow & { output?: unknown })[], isActive: boolean, columns = 100): RenderElement => {
-  if (style.toolOutput === 'quiet') return quietToolGroup(el, style, calls, isActive, columns)
+export const renderToolGroup = (el: ElementTable, style: Style, calls: readonly (ToolRow & { output?: unknown })[], isActive: boolean, columns = 100, fold?: FoldResult): RenderElement => {
+  if (style.toolOutput === 'quiet') return quietToolGroup(el, style, calls, isActive, columns, fold)
   const { Text } = el
   const t = style.theme
   const failed = calls.filter(c => c.isErrored).length
