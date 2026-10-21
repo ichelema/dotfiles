@@ -10,8 +10,8 @@ import type { ClipboardBackend } from './clipboard'
 import { clipboardCommand } from './clipboard'
 import { FIGURE_HINT } from './figure'
 import { drawDiagrams } from './mermaid'
-import type { Fold, TerminalEnv } from './render'
-import { bashEdits, drawMath, drawsHyperlinks, editNotes, fileRoot, hasShellOutput, instanceKey, isReadOnlyCall, leftToEngine, mirrored, noteTip, remember, rememberCall, renderBashEdits, renderBlocks, renderDiffCard, renderExpandedShell, renderFailure, renderShellResult, renderToolGroup, renderToolRow, renderTurnDuration, renderUserPrompt, takesClickableMarks, takesEditorLinks, takesHttpLinks, withoutBashEdits } from './render'
+import type { CopyButton, DrawPaste, Fold, TerminalEnv } from './render'
+import { MARK, bashEdits, drawMath, drawsHyperlinks, editNotes, fileRoot, hasShellOutput, instanceKey, isReadOnlyCall, leftToEngine, markerRoom, mirrored, noteTip, pasteLang, remember, rememberCall, renderBashEdits, renderBlocks, renderDiffCard, renderExpandedShell, renderFailure, renderShellResult, renderToolGroup, renderToolRow, renderTurnDuration, renderUserPrompt, takesClickableMarks, takesEditorLinks, takesHttpLinks, withoutBashEdits } from './render'
 import type { SetupStep } from './help'
 import { HINT, ISSUE_HINT, SETUP_DONE, SETUP_PANE_KEYS, SETUP_PANE_OPENED, THEME_PREVIEW, findSetup, helpText, languageShowcase, rtlShowcaseText, setupParts, setupSteps, setupText, showcaseText } from './help'
 import { PRESET_NAMES } from './presets'
@@ -319,7 +319,7 @@ const drawMarkdown = ($: EngineInterface, el: ReturnType<EngineInterface['ui']['
       />
     ) : null
   }
-  const drawn = drawDiagrams(el, style, blocks, columns)
+  const drawn = drawDiagrams(el, style, blocks, columns - markerRoom(style))
   const Image = 'Image' in el ? el.Image : null
   if (Image) {
     for (const [i, formula] of math) {
@@ -335,9 +335,17 @@ const drawMarkdown = ($: EngineInterface, el: ReturnType<EngineInterface['ui']['
   const elements = renderBlocks(el, notes ? { ...style, noteKey: instanceKey(notes.id) } : style, blocks, columns, drawMath(el, style, blocks, drawn), copy, folder($, el, open), tip)
   const button = reply === undefined ? null : copy(reply, 'reply', '⧉ copy reply')
   if (!button) return elements
-  return style.copyButtonStyle === 'hover'
-    ? [...elements, <el.Box position="absolute" bottom={0} right={0} display="none" hover={{ display: 'flex' }}>{button}</el.Box>]
-    : [...elements, <el.Box key="reply" alignSelf="flex-end">{button}</el.Box>]
+  return [...elements, style.copyButtonStyle === 'hover' ? replyMarker(el, button, notes?.id) : <el.Box key="reply" alignSelf="flex-end">{button}</el.Box>]
+}
+
+const replyMarker = (el: ReturnType<EngineInterface['ui']['resolve']>, button: RenderElement, id?: string) => {
+  const scope = `copy:${id === undefined ? '' : instanceKey(id)}:reply`
+  return (
+    <el.Box key="reply" position="absolute" bottom={0} right={-MARK} hover={{ scope }}>
+      <el.Text dimColor>⧉</el.Text>
+      <el.Box position="absolute" top={0} right={0} display="none" hover={{ scope, display: 'flex' }}>{button}</el.Box>
+    </el.Box>
+  )
 }
 
 const THEME_ARGS = [...PRESET_NAMES, 'random']
@@ -462,6 +470,34 @@ const toolOutputSample = (el: ReturnType<EngineInterface['ui']['resolve']>, styl
   ]
 }
 
+const SETUP_TABLE = '| Item | Qty |\n|:-----|----:|\n| Apples | 3 |\n| Pears | 5 |'
+const SETUP_SENT = new Date(2026, 0, 15, 14, 32).getTime()
+
+const copySample = (el: ReturnType<EngineInterface['ui']['resolve']>, style: Style, value: string, id: string, columns: number): RenderElement[] => {
+  const label: CopyButton = (_text, key, name = '⧉ copy', html) => (html && !style.htmlCopy ? null : <el.Text key={key} bold>{`[ ${name} ]`}</el.Text>)
+  const table = renderBlocks(el, style, parse(SETUP_TABLE, { numbers: style.highlightNumbers, paths: style.highlightPaths }), columns, new Map(), label)
+  return [
+    <el.Box key={`${id}t`} flexDirection="column">{table}</el.Box>,
+    ...(value === 'hover' ? [<el.Text key={`${id}h`} dimColor>{'Its buttons show only while the pointer is on its ⧉.'}</el.Text>] : []),
+  ]
+}
+
+const clockSample = (el: ReturnType<EngineInterface['ui']['resolve']>, style: Style, value: string, id: string, columns: number): RenderElement[] => {
+  const time = value === '24h' || value === '12h' ? clockText(SETUP_SENT, SETUP_SENT, value) : undefined
+  const prompt = style.promptStyle === 'off' ? <el.Text dimColor>{`> ${time === undefined ? '' : `[${time}] `}fix the failing test`}</el.Text> : renderUserPrompt(el, style, 'fix the failing test', columns, time)
+  return [<el.Box key={`${id}p`}>{prompt}</el.Box>, <el.Box key={`${id}d`}>{renderTurnDuration(el, style, 'Baked', 115000, time)}</el.Box>]
+}
+
+const SETUP_EDIT = {
+  filePath: 'src/config.ts',
+  structuredPatch: [{ oldStart: 12, newStart: 12, lines: [' export const config = {', '-  retries: 3,', '-  timeout: 5000,', '+  retries: 5,', '+  timeout: 10_000,', '   verbose: false,', ' }'] }],
+}
+
+const diffSample = (el: ReturnType<EngineInterface['ui']['resolve']>, style: Style, id: string, columns: number): RenderElement[] => [
+  <el.Box key={`${id}r`}>{renderToolRow(el, style, { tool: 'Edit', input: { file_path: 'src/config.ts' }, isRunning: false, isErrored: false, isInterrupted: false }, columns)}</el.Box>,
+  <el.Box key={`${id}d`} flexDirection="column">{renderDiffCard(el, style, SETUP_EDIT, () => null, id, columns)}</el.Box>,
+]
+
 type SetupView = { el: ReturnType<EngineInterface['ui']['resolve']>; base: Style; options: PluginOptions; at: number; step: SetupStep; current: string; columns: number; rows: number; pick: (value: string) => void }
 
 const setupKeyboardPane = ($: EngineInterface, v: SetupView, focused: string, randomTheme: string): RenderElement => {
@@ -495,6 +531,9 @@ const drawSetup = ($: EngineInterface, el: ReturnType<EngineInterface['ui']['res
     if (key === 'promptStyle') return [value === 'off' ? <el.Text key={id} dimColor>{'> fix the failing test'}</el.Text> : <el.Box key={id}>{renderUserPrompt(el, style, 'fix the failing test', columns)}</el.Box>]
     if (key === 'toolStyle') return [md({ ...style, narration: style.toolStyle === 'tree-bold' }, 'Reading the config.', `${id}s`), <el.Box key={id}>{renderToolRow(el, style, { tool: 'Read', input: { file_path: 'src/config.ts' }, isRunning: false, isErrored: false, isInterrupted: false }, columns)}</el.Box>]
     if (key === 'toolOutput') return toolOutputSample(el, style, value, id, columns)
+    if (key === 'diffStyle') return diffSample(el, style, id, columns)
+    if (key === 'copyButtonStyle') return copySample(el, style, value, id, columns)
+    if (key === 'clock') return clockSample(el, style, value, id, columns)
     return []
   }
   const picks = found.parts.options.map(({ value, text }, i) => {
@@ -688,6 +727,19 @@ export const register: Register = (on, options) => {
     return next(e)
   })
 
+  on('ui.scroll', { component: 'Pane', requestId: SETUP_PANE }, async ($, e, next) => {
+    if (e.origin.kind !== 'person' || e.pointer || Math.abs(e.by) !== 1) return next(e)
+    const steps = setupSteps(PRESET_NAMES)
+    const step = steps[Math.min(await read($, setupAt), steps.length - 1)]!
+    const choices = step.key === 'theme' ? THEME_ARGS : step.options
+    const focused = await read($, setupFocus)
+    const at = choices.indexOf(choices.includes(focused) ? focused : currentOf(step))
+    const target = choices[at + e.by]
+    if (target === undefined) return next(e)
+    await $.ui.focus({ requestId: SETUP_PANE, key: pickKey(step, target) }).catch(() => undefined)
+    return {}
+  })
+
   on('ui.render', { component: 'Pane', requestId: SETUP_PANE }, async ($, e) => {
     const steps = setupSteps(PRESET_NAMES)
     const at = Math.min(await read($, setupAt), steps.length - 1)
@@ -733,7 +785,23 @@ export const register: Register = (on, options) => {
     const at = style.clock === 'off' ? undefined : sentAt(await read($, sent), e.props.text, await firstDrawn($, e.requestId))
     const time = at === undefined ? undefined : clockText(at, await $.clock.now(), style.clock)
     if (style.promptStyle === 'off') return time === undefined ? next(e) : next({ ...e, props: { ...e.props, text: `[${time}] ${e.props.text}` } })
-    return renderUserPrompt($.ui.resolve(e), fit(e.viewport), e.props.text, columnsOf(e.viewport), time)
+    const el = $.ui.resolve(e)
+    const drawn = forSurface(fit(e.viewport), e.surface, await linkReach($, probes, style))
+    const columns = columnsOf(e.viewport)
+    const open = await read($, unfolded)
+    const paste: DrawPaste = (body, key) => {
+      const lines = body.split('\n')
+      const title = `pasted text · ${lines.length} lines`
+      const toggle = folder($, el, open)(`${e.requestId}:${key}`, lines.length, key, { label: title })
+      const opened = toggle?.folded === false
+      return (
+        <el.Box key={key} borderStyle="double" borderColor={drawn.theme.codeComment} paddingX={1} flexDirection="column" alignSelf="flex-start">
+          {opened ? <el.Box key="head" flexDirection="row" justifyContent="space-between" columnGap={4}><el.Text color={drawn.theme.codeComment}>{title}</el.Text>{toggle.element}</el.Box> : toggle?.element ?? null}
+          {opened ? drawMarkdown($, el, drawn, [{ kind: 'code', lang: pasteLang(body), lines, raw: body }], columns - 8, undefined, undefined, undefined, open) : null}
+        </el.Box>
+      )
+    }
+    return renderUserPrompt(el, drawn, e.props.text, columns, time, paste)
   })
 
   on('ui.render', { component: 'AssistantMessage' }, async ($, e, next) => {
@@ -755,14 +823,17 @@ export const register: Register = (on, options) => {
       : undefined
     const surfaceStyle = files?.size ? { ...linked, editorPaths: files } : linked
     const open = await read($, unfolded)
+    const reply = blocks.length > 1 || hasRtl(e.props.text) ? e.props.text : undefined
+    const corner = reply !== undefined && markerRoom(surfaceStyle) > 0
     return (
       <Box key="msg" flexDirection="row">
         <Box width={2} flexShrink={0}>
           <Text color={style.theme.accent}>{e.props.isFirstOfReply ? '●' : ' '}</Text>
         </Box>
         <Box flexDirection="column" rowGap={1} flexGrow={1}>
-          {drawMarkdown($, el, narration ? { ...surfaceStyle, narration } : surfaceStyle, blocks, columnsOf(e.viewport), math, pictures, blocks.length > 1 || hasRtl(e.props.text) ? e.props.text : undefined, open, { id: e.requestId, press: reach.marks })}
+          {drawMarkdown($, el, narration ? { ...surfaceStyle, narration } : surfaceStyle, blocks, columnsOf(e.viewport), math, pictures, reply, open, { id: e.requestId, press: reach.marks })}
         </Box>
+        {corner ? <Box width={MARK} flexShrink={0} /> : null}
       </Box>
     )
   })

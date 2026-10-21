@@ -84,13 +84,13 @@ test('framed: the prompt draws in a square box with the mascot', { options: { pr
 test('setup: framed and folded are steps too, each sample drawn in its own style', async $ => {
   const mount = async (at: number) =>
     $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'CommandOutput', props: { command: 'prismantis', args: 'setup', text: `Tables set to box.\n\n${setupText(setupParts(PRESET_NAMES, at))}`, isErrored: false }, viewport: { columns: 100, rows: 40 } })
-  const prompts = await mount(3)
-  expect(setupParts(PRESET_NAMES, 3).options.map(o => o.value)).toEqual(['bubble', 'bar', 'chevron', 'off', 'framed'])
+  const prompts = await mount(5)
+  expect(setupParts(PRESET_NAMES, 5).options.map(o => o.value)).toEqual(['bubble', 'bar', 'chevron', 'off', 'framed'])
   expect(await prompts.findAll({ type: 'Text', text: /fix the failing test/ })).toHaveLength(5)
   expect(await prompts.find({ type: 'Text', text: /^⠀⡖⣶⣶⢲⠀$/ })).toBeTruthy()
   await prompts.unmount()
-  const tools = await mount(4)
-  expect(setupParts(PRESET_NAMES, 4).options.map(o => o.value)).toEqual(['chat', 'tree-dim', 'tree-bold', 'classic', 'folded'])
+  const tools = await mount(7)
+  expect(setupParts(PRESET_NAMES, 7).options.map(o => o.value)).toEqual(['chat', 'tree-dim', 'tree-bold', 'classic', 'folded'])
   expect(await tools.find({ type: 'Text', text: /⎿/ })).toBeTruthy()
   expect(await tools.findAll({ type: 'Text', text: /^Read$/ })).toHaveLength(5)
   await tools.unmount()
@@ -186,6 +186,42 @@ test('lists get no copy button: hover anchors right-to-left quotes, alerts and t
   expect(await anchors('> [!NOTE]\n> שלום עולם')).toEqual(['left'])
   expect(await anchors('| שם | ערך |\n|---|---|\n| אחד | שתיים |')).toEqual(['left'])
   expect(await anchors('> hello')).toEqual(['right'])
+})
+
+// local: versione dei test upstream "copyButtonStyle hover gives every block with copy buttons one dim ⧉ …"
+// e "copyButtonStyle hover puts the ⧉ of a right-to-left block at its left …" senza il bottone delle liste
+type MarkNode = FloatNode & { hover?: { scope?: string } }
+const withParents = (node: MarkNode, parent?: MarkNode): { node: MarkNode; parent?: MarkNode }[] => [{ node, parent }, ...floatKids(node).flatMap(child => withParents(child, node))]
+const shownText = (node: FloatNode): string => (node.children ?? []).map(child => (typeof child === 'string' ? child : child && typeof child === 'object' ? shownText(child as FloatNode) : '')).join('')
+
+for (const surface of ['terminal', 'desktop'] as const) test(`lists get no copy button: hover gives every other block one dim ⧉ in the flow, the list none, on ${surface}`, { options: { copyButtonStyle: 'hover' } }, async $ => {
+  const ui = await $.ui.mount({ ...hoverMount('| a |\n|---|\n| 1 |\n\n```\nx\n```\n\n- y\n\n> z\n\n> [!NOTE]\n> w\n\n```mermaid\nflowchart LR\n  A --> B\n```\n\nplain'), surface })
+  const marks = withParents((await ui.drawn()) as MarkNode).filter(({ node }) => node.type === 'Text' && shownText(node) === '⧉')
+  expect(marks).toHaveLength(6)
+  for (const { node } of marks) expect(node.props?.dimColor).toBe(true)
+  const blocks = marks.map(({ parent }) => parent!).filter(box => !box.hover?.scope?.endsWith(':reply'))
+  expect(blocks).toHaveLength(5)
+  for (const box of blocks) expect({ scoped: box.hover?.scope !== undefined, flows: box.props?.position !== 'absolute' }).toEqual({ scoped: true, flows: true })
+  expect(await ui.find({ key: 'c2' })).toBeUndefined()
+  for (const key of ['c0', 'c3', 'c4', 'c5']) expect(((await ui.find({ key }))?.children[0] as FloatNode).props?.columnGap).toBe(1)
+  await ui.unmount()
+})
+
+test('lists get no copy button: hover puts the ⧉ of right-to-left quotes, alerts and tables at the left', { options: { copyButtonStyle: 'hover', rtl: 'warp' } }, async $ => {
+  const side = async (text: string) => {
+    const ui = await $.ui.mount(hoverMount(text))
+    const row = (await ui.find({ key: 'c0' }))?.children[0] as FloatNode | undefined
+    const flow = row ? floatKids(row).filter(child => child.props?.position !== 'absolute') : []
+    const marked = (child?: FloatNode) => !!(child as MarkNode | undefined)?.hover?.scope
+    await ui.unmount()
+    return marked(flow[0]) ? 'left' : marked(flow.at(-1)) ? 'right' : 'none'
+  }
+  expect(await side('- שלום עולם\n- עוד פריט')).toBe('none')
+  expect(await side('> שלום עולם')).toBe('left')
+  expect(await side('> [!NOTE]\n> שלום עולם')).toBe('left')
+  expect(await side('| שם | ערך |\n|---|---|\n| אחד | שתיים |')).toBe('left')
+  expect(await side('> hello שלום')).toBe('right')
+  expect(await side('> hello')).toBe('right')
 })
 
 // local: percorsi cliccabili (hooks/filelink.ts)
