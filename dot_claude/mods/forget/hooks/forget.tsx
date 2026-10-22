@@ -43,8 +43,9 @@ const MARK = 'turn-forget'
 let keepStart = false
 
 /**
- * Le righe di prompt di una selezione: il turno di ogni riga del contesto (per uuid), le righe che lo
- * schermo mostra ancora ma il modello non legge più, i testi dei turni del contesto.
+ * Le righe di prompt di una selezione: il turno di ogni riga del contesto (per uuid e per id del primo
+ * blocco), le righe che lo schermo mostra ancora ma il modello non legge più, i testi dei turni del
+ * contesto.
  */
 export type Rows = { turns: Map<string, number>; outside: Set<string>; texts: string[] }
 
@@ -118,14 +119,22 @@ export function sameStart(turns: readonly SessionMessage[][], texts: readonly st
  * Il turno di ogni riga di prompt. Dopo una compattazione lo schermo mostra ancora sopra di essa le
  * righe di prima: quella che ripete un turno del contesto (`turn`, da `promptRows`) ha la sua
  * casella, le altre sono uscite dal contesto.
+ *
+ * Ogni riga sta sotto due id: il suo uuid e quello del suo primo blocco. Dal primo messaggio a più
+ * blocchi della conversazione (un prompt con un'immagine) il motore disegna i messaggi seguenti con
+ * id derivati: i primi 24 caratteri dell'uuid e l'indice del blocco in 12 cifre esadecimali.
  */
 export function rowsOf({ current, earlier }: Prompts): Rows {
-  const turns = new Map(current.map((p, i) => [p.uuid, i + 1]))
+  const turns = new Map<string, number>()
   const outside = new Set<string>()
-  for (const p of earlier) {
-    if (p.turn === undefined) outside.add(p.uuid)
-    else turns.set(p.uuid, p.turn)
+  const add = (uuid: string, turn?: number) => {
+    for (const id of [uuid, `${uuid.slice(0, 24)}${'0'.repeat(12)}`]) {
+      if (turn === undefined) outside.add(id)
+      else turns.set(id, turn)
+    }
   }
+  current.forEach((p, i) => add(p.uuid, i + 1))
+  for (const p of earlier) add(p.uuid, p.turn)
   return { turns, outside, texts: current.map(p => p.text) }
 }
 

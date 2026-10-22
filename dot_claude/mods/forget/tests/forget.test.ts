@@ -113,9 +113,21 @@ describe('turn-forget', () => {
       current: [{ uuid: 'c1', text: 'uno' }, { uuid: 'c3', text: 'tre' }],
       earlier: [{ uuid: 'o1', turn: 1 }, { uuid: 'o2' }, { uuid: 'o3', turn: 2 }],
     })
-    expect([...rows.turns]).toEqual([['c1', 1], ['c3', 2], ['o1', 1], ['o3', 2]])
-    expect([...rows.outside]).toEqual(['o2'])
+    expect(['c1', 'c3', 'o1', 'o3'].map(id => rows.turns.get(id))).toEqual([1, 2, 1, 2])
+    expect(rows.turns.has('o2')).toBe(false)
+    expect(rows.outside.has('o2')).toBe(true)
     expect(rows.texts).toEqual(['uno', 'tre'])
+  })
+
+  test('rowsOf riconosce una riga anche con l\'id che il motore deriva dopo un messaggio a più blocchi', () => {
+    const rows = rowsOf({
+      current: [{ uuid: '43a0d710-e13b-4847-b247-d08fd3681144', text: 'prova' }],
+      earlier: [{ uuid: '3a5ea628-8bca-4d43-8ce7-6c9c6d5ceda6' }],
+    })
+    expect(rows.turns.get('43a0d710-e13b-4847-b247-000000000000')).toBe(1)
+    expect(rows.outside.has('3a5ea628-8bca-4d43-8ce7-000000000000')).toBe(true)
+    // gli altri blocchi dello stesso messaggio restano senza casella
+    expect(rows.turns.has('43a0d710-e13b-4847-b247-000000000001')).toBe(false)
   })
 
   test('splitTurns numera i prompt e lascia fuori il contesto iniziale', () => {

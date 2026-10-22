@@ -17,6 +17,8 @@
 //                ancora, i turni del contesto hanno la loro casella, il turno tolto «fuori dal contesto»
 //   utente       le mod vere di ~/.claude/mods (con prismantis): casella sopra il prompt incorniciato,
 //                /forget da solo chiude la selezione
+//   blocchi      la conversazione si apre con un prompt di due blocchi: da lì il motore disegna le righe
+//                con id derivati dall'uuid, e i prompt hanno comunque la loro casella
 // Serve: zellij, claude, PowerShell, bun. Lavora in <config>/tmp/turn-forget-e2e: le conversazioni di
 // prova (create con haiku alla prima esecuzione, rifatte se mancano), un log e gli schermi per caso.
 // Effetti fuori da quella cartella: la cartella delle conversazioni di prova diventa fidata in
@@ -37,7 +39,7 @@ const POWERSHELL = `${process.env.SystemRoot ?? 'C:/Windows'}/System32/WindowsPo
 const ISOLATE = ['--settings', JSON.stringify({ env: { CLAUDE_CODE_PLUGIN_DIRS: win(NOMODS) } })]
 const TOOL_WORDS = ['MELA', 'TRENO', 'CACTUS']
 const SHORT_WORDS = ['MELA', 'TRENO', 'CACTUS', 'LIMONE', 'PERA', 'NAVE', 'SOLE', 'LUNA']
-const CASES = ['numeri', 'inesistente', 'clic', 'due', 'storico', 'utente']
+const CASES = ['numeri', 'inesistente', 'clic', 'due', 'storico', 'utente', 'blocchi']
 
 mkdirSync(FIX_DIR, { recursive: true })
 mkdirSync(NOMODS, { recursive: true })
@@ -110,6 +112,33 @@ function fixture(name, prompts, tools) {
     log(`  turno ${i + 1}: exit=${r.exitCode} ${String(r.stdout ?? '').trim().slice(0, 40)}`)
   })
   if (!valid(id)) throw new Error(`la conversazione di prova «${name}» non è completa (${id})`)
+  writeFileSync(file, id)
+  return id
+}
+
+/**
+ * Una conversazione di prova che si apre con un prompt di due blocchi di testo (stream-json): dal primo
+ * messaggio a più blocchi il motore disegna i messaggi seguenti con id derivati dall'uuid.
+ */
+function fixtureBlocks() {
+  const file = join(WORK, 'blocchi.id')
+  const valid = id => {
+    const p = projectOf(id)
+    return !!p && readFileSync(join(p, `${id}.jsonl`), 'utf8').includes(`OK ${TOOL_WORDS.length}`)
+  }
+  const old = existsSync(file) ? readFileSync(file, 'utf8').trim() : ''
+  if (old && valid(old)) return old
+  const id = crypto.randomUUID()
+  log(`creo la conversazione di prova «blocchi» (${TOOL_WORDS.length} turni con haiku, il primo di due blocchi): ${id}`)
+  const first = { type: 'user', message: { role: 'user', content: [{ type: 'text', text: `T1 ${TOOL_WORDS[0]}.` }, { type: 'text', text: 'Rispondi solo: OK 1' }] } }
+  TOOL_WORDS.forEach((w, i) => {
+    const args = i ? ['-p', `T${i + 1} ${w}. Rispondi solo: OK ${i + 1}`, '--resume', id] : ['-p', '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose', '--session-id', id]
+    const r = Bun.spawnSync([CLAUDE, ...args, '--model', 'haiku', '--strict-mcp-config', ...ISOLATE], {
+      cwd: FIX_DIR, env, stdin: i ? 'ignore' : Buffer.from(`${JSON.stringify(first)}\n`), stdout: 'pipe', stderr: 'pipe', timeout: 180_000,
+    })
+    log(`  turno ${i + 1}: exit=${r.exitCode} ${String(r.stdout ?? '').trim().slice(-40)}`)
+  })
+  if (!valid(id)) throw new Error(`la conversazione di prova «blocchi» non è completa (${id})`)
   writeFileSync(file, id)
   return id
 }
@@ -359,6 +388,23 @@ const cases = {
       await Bun.sleep(1500)
       check('/forget da solo chiude la selezione', s.logs().some(t => t.includes('selezione chiusa, nessun turno tolto')) && !s.look().includes('[ ] turno'))
       check('nessuna compattazione', !s.rows().some(r => r.subtype === 'compact_boundary'))
+    } finally {
+      s.close()
+    }
+  },
+
+  async blocchi() {
+    const s = await session('blocchi', fixtureBlocks())
+    try {
+      await s.ready('OK 3')
+      await s.type('T4 FINE. Rispondi solo: OK 4')
+      await until(() => s.ended('OK 4'), 120_000, 'fine del turno 4')
+      await s.type('/forget')
+      await until(() => s.look().includes('[ ] turno 4'), 30_000, 'caselle').catch(() => undefined)
+      const boxes = [...s.last.matchAll(/\[[ x]\] turno (\d+)/g)].map(m => m[1])
+      log(`  caselle in vista: ${boxes.join(', ') || 'nessuna'}`)
+      check('dopo un prompt di due blocchi il prompt nuovo ha la sua casella', /\[ \] turno 4\s*❯/.test(s.last))
+      check('anche il prompt di un turno di prima ha la sua casella', /\[ \] turno [23]\s*❯/.test(s.last))
     } finally {
       s.close()
     }
