@@ -215,6 +215,7 @@ autoload -Uz zf
 autoload -Uz _df
 autoload -Uz y
 autoload -Uz rg
+autoload -Uz zeshij
 
 #  ╔═╗╦  ╦╔═╗╔═╗
 #  ╠═╣║  ║╠═╣╚═╗

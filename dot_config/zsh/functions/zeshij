@@ -1,0 +1,15 @@
+zeshij() {
+  # i comandi di sesh verso il plugin zeshij di Zellij, con zellij pipe (da un pannello di Zellij)
+  # connect -c/--command <cmd> diventa --args command=<cmd> (Zellij divide --args sulle virgole)
+  (( $# )) || { print -u2 "uso: zeshij connect|mkdir|last|list|preview|root …"; return 2; }
+  local -a extra words=("$1")
+  shift
+  while (( $# )); do
+    case "${words[1]}:$1" in
+      connect:-c|connect:--command) extra=(--args "command=$2"); shift 2 ;;
+      connect:--command=*) extra=(--args "command=${1#*=}"); shift ;;
+      *) words+=("$1"); shift ;;
+    esac
+  done
+  zellij pipe --plugin zeshij "${extra[@]}" -- "${words[*]}"
+}
