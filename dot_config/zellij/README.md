@@ -45,6 +45,7 @@ Regola: dove WezTerm usa `CTRL+ALT+tasto`, Zellij usa `ALT+tasto`.
 | `ALT+1` … `ALT+9` | Vai alla tab 1 … 9 | `CTRL+ALT+1` … `CTRL+ALT+9` |
 | `ALT+PageUp` / `ALT+PageDown` | Scorre il pannello di una pagina. Zellij entra nel modo scroll e torna al modo base quando arrivi in fondo | `CTRL+ALT+PageUp` / `CTRL+ALT+PageDown` |
 | `ALT+f` | Mostra / nasconde i pannelli floating (sopra gli altri) | — |
+| `ALT+s` | Picker delle sessioni **zeshij**, come sesh: sessioni Zellij, `sesh.toml`, zoxide e layout. `Invio` connette, `Tab` mostra la preview, `Esc` chiude | `ALT+/` → `w` → `s` (lista dei workspace) |
 
 ## Leader: `ALT+.` poi…
 
