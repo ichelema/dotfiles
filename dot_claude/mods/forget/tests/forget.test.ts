@@ -193,6 +193,30 @@ describe('turn-forget', () => {
     expect(relinks(rows)).toEqual([])
   })
 
+  test('relinks ricollega i risultati di due chiamate parallele ciascuno alla copia della sua chiamata', () => {
+    const row = (uuid: string, parentUuid: string | null, type: string, content: unknown): TranscriptRow => ({ uuid, parentUuid, type, message: { content } })
+    const use = (id: string) => [{ type: 'tool_use', id, name: 'Bash', input: {} }]
+    const res = (id: string) => [{ type: 'tool_result', tool_use_id: id, content: 'ok' }]
+    // come le scrive il motore: B è figlia di A, il risultato di ogni chiamata è figlio della sua riga
+    const rows: TranscriptRow[] = [
+      row('p', null, 'user', 'prompt'),
+      row('aA', 'p', 'assistant', use('A')),
+      row('aB', 'aA', 'assistant', use('B')),
+      row('rA', 'aA', 'user', res('A')),
+      row('rB', 'aB', 'user', res('B')),
+      { type: 'system', subtype: 'compact_boundary', uuid: 'b', parentUuid: null },
+      row('pc', 'b', 'user', 'prompt'),
+      row('aAc', 'pc', 'assistant', use('A')),
+      row('aBc', 'aAc', 'assistant', use('B')),
+      row('rAc', 'aA', 'user', res('A')),
+      row('rBc', 'aB', 'user', res('B')),
+    ]
+    expect(relinks(rows)).toEqual([
+      { index: 9, from: 'aA', to: 'aAc' },
+      { index: 10, from: 'aB', to: 'aBc' },
+    ])
+  })
+
   test('senza compattazioni relinks non cambia niente e la catena è intera', () => {
     const rows: TranscriptRow[] = [
       { uuid: 'p', parentUuid: null, type: 'user', message: { content: 'ciao' } },

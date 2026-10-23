@@ -153,8 +153,11 @@ export function reachesBoundary(rows: readonly (TranscriptRow | undefined)[]): b
   return i <= cut
 }
 
-/** Gli id dei blocchi di una riga: `id` dei tool_use e `tool_use_id` dei tool_result. */
-function blockIds(r: TranscriptRow | undefined): { type?: string; id: string }[] {
+/**
+ * Ogni blocco di una riga che ha un id, col suo tipo: `id` dei tool_use, `tool_use_id` dei tool_result. Non
+ * `blockIds`: con lo stesso nome questa sostituiva quella di `relinks`, che confrontava allora «[object Object]».
+ */
+function blockRefs(r: TranscriptRow | undefined): { type?: string; id: string }[] {
   const c = r?.message?.content
   if (!Array.isArray(c)) return []
   return c.flatMap((b: { type?: string; id?: string; tool_use_id?: string }) => {
@@ -179,7 +182,7 @@ export function hiddenIds(rows: readonly (TranscriptRow | undefined)[]): string[
     for (let i = from; i < to; i++) {
       const u = rows[i]?.uuid
       if (u) for (const id of [u, `${u.slice(0, 24)}${'0'.repeat(12)}`, `collapsed-${u}`]) out.add(id)
-      for (const b of blockIds(rows[i])) out.add(b.id)
+      for (const b of blockRefs(rows[i])) out.add(b.id)
     }
     return out
   }
@@ -187,7 +190,7 @@ export function hiddenIds(rows: readonly (TranscriptRow | undefined)[]): string[
   const after = ids(cut + 1, rows.length)
   const hidden = [...before].filter(id => !after.has(id))
   for (let i = cut + 1; i < rows.length; i++) {
-    const calls = blockIds(rows[i]).filter(b => b.type === 'tool_use' && before.has(b.id))
+    const calls = blockRefs(rows[i]).filter(b => b.type === 'tool_use' && before.has(b.id))
     if (!calls.length) continue
     hidden.push(`collapsed-${rows[i]!.uuid}`, ...calls.map(b => b.id))
   }
