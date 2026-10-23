@@ -17,8 +17,8 @@
 //   inesistente  /forget 9: «Not compacted», nessuna compattazione
 //   clic         /forget, clic sulla casella, secondo clic, terzo clic, Invio: turno tolto
 //   due          /forget, due caselle spuntate, prompt «/forget 7-8», Invio: tolti tutti e due
-//   storico      /forget 2, poi /forget: nella storia sopra la compattazione, che lo schermo mostra
-//                ancora, i turni del contesto hanno la loro casella, il turno tolto «fuori dal contesto»
+//   nascondi     /forget 2: sopra la compattazione lo schermo non disegna più la storia, nemmeno le righe di
+//                tool dei turni tenuti; un tool nuovo si vede; dopo /forget 3 va via anche la durata del turno
 //   utente       le mod vere di ~/.claude/mods (con prismantis): casella sopra il prompt incorniciato,
 //                /forget da solo chiude la selezione
 //   blocchi      la conversazione si apre con un prompt di due blocchi: da lì il motore disegna le righe
@@ -43,7 +43,7 @@ const POWERSHELL = `${process.env.SystemRoot ?? 'C:/Windows'}/System32/WindowsPo
 const ISOLATE = ['--settings', JSON.stringify({ env: { CLAUDE_CODE_PLUGIN_DIRS: win(NOMODS) } })]
 const TOOL_WORDS = ['MELA', 'TRENO', 'CACTUS']
 const SHORT_WORDS = ['MELA', 'TRENO', 'CACTUS', 'LIMONE', 'PERA', 'NAVE', 'SOLE', 'LUNA']
-const CASES = ['numeri', 'cache', 'inesistente', 'clic', 'due', 'storico', 'utente', 'blocchi']
+const CASES = ['numeri', 'cache', 'inesistente', 'clic', 'due', 'nascondi', 'utente', 'blocchi']
 
 mkdirSync(FIX_DIR, { recursive: true })
 mkdirSync(NOMODS, { recursive: true })
@@ -425,28 +425,49 @@ const cases = {
     }
   },
 
-  async storico() {
-    const s = await session('storico', fixture('corti', SHORT_WORDS.map((w, i) => `T${i + 1} ${w}. Rispondi solo: OK ${i + 1}`)))
+  async nascondi() {
+    const s = await session('nascondi', fixture('echo', TOOL_WORDS.map((w, i) => `Turno ${i + 1}. La parola segreta numero ${i + 1} è ${w}. Esegui con il tool Bash il comando: echo ${w}. Poi rispondi solo: OK ${i + 1}`), true))
     try {
-      await s.ready('OK 8')
-      await s.type('/forget 2')
-      await waitCut(s)
-      await s.type('/forget')
-      await until(() => s.logs().some(t => t.includes('7 turni: clic sulle caselle')), 30_000, 'caselle').catch(() => undefined)
-      await Bun.sleep(1500)
-      // ctrl+Home: in cima, nella storia sopra la compattazione
+      await s.ready('OK 3')
       s.seq('\x1b[1;5H')
       await Bun.sleep(1500)
-      // le righe non vuote: il motore disegna una riga vuota sopra ogni messaggio, non sempre
-      const lines = s.look().split('\n').filter(l => l.trim())
-      const at = re => lines.findIndex(l => re.test(l))
-      const above = re => lines[at(re) - 1] ?? ''
-      const below = re => lines[at(re) + 1] ?? ''
-      log(`  in cima: T1 ← ${JSON.stringify(above(/❯\sT1 MELA/).trim())} · T2 ← ${JSON.stringify(above(/❯\sT2 TRENO/).trim())} · dopo OK 2 → ${JSON.stringify(below(/● OK 2/).trim())}`)
-      check('nella storia il turno 1 ha la sua casella', above(/❯\sT1 MELA/).includes('[ ] turno 1'))
-      check('nella storia il turno tolto dice «fuori dal contesto»', above(/❯\sT2 TRENO/).includes('fuori dal contesto'))
-      // il prompt di T3 può restare sotto il bordo: basta la sua casella, la prima riga dopo il turno 2 tolto
-      check('nella storia T3 ha la casella del turno 2, come sotto', below(/● OK 2/).startsWith('[ ] turno 2'))
+      const count = (text, re) => (text.match(new RegExp(re, 'g')) ?? []).length
+      const top0 = s.look()
+      log(`  prima, in cima: Turno 1 ×${count(top0, 'Turno 1\\.')} · echo MELA ×${count(top0, 'echo MELA')}`)
+      s.seq('\x1b[1;5F')
+      await s.type('/forget 2')
+      await waitCut(s)
+      await Bun.sleep(3000)
+      s.seq('\x1b[1;5H')
+      await Bun.sleep(1500)
+      const top = s.look()
+      const lines = top.split('\n')
+      log(`  dopo, in cima:\n${lines.map(l => `    |${l}`).join('\n')}`)
+      const first = lines.findIndex(l => /Turno 1\./.test(l))
+      check('il turno tolto non compare più', count(top, 'Turno 2\\.') === 0 && count(top, 'TRENO') === 0)
+      check('il turno 1 compare una volta sola', count(top, 'Turno 1\\.') === 1)
+      check('sopra il turno 1 nessun gruppo di tool della storia', first > 0 && !lines.slice(0, first).some(l => /Ran \d+ shell command/.test(l)))
+      check('nessun avviso «storia non nascosta»', !s.logs().some(t => t.includes('storia non nascosta')))
+      check('nessuna riga di tool copiata sullo schermo', !/Ran \d+ shell command/.test(top))
+      // un tool chiamato dopo la rimozione resta visibile
+      s.seq('\x1b[1;5F')
+      await s.type('Turno 4. La parola segreta numero 4 è LIMONE. Esegui con il tool Bash il comando: echo LIMONE. Poi rispondi solo: OK 4')
+      await until(() => s.ended('OK 4'), 120_000, 'fine del turno 4').catch(() => undefined)
+      const end = s.look()
+      log(`  dopo il turno 4, in fondo:\n${end.split('\n').map(l => `    |${l}`).join('\n')}`)
+      check('il tool del turno 4 si vede', /OK 4/.test(end) && /Ran \d+ shell command|echo LIMONE/.test(end))
+      // una seconda rimozione: anche la durata del turno tolto va via. Restano le righe che ui.render non raggiunge:
+      // «/compact turn-forget …» con «Compacted», «1 agent type available» e i messaggi della mod
+      await s.type('/forget 3')
+      await until(() => s.rows().filter(r => r.subtype === 'compact_boundary').length >= 2, 60_000, 'seconda compattazione').catch(() => undefined)
+      await Bun.sleep(4000)
+      s.seq('\x1b[1;5H')
+      await Bun.sleep(1500)
+      const top2 = s.look()
+      log(`  dopo /forget 3, in cima:\n${top2.split('\n').map(l => `    |${l}`).join('\n')}`)
+      check('dopo la seconda rimozione il turno 4 non compare più', !/LIMONE/.test(top2))
+      check('dopo la seconda rimozione niente durata del turno tolto', !/✻ \S+ for \d+s/.test(top2))
+      check('dopo la seconda rimozione il turno 1 compare una volta sola', count(top2, 'Turno 1\\.') === 1)
     } finally {
       s.close()
     }

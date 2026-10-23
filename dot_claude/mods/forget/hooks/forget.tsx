@@ -12,8 +12,14 @@
  * conversazione compare una casella col numero del turno. Un clic la spunta e
  * riscrive il prompt (`/forget 3 5`); Invio toglie quei turni, `/forget` da solo
  * chiude la selezione. I numeri vengono dal transcript (`prompts.mjs`): prima di
- * togliere, la mod ritrova gli stessi prompt in `e.messages`. Sopra una
- * compattazione lo schermo mostra ancora la storia: la riga di un turno del
+ * togliere, la mod ritrova gli stessi prompt in `e.messages`.
+ *
+ * Sopra l'ultima compattazione il motore disegna ancora la storia: `ui.render`
+ * disegna vuote quelle righe (gli id da `hidden.mjs`, letti all'avvio e dopo ogni
+ * rimozione), e anche le righe di tool dei turni tenuti, che il motore mostra una
+ * volta sola, al posto vecchio. Restano le righe che `ui.render` non raggiunge
+ * (il comando `/compact`, i messaggi della mod); col renderer classico la storia
+ * è già nel terminale. Se `hidden.mjs` fallisce, la riga di un turno del
  * contesto ha la sua casella anche lì, le altre la scritta «fuori dal contesto».
  *
  * Non `$.session.compact`: passa da tutti gli hook tranne quelli della mod che la
@@ -58,6 +64,21 @@ let selection: (Rows & { picked: Set<number> }) | undefined
 
 /** I prompt della selezione confermata: la rimozione parte solo se `e.messages` comincia con gli stessi. */
 let expected: readonly string[] | undefined
+
+/** Gli id delle righe sopra l'ultima compattazione, che lo schermo non disegna più (`hiddenIds`). */
+let hidden: Set<string> | undefined
+
+/** Rilegge dal transcript le righe da nascondere e ridisegna; se non ci riesce la storia resta visibile. */
+async function loadHidden($: EngineInterface): Promise<void> {
+  const r = await helper($, 'hidden.mjs')
+  try {
+    if (r.exitCode !== 0) throw new Error(r.stderr.trim().slice(0, 200))
+    hidden = new Set(JSON.parse(r.stdout) as string[])
+    $.ui.invalidate('ui.render')
+  } catch (err) {
+    $.ui.log(`storia sopra la compattazione non nascosta (${err instanceof Error ? err.message : err})`)
+  }
+}
 
 /** Intervalli di turni, numerati da 1 ed estremi inclusi: `7-8` è `[7, 8]`. */
 export type Ranges = readonly (readonly [number, number])[]
@@ -190,6 +211,7 @@ async function helper($: EngineInterface, name: string, ...extra: string[]): Pro
 /** Dopo una rimozione: ricollega nel transcript le copie dei tool_result (relink.mjs); avvisa solo se non ci riesce. */
 async function relink($: EngineInterface, since: number): Promise<void> {
   const r = await helper($, 'relink.mjs', String(since))
+  await loadHidden($)
   if (r.exitCode !== 0) $.ui.log(`transcript non ricollegato (${r.stderr.trim().slice(0, 200)}): un --resume potrebbe perdere il contesto di prima della rimozione`)
 }
 
@@ -231,6 +253,7 @@ export const register: Register = on => {
         argumentHint: '[turni, es. 7-8]',
       })
       .catch(err => $.ui.log(`/${COMMAND} non registrato: ${err}`))
+    void loadHidden($)
     return r
   })
 
@@ -288,9 +311,14 @@ export const register: Register = on => {
     return r
   }).catch((_, e, next) => (next.called ? next(e) : { skip: 'turn-forget: errore interno, nessun turno tolto' }))
 
-  // la casella sopra ogni prompt della selezione; cartella prima di prismantis, che non chiama next
-  on('ui.render', { component: 'UserMessage' }, async ($, e, next) => {
-    if (!selection) return next(e)
+  // la storia sopra l'ultima compattazione disegnata vuota (ogni componente), e la casella sopra ogni prompt della
+  // selezione; cartella prima di prismantis, che non chiama next
+  on('ui.render', async ($, e, next) => {
+    if (hidden?.has(e.requestId)) {
+      const { Box } = $.ui.resolve(e)
+      return <Box />
+    }
+    if (e.component !== 'UserMessage' || !selection) return next(e)
     const turn = selection.turns.get(e.requestId)
     const { Box, Button, Text } = $.ui.resolve(e)
     if (turn === undefined) {

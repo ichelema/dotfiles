@@ -152,3 +152,44 @@ export function reachesBoundary(rows: readonly (TranscriptRow | undefined)[]): b
   }
   return i <= cut
 }
+
+/** Gli id dei blocchi di una riga: `id` dei tool_use e `tool_use_id` dei tool_result. */
+function blockIds(r: TranscriptRow | undefined): { type?: string; id: string }[] {
+  const c = r?.message?.content
+  if (!Array.isArray(c)) return []
+  return c.flatMap((b: { type?: string; id?: string; tool_use_id?: string }) => {
+    const id = b?.id ?? b?.tool_use_id
+    return id ? [{ type: b.type, id }] : []
+  })
+}
+
+/**
+ * Gli id con cui `ui.render` disegna le righe sopra l'ultimo confine, che lo schermo non deve più mostrare: l'uuid
+ * di ogni riga (anche nella forma derivata dopo un messaggio a più blocchi), `collapsed-<uuid>` per il gruppo di
+ * tool chiuso («Ran 1 shell command») e gli id dei tool, meno quelli che si ripetono dopo il confine.
+ *
+ * Una chiamata tool copiata dopo il confine il motore la disegna una volta sola, al posto dell'originale sopra il
+ * confine e con l'id della copia: anche quella va nascosta, così i turni tenuti restano senza le loro righe di tool.
+ */
+export function hiddenIds(rows: readonly (TranscriptRow | undefined)[]): string[] {
+  const cut = rows.findLastIndex(r => r?.subtype === 'compact_boundary')
+  if (cut < 0) return []
+  const ids = (from: number, to: number) => {
+    const out = new Set<string>()
+    for (let i = from; i < to; i++) {
+      const u = rows[i]?.uuid
+      if (u) for (const id of [u, `${u.slice(0, 24)}${'0'.repeat(12)}`, `collapsed-${u}`]) out.add(id)
+      for (const b of blockIds(rows[i])) out.add(b.id)
+    }
+    return out
+  }
+  const before = ids(0, cut + 1)
+  const after = ids(cut + 1, rows.length)
+  const hidden = [...before].filter(id => !after.has(id))
+  for (let i = cut + 1; i < rows.length; i++) {
+    const calls = blockIds(rows[i]).filter(b => b.type === 'tool_use' && before.has(b.id))
+    if (!calls.length) continue
+    hidden.push(`collapsed-${rows[i]!.uuid}`, ...calls.map(b => b.id))
+  }
+  return hidden
+}

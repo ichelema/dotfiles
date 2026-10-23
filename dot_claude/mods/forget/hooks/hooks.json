@@ -1,5 +1,5 @@
 {
-  "description": "turn-forget: /forget mostra una casella sopra ogni prompt della conversazione; un clic la spunta e riscrive il prompt (/forget 3 5), Invio toglie quei turni dal contesto senza riassunto; l'hook session.compact risponde al posto del motore con i messaggi rimasti; classic.SessionStart salta la riesecuzione degli hook dopo una rimozione",
+  "description": "turn-forget: /forget mostra una casella sopra ogni prompt della conversazione; un clic la spunta e riscrive il prompt (/forget 3 5), Invio toglie quei turni dal contesto senza riassunto; l'hook session.compact risponde al posto del motore con i messaggi rimasti; ui.render non disegna la storia sopra l'ultima compattazione; classic.SessionStart salta la riesecuzione degli hook dopo una rimozione",
   "modules": [
     "./forget.tsx"
   ]

@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'claude-code/testing'
 import type { SessionMessage } from 'claude-code'
 import { forget, formatTurns, ownArgs, parseTurns, rowsOf, sameStart, splitTurns } from '../hooks/forget'
-import { promptRows, reachesBoundary, relinks, type TranscriptRow } from '../hooks/transcript'
+import { hiddenIds, promptRows, reachesBoundary, relinks, type TranscriptRow } from '../hooks/transcript'
 
 const user = (text: string): SessionMessage => ({ role: 'user', text, toolUses: [] })
 const result = (id: string): SessionMessage => ({
@@ -200,6 +200,34 @@ describe('turn-forget', () => {
     ]
     expect(relinks(rows)).toEqual([])
     expect(reachesBoundary(rows)).toBe(true)
+    expect(hiddenIds(rows)).toEqual([])
+  })
+
+  test('hiddenIds nasconde la storia sopra l\'ultimo confine e le chiamate tool copiate, non i messaggi copiati', () => {
+    const row = (uuid: string, type: string, content: unknown): TranscriptRow => ({ uuid, type, message: { content } })
+    const use = (id: string) => [{ type: 'tool_use', id, name: 'Bash', input: {} }]
+    const res = (id: string) => [{ type: 'tool_result', tool_use_id: id, content: 'ok' }]
+    const rows: (TranscriptRow | undefined)[] = [
+      row('p1', 'user', 'prompt 1'),
+      row('a1', 'assistant', use('t1')),
+      row('r1', 'user', res('t1')),
+      row('p2', 'user', 'prompt 2'),
+      row('a2', 'assistant', use('t2')),
+      row('r2', 'user', res('t2')),
+      { type: 'system', subtype: 'compact_boundary', uuid: 'b' },
+      row('p1c', 'user', 'prompt 1'),
+      row('a1c', 'assistant', use('t1')),
+      row('r1c', 'user', res('t1')),
+      undefined, // una riga che non si legge
+      row('a3', 'assistant', use('t3')),
+    ]
+    const hidden = new Set(hiddenIds(rows))
+    for (const id of ['p1', 'a1', 'r1', 'p2', 'a2', 'r2', 'b', 'collapsed-a1', 'collapsed-a2', 't2']) expect(hidden.has(id)).toBe(true)
+    // il gruppo della chiamata copiata ha l'id della copia: il motore lo disegna al posto dell'originale
+    expect(hidden.has('collapsed-a1c')).toBe(true)
+    expect(hidden.has('t1')).toBe(true)
+    // i messaggi copiati e le chiamate nuove restano
+    for (const id of ['p1c', 'a1c', 'r1c', 'a3', 'collapsed-a3', 't3']) expect(hidden.has(id)).toBe(false)
   })
 
   test('forget non tocca nulla per un turno inesistente o una chiamata tool spezzata', () => {
