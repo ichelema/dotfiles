@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
-// Test di regressione di /forget nella sessione interattiva di Claude Code (schermo intero), solo Windows.
+// Test di regressione di /forget nella sessione interattiva di Claude Code (schermo intero), su Windows e su Linux.
 //
-// zellij parte in una console nascosta (Start-Process -WindowStyle Hidden): con stdout su una pipe i
-// riquadri del ConPTY ereditano la pipe e lo schermo resta vuoto. Nel riquadro gira
+// Su Windows zellij parte in una console nascosta (Start-Process -WindowStyle Hidden): con stdout su una pipe i
+// riquadri del ConPTY ereditano la pipe e lo schermo resta vuoto. Su Linux basta `zellij attach -b`. Nel riquadro gira
 // `claude --resume <conversazione di prova> --fork-session`: la conversazione di prova resta intatta.
 // Lo schermo si legge con screen.mjs da `zellij subscribe --format json`, una riga per ogni riga dello schermo:
 // `dump-screen` unisce alcune righe e salta quelle vuote, e i clic finirebbero sulla riga sbagliata.
@@ -25,9 +25,10 @@
 //                con id derivati dall'uuid, e i prompt hanno comunque la loro casella
 //   tui          /forget tui su uno schermo di 160 colonne: il pannello agganciato accanto alla conversazione,
 //                clic sulla casella, clic sul testo che porta al turno, [forget] toglie, [annulla] chiude
-// Una sessione zellij in background è larga 50 colonne; per «tui» un client zellij gira dentro
-// `conhost --headless` (nessuna finestra) della misura chiesta, e la sessione prende la sua.
-// Serve: zellij, claude, PowerShell, bun. Lavora in <config>/tmp/turn-forget-e2e: le conversazioni di
+// Una sessione zellij in background ha una misura fissa (su Windows 50 colonne); per «tui» un client zellij della
+// misura chiesta gira dentro `conhost --headless` (nessuna finestra) su Windows, in un pty di Bun su Linux, e la
+// sessione prende la sua.
+// Serve: zellij, claude, bun; su Windows anche PowerShell. Lavora in <config>/tmp/turn-forget-e2e: le conversazioni di
 // prova (create con haiku alla prima esecuzione, rifatte se mancano), un log e gli schermi per caso.
 // Effetti fuori da quella cartella: la cartella delle conversazioni di prova diventa fidata in
 // ~/.claude.json; ogni caso lascia una sessione nuova in <config>/projects.
@@ -43,6 +44,7 @@ const FIX_DIR = join(WORK, 'fixture')
 const NOMODS = join(WORK, 'nomods')
 const ZELLIJ = Bun.which('zellij')
 const CLAUDE = Bun.which('claude')
+const WINDOWS = process.platform === 'win32'
 const POWERSHELL = `${process.env.SystemRoot ?? 'C:/Windows'}/System32/WindowsPowerShell/v1.0/powershell.exe`
 const CONHOST = `${process.env.SystemRoot ?? 'C:/Windows'}/System32/conhost.exe`
 const ISOLATE = ['--settings', JSON.stringify({ env: { CLAUDE_CODE_PLUGIN_DIRS: win(NOMODS) } })]
@@ -66,8 +68,11 @@ const log = s => {
 // CLAUDE_CODE_NO_FLICKER: schermo intero sempre, anche se l'avvio di prima non è finito, e nessun controllo degli
 // avvii. Con "tui": "fullscreen" una sessione chiusa di forza conta come avvio fallito: dopo una, la successiva parte
 // col renderer classico (i clic sulle caselle non arrivano); dopo due, il motore spegne lo schermo intero per quella
-// versione in ~/.claude.json (fullscreenAutoDisabled), anche nelle sessioni di chi usa la mod
-const env = { ...process.env, HS_CFG_RETAIN_ENABLED: 'false', HS_CFG_RECALL_ENABLED: 'false', HS_CFG_FAILCHECK_ENABLED: 'false', HS_CFG_MENTAL_MODELS_INJECT_ON_START: 'false', DISABLE_AUTOUPDATER: '1', CLAUDE_CODE_NO_FLICKER: '1' }
+// versione in ~/.claude.json (fullscreenAutoDisabled), anche nelle sessioni di chi usa la mod.
+// INVOCATION_ID: l'hook ntfy claude-notifica esce subito se lo trova. Senza, ogni fine turno di una sessione di prova
+// programma un avviso «fine» sul telefono, e una sessione chiusa di forza può non mandare SessionEnd ad annullarlo;
+// l'env con cui parte la sessione zellij arriva ai processi dei riquadri
+const env = { ...process.env, HS_CFG_RETAIN_ENABLED: 'false', HS_CFG_RECALL_ENABLED: 'false', HS_CFG_FAILCHECK_ENABLED: 'false', HS_CFG_MENTAL_MODELS_INJECT_ON_START: 'false', DISABLE_AUTOUPDATER: '1', CLAUDE_CODE_NO_FLICKER: '1', INVOCATION_ID: 'turn-forget-e2e' }
 for (const k of ['CLAUDECODE', 'CLAUDE_CODE_SESSION_ID', 'CLAUDE_CODE_CHILD_SESSION', 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDE_CODE_MESSAGING_SOCKET',
   'CLAUDE_CODE_MESSAGING_TOKEN', 'CLAUDE_CODE_SESSION_ATTENDED', 'CLAUDE_PID', 'CLAUDE_ENV_FILE', 'CLAUDE_CODE_EXECPATH', 'CLAUDE_CODE_SSE_PORT']) delete env[k]
 
@@ -159,7 +164,7 @@ function fixtureBlocks() {
 
 /**
  * Una sessione interattiva in zellij sulla conversazione di prova; `real`: le mod vere, senza isolamento;
- * `size` ({ columns, rows }): lo schermo di quella misura, col client zellij dentro `conhost --headless`.
+ * `size` ({ columns, rows }): lo schermo di quella misura, col client zellij dentro `conhost --headless` (Windows) o un pty (Linux).
  */
 async function session(name, fixtureId, real = false, size) {
   // un nome per giro: una sessione rimasta bloccata in un giro di prima non ferma questo
@@ -168,15 +173,20 @@ async function session(name, fixtureId, real = false, size) {
   const screens = join(WORK, `${name}.screens.log`)
   writeFileSync(screens, '')
   run([ZELLIJ, 'delete-session', '--force', zname])
-  const pid = run([POWERSHELL, '-NoProfile', '-Command', `(Start-Process -WindowStyle Hidden -PassThru -FilePath '${ZELLIJ}' -ArgumentList 'attach','-b','${zname}').Id`]).text
+  // su Linux `attach -b` torna subito anche con stdout su una pipe, e il PID non serve: basta delete-session
+  let pid = ''
+  if (WINDOWS) pid = run([POWERSHELL, '-NoProfile', '-Command', `(Start-Process -WindowStyle Hidden -PassThru -FilePath '${ZELLIJ}' -ArgumentList 'attach','-b','${zname}').Id`]).text
+  else run([ZELLIJ, 'attach', '-b', zname])
   const args = ['--model', 'haiku', '--resume', fixtureId, '--fork-session', ...(real ? [] : [...ISOLATE, '--plugin-dir', MOD])]
   let pane
   let client
   try {
     await until(() => /terminal_0/.test(z('action', 'list-panes').text), 20_000, 'sessione zellij', 250)
     if (size) {
-      // stdout su NUL: lo schermo del client non lo legge nessuno, e una pipe piena lo fermerebbe
-      client = Bun.spawn([CONHOST, '--headless', '--width', String(size.columns), '--height', String(size.rows), '--', ZELLIJ, 'attach', zname], { stdin: 'pipe', stdout: 'ignore', stderr: 'ignore' })
+      // lo schermo del client non lo legge nessuno, e una pipe piena lo fermerebbe: stdout su NUL, o data() lo scarta
+      client = WINDOWS
+        ? Bun.spawn([CONHOST, '--headless', '--width', String(size.columns), '--height', String(size.rows), '--', ZELLIJ, 'attach', zname], { stdin: 'pipe', stdout: 'ignore', stderr: 'ignore' })
+        : Bun.spawn([ZELLIJ, 'attach', zname], { terminal: { cols: size.columns, rows: size.rows, data() {} }, env })
       await Bun.sleep(2000)
     }
     pane = /terminal_\d+/.exec(z('run', '--cwd', win(FIX_DIR), '--', CLAUDE, ...args).text)?.[0]
@@ -423,10 +433,15 @@ const cases = {
       await until(() => s.ended('OK 9'), 120_000, 'fine del turno 9')
       await s.type('/forget')
       await until(() => s.look().includes('[ ] turno 9'), 30_000, 'caselle').catch(() => undefined)
-      // rotella in su di due colpi (3 righe l'uno), per avere in vista caselle di turni in mezzo
+      // rotella in su di due colpi (su Windows 3 righe l'uno), per avere in vista caselle di turni in mezzo
       for (let i = 0; i < 2; i++) s.seq('\x1b[<64;10;5M')
       await Bun.sleep(1500)
       const visible = () => s.look().split('\n').map((l, y) => ({ y, m: /^\[[ x]\] turno (\d+)$/.exec(l) })).filter(b => b.m && b.y > 0 && Number(b.m[1]) <= SHORT_WORDS.length)
+      // fuori da Windows il motore scorre di una riga a colpo, e due colpi ravvicinati valgono due righe: altri colpi, distanziati
+      for (let i = 0; i < 10 && visible().length < 2; i++) {
+        s.seq('\x1b[<64;10;5M')
+        await Bun.sleep(500)
+      }
       const seen = visible()
       const picks = (seen.length > 2 ? [seen[0], seen[2]] : seen.slice(0, 2)).map(b => Number(b.m[1]))
       log(`  caselle visibili: ${seen.map(b => b.m[1]).join(', ')} · spunto: ${picks.join(', ')}`)
