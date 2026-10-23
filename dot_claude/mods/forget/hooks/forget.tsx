@@ -155,16 +155,13 @@ export function forget(messages: readonly SessionMessage[], drop: Ranges): { mes
   const before = orphans(messages)
   const broken = [...orphans(kept)].filter(id => !before.has(id))
   if (broken.length) return { skip: `toglierei solo metà di una chiamata tool (${broken[0]})` }
-  // ponytail: tenuta col suo handle, una riga tool_result resta agganciata al tool_use originale e
-  // --resume ripercorre da lì la conversazione di prima: uguale fino al primo turno tolto, dopo con i
-  // turni tolti. Dopo quel turno il motore la ricostruisce senza handle e perde immagini, dati
-  // strutturati e le righe agganciate al risultato (testo di una skill, avvisi). Togliere quando il
-  // motore riaggancia la copia.
-  const first = Math.min(...drop.map(r => r[0]))
-  const same = new Set([...preamble, ...turns.slice(0, first - 1).flat()])
+  // ponytail: tenuta col suo handle, la copia di un tool_result punta al tool_use di prima della
+  // compattazione; oltre i 5 MB --resume legge solo dall'ultimo confine, si ferma lì e perde tutto ciò
+  // che viene prima. Senza handle il motore la ricostruisce, ma perde immagini, dati strutturati e le
+  // righe agganciate al risultato (testo di una skill, avvisi). Togliere quando il motore riaggancia la copia.
   return {
     messages: kept.map(m => {
-      if (same.has(m) || !m.toolResults?.length) return m
+      if (!m.toolResults?.length) return m
       const { handle: _, ...rebuilt } = m
       return rebuilt
     }),

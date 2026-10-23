@@ -8,8 +8,8 @@
 // processo: i casi isolano le mod con --settings e caricano questa con --plugin-dir; «utente» no.
 //
 // Uso: bun tests/e2e.mjs [caso…]   (senza casi: tutti, circa 5 minuti)
-//   numeri       /forget 2 su tre turni con un echo: turno tolto senza riassunto, tool_result del
-//                turno 1 tenuto col suo handle, del turno 3 ricostruito, dopo --resume il turno 2 non torna
+//   numeri       /forget 2 su tre turni con un echo: turno tolto senza riassunto, dopo il confine
+//                nessuna riga punta a prima, dopo --resume il turno 2 non torna
 //   inesistente  /forget 9: «Not compacted», nessuna compattazione
 //   clic         /forget, clic sulla casella, secondo clic, terzo clic, Invio: turno tolto
 //   due          /forget, due caselle spuntate, prompt «/forget 7-8», Invio: tolti tutti e due
@@ -233,19 +233,24 @@ const cases = {
       await s.type('/forget 2')
       const boundary = await waitCut(s)
       const rows = s.rows()
-      const { after, text } = afterCut(rows)
+      const { after } = afterCut(rows)
+      // dopo il confine --fork-session copia anche la storia della prova: conta solo la catena che parte dal confine.
+      // Oltre i 5 MB --resume legge solo dall'ultimo confine: una copia che punta a prima spezza la catena lì
+      const chain = []
+      for (let link = boundary; (link = after.find(r => r.parentUuid === link.uuid)); ) chain.push(link)
+      const text = chain.filter(r => r.type === 'user' || r.type === 'assistant').map(r => JSON.stringify(r.message?.content ?? '')).join('\n')
+      // come --resume: dall'ultima riga indietro, fino al confine
+      const byId = new Map(after.map(r => [r.uuid, r]))
+      let back = chain.at(-1)
+      while (back?.parentUuid && byId.has(back.parentUuid)) back = byId.get(back.parentUuid)
+      log(`  risalendo dall'ultima riga la catena si ferma su: ${back?.type} ${JSON.stringify(back?.message?.content ?? '').slice(0, 80)}`)
       check('compattazione senza chiamata al modello', !!boundary && boundary.compactMetadata?.durationMs < 1000)
-      check('nessun riassunto', !after.some(r => r.type === 'user' && JSON.stringify(r.message?.content ?? '').includes('being continued from a previous conversation')))
+      check('nessun riassunto', !text.includes('being continued from a previous conversation'))
+      check('la catena dal confine arriva all\'ultima risposta (OK 3)', text.includes('OK 3'))
+      check('risalendo dall\'ultima riga si arriva al confine senza uscire', back?.parentUuid === boundary?.uuid)
       check('il turno 2 (TRENO) è uscito, 1 e 3 sono rimasti', !text.includes('TRENO') && text.includes('MELA') && text.includes('CACTUS'))
       check('gli hook SessionStart:compact non sono ripartiti', !rows.some(r => r.attachment?.hookName === 'SessionStart:compact'))
       check('la mod dice «tolti dal contesto i turni 2»', s.logs().some(t => t.includes('tolti dal contesto i turni 2')))
-      // un tool_result tenuto col suo handle resta agganciato a una riga di prima della compattazione
-      const ids = new Set(after.map(r => r.uuid))
-      const result = word => after.find(r => r.type === 'user' && Array.isArray(r.message?.content) && r.message.content.some(b => b.type === 'tool_result') && JSON.stringify(r.message.content).includes(word))
-      const mela = result('MELA')
-      const cactus = result('CACTUS')
-      check('tool_result del turno 1 tenuto col suo handle (dati strutturati compresi)', !!mela && !ids.has(mela.parentUuid) && !!mela.toolUseResult)
-      check('tool_result del turno 3 ricostruito', !!cactus && ids.has(cactus.parentUuid))
       s.close()
       await Bun.sleep(2000)
       const fork = s.forkId()

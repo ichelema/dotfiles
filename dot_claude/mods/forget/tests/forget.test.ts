@@ -148,20 +148,17 @@ describe('turn-forget', () => {
     expect(r.messages.some(m => m.toolUses.some(u => u.tool_use_id === 't8'))).toBe(false)
     expect(r.messages.some(m => m.toolResults?.some(x => x.tool_use_id === 't8'))).toBe(false)
     expect(r.messages.some(m => m.toolUses.some(u => u.tool_use_id === 't4'))).toBe(true)
-    // prima del primo turno tolto gli oggetti restano quelli del motore, tool_result e handle compresi
     expect(r.messages[0]).toBe(all[0])
-    const result4 = (list: readonly SessionMessage[]) => list.find(m => m.toolResults?.some(x => x.tool_use_id === 't4'))
-    expect(result4(r.messages)).toBe(result4(all))
   })
 
-  test('dopo il primo turno tolto i tool_result perdono il loro handle', () => {
+  test('i tool_result tenuti perdono il loro handle, anche prima del primo turno tolto', () => {
     const all = conversation()
-    const r = forget(all, [[3, 3], [9, 9]])
+    const r = forget(all, [[9, 9]])
     if (!('messages' in r)) throw new Error(r.skip)
     const kept4 = r.messages.find(m => m.toolResults?.some(x => x.tool_use_id === 't4'))!
     expect(kept4.handle).toBe(undefined)
     expect(kept4.toolResults).toEqual([{ tool_use_id: 't4', text: 'ok', isError: false }])
-    // gli altri messaggi dopo il turno tolto restano quelli del motore
+    // gli altri messaggi restano quelli del motore
     expect(r.messages.find(m => m.text === 'risposta 4')).toBe(all.find(m => m.text === 'risposta 4'))
   })
 
