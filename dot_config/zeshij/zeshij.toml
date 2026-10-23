@@ -8,8 +8,8 @@
 show_icons = true
 # Le tab in grigio accanto alle sessioni aperte.
 show_windows = true
-# Pannello del picker: 130 colonne (un intero = colonne, "80%" = percentuale dello schermo).
-width = 130
+# Pannello del picker: 100 colonne (un intero = colonne, "80%" = percentuale dello schermo).
+width = 100
 # height = "80%"
 
 [default_session]
