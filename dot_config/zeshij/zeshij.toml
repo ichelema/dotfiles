@@ -12,8 +12,8 @@ show_windows = true
 # La preview (Tab) è la miniatura della tab. Più largo = più testo in ogni pane della miniatura.
 width = "60%"
 height = "80%"
-# Preview al 90% del pannello: la lista scende al minimo di 40 colonne.
-preview_width = 90
+# Preview all'86% del pannello: la lista scende al minimo di 40 colonne.
+preview_width = 86
 
 [default_session]
 # Preview delle cartelle (Tab nel picker, `zeshij preview <nome>`).
