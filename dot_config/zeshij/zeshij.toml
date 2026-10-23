@@ -1,6 +1,8 @@
 # zeshij.toml — sessioni Zellij dei progetti (Linux).
 # Picker: Alt s. Pipe: zellij pipe --plugin zeshij -- "<comando>".
 # /Dati è un link a /mnt/data: i path usano la grafia che zoxide conosce già.
+# Niente startup_command né windows: con questi zeshij genera un layout suo e le sessioni
+# non usano il default_layout di Zellij.
 
 [tui]
 show_icons = true
@@ -18,19 +20,16 @@ preview_command = "eza --all --git --icons=always --color=always {}"
 name = "trinity"
 path = "/Dati/AI/Claude/Trinity"
 alias = "t"
-windows = ["git"]
 
 [[session]]
 name = "zeshij"
 path = "/mnt/data/Sviluppo/Progetti/zesh"
 alias = "z"
-windows = ["git"]
 
 [[session]]
 name = "hindsight-mod"
 path = "/Dati/AI/Claude/hindsight-mod"
 alias = "h"
-windows = ["git"]
 
 # ---- configurazione e note ---------------------------------------------------------------
 
@@ -38,7 +37,6 @@ windows = ["git"]
 name = "dotfiles"
 path = "~/.local/share/chezmoi"
 alias = "d"
-windows = ["git"]
 
 [[session]]
 name = "claude"
@@ -49,19 +47,3 @@ alias = "c"
 name = "obsidian"
 path = "/mnt/data/Obsidian"
 alias = "o"
-
-# ---- tab in più --------------------------------------------------------------------------
-
-# In Zellij ogni finestra diventa una tab della sessione.
-[[window]]
-name = "git"
-startup_script = "lazygit"
-
-# I nuovi progetti (da zoxide) ricevono la tab git come quelli sopra.
-[[wildcard]]
-pattern = "/mnt/data/Sviluppo/Progetti/*"
-windows = ["git"]
-
-[[wildcard]]
-pattern = "/Dati/AI/Claude/*"
-windows = ["git"]
