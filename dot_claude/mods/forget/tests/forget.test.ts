@@ -1,7 +1,7 @@
 // Run with: claude plugin test <cartella della mod>
-import { describe, expect, test } from 'claude-code/testing'
-import type { SessionMessage } from 'claude-code'
-import { forget, formatTurns, ownArgs, parseTurns, rowsOf, sameStart, splitTurns } from '../hooks/forget'
+import { describe, expect, mock, test } from 'claude-code/testing'
+import type { On, SessionMessage } from 'claude-code'
+import { fit, forget, formatTurns, ownArgs, parseTurns, rowsOf, sameStart, splitTurns } from '../hooks/forget'
 import { hiddenIds, promptRows, reachesBoundary, relinks, type TranscriptRow } from '../hooks/transcript'
 
 const user = (text: string): SessionMessage => ({ role: 'user', text, toolUses: [] })
@@ -270,5 +270,88 @@ describe('turn-forget', () => {
     await $.classic.SessionStart({ source: 'compact' } as never)
     await $.classic.SessionStart({ source: 'startup' } as never)
     expect(reached).toBe(2)
+  })
+
+  test('fit tiene il testo su una riga e lo taglia alla larghezza', () => {
+    expect(fit('due\n  righe', 20)).toBe('due righe')
+    expect(fit('abcdefghij', 5)).toBe('abcd…')
+  })
+
+  /** Il motore sotto la mod per il pannello: i prompt da prompts.mjs, e quello che la mod apre, chiude, esegue. */
+  function engine(on: On) {
+    const clock = mock.clock(on)
+    mock.env(on, { CLAUDE_CONFIG_DIR: '/cfg' })
+    const seen = { opened: [] as string[], closed: [] as string[], ran: [] as string[], logs: [] as string[] }
+    const prompts = { current: [{ uuid: 'u1', text: 'prima domanda' }, { uuid: 'u2', text: 'seconda\ndomanda' }, { uuid: 'u3', text: 'terza' }], earlier: [] }
+    on('session.id', () => ({ value: 'sessione' }))
+    on('process.run', () => ({ value: { exitCode: 0, stdout: JSON.stringify(prompts), stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
+    on('ui.open', (_, e) => {
+      seen.opened.push(e.id)
+      return { value: { isPlaced: true } }
+    })
+    on('ui.close', (_, e) => {
+      seen.closed.push(e.id)
+      return { value: undefined }
+    })
+    on('ui.log', (_, e) => {
+      seen.logs.push(e.text)
+      return { value: undefined }
+    })
+    on('command.run', { command: 'compact' }, (_, e) => {
+      seen.ran.push(`/compact ${e.args}`)
+      return {}
+    })
+    return { clock, seen }
+  }
+
+  const PANE = {
+    plugin: 'turn-forget',
+    component: 'Pane',
+    requestId: 'forget',
+    surface: 'terminal',
+    props: { title: 'forget', isFocused: true, bodyColumns: 40, placement: 'dock', scroll: { offset: 0, bodyRows: 20 }, view: {} },
+  } as const
+
+  /** `/forget tui` scritto nel composer di uno schermo intero largo 160 colonne. */
+  const TUI = { command: 'forget', args: 'tui', origin: { kind: 'composer' }, presentation: { isFullscreen: true, columns: 160 } } as const
+
+  test('/forget tui apre il pannello coi turni del contesto; [forget] toglie i turni spuntati e lo chiude', async ($, on) => {
+    const { clock, seen } = engine(on)
+    await $.command.run(TUI)
+    await clock.settle()
+    expect(seen.opened).toEqual(['forget'])
+    const ui = await $.ui.mount(PANE)
+    expect((await ui.find({ type: 'Text', text: /3 turni nel contesto/ }))?.text).toBe('3 turni nel contesto')
+    expect((await ui.find({ key: 'vai:2' }))?.text).toBe('2 seconda domanda')
+    await ui.press({ key: 'spunta:2' })
+    await ui.press({ key: 'spunta:3' })
+    expect((await ui.find({ key: 'spunta:2' }))?.text).toBe('[x]')
+    expect((await ui.find({ type: 'Text', text: /spuntati/ }))?.text).toBe('spuntati: 2-3')
+    // un secondo clic toglie la spunta
+    await ui.press({ key: 'spunta:3' })
+    expect((await ui.find({ key: 'spunta:3' }))?.text).toBe('[ ]')
+    await ui.press({ key: 'forget' })
+    await clock.settle()
+    expect(seen.ran).toEqual(['/compact turn-forget 2'])
+    expect(seen.closed).toEqual(['forget'])
+    await ui.unmount()
+  })
+
+  test('[annulla] chiude il pannello senza togliere nulla; [forget] senza spunte non toglie nulla', async ($, on) => {
+    const { clock, seen } = engine(on)
+    await $.command.run(TUI)
+    await clock.settle()
+    const ui = await $.ui.mount(PANE)
+    await ui.press({ key: 'forget' })
+    await clock.settle()
+    expect(seen.ran).toEqual([])
+    expect(seen.logs).toContain('nessun turno spuntato nel pannello')
+    await ui.press({ key: 'spunta:1' })
+    await ui.press({ key: 'annulla' })
+    await clock.settle()
+    expect(seen.ran).toEqual([])
+    expect(seen.closed).toEqual(['forget'])
+    expect(seen.logs).toContain('nessun turno tolto')
+    await ui.unmount()
   })
 })

@@ -23,6 +23,10 @@
 //                /forget da solo chiude la selezione
 //   blocchi      la conversazione si apre con un prompt di due blocchi: da lì il motore disegna le righe
 //                con id derivati dall'uuid, e i prompt hanno comunque la loro casella
+//   tui          /forget tui su uno schermo di 160 colonne: il pannello agganciato accanto alla conversazione,
+//                clic sulla casella, clic sul testo che porta al turno, [forget] toglie, [annulla] chiude
+// Una sessione zellij in background è larga 50 colonne; per «tui» un client zellij gira dentro
+// `conhost --headless` (nessuna finestra) della misura chiesta, e la sessione prende la sua.
 // Serve: zellij, claude, PowerShell, bun. Lavora in <config>/tmp/turn-forget-e2e: le conversazioni di
 // prova (create con haiku alla prima esecuzione, rifatte se mancano), un log e gli schermi per caso.
 // Effetti fuori da quella cartella: la cartella delle conversazioni di prova diventa fidata in
@@ -40,10 +44,11 @@ const NOMODS = join(WORK, 'nomods')
 const ZELLIJ = Bun.which('zellij')
 const CLAUDE = Bun.which('claude')
 const POWERSHELL = `${process.env.SystemRoot ?? 'C:/Windows'}/System32/WindowsPowerShell/v1.0/powershell.exe`
+const CONHOST = `${process.env.SystemRoot ?? 'C:/Windows'}/System32/conhost.exe`
 const ISOLATE = ['--settings', JSON.stringify({ env: { CLAUDE_CODE_PLUGIN_DIRS: win(NOMODS) } })]
 const TOOL_WORDS = ['MELA', 'TRENO', 'CACTUS']
 const SHORT_WORDS = ['MELA', 'TRENO', 'CACTUS', 'LIMONE', 'PERA', 'NAVE', 'SOLE', 'LUNA']
-const CASES = ['numeri', 'cache', 'inesistente', 'clic', 'due', 'nascondi', 'utente', 'blocchi']
+const CASES = ['numeri', 'cache', 'inesistente', 'clic', 'due', 'nascondi', 'utente', 'blocchi', 'tui']
 
 mkdirSync(FIX_DIR, { recursive: true })
 mkdirSync(NOMODS, { recursive: true })
@@ -152,8 +157,11 @@ function fixtureBlocks() {
   return id
 }
 
-/** Una sessione interattiva in zellij sulla conversazione di prova; `real`: le mod vere, senza isolamento. */
-async function session(name, fixtureId, real = false) {
+/**
+ * Una sessione interattiva in zellij sulla conversazione di prova; `real`: le mod vere, senza isolamento;
+ * `size` ({ columns, rows }): lo schermo di quella misura, col client zellij dentro `conhost --headless`.
+ */
+async function session(name, fixtureId, real = false, size) {
   // un nome per giro: una sessione rimasta bloccata in un giro di prima non ferma questo
   const zname = `forget-e2e-${name}-${process.pid}`
   const z = (...a) => run([ZELLIJ, '--session', zname, ...a])
@@ -163,12 +171,19 @@ async function session(name, fixtureId, real = false) {
   const pid = run([POWERSHELL, '-NoProfile', '-Command', `(Start-Process -WindowStyle Hidden -PassThru -FilePath '${ZELLIJ}' -ArgumentList 'attach','-b','${zname}').Id`]).text
   const args = ['--model', 'haiku', '--resume', fixtureId, '--fork-session', ...(real ? [] : [...ISOLATE, '--plugin-dir', MOD])]
   let pane
+  let client
   try {
     await until(() => /terminal_0/.test(z('action', 'list-panes').text), 20_000, 'sessione zellij', 250)
+    if (size) {
+      // stdout su NUL: lo schermo del client non lo legge nessuno, e una pipe piena lo fermerebbe
+      client = Bun.spawn([CONHOST, '--headless', '--width', String(size.columns), '--height', String(size.rows), '--', ZELLIJ, 'attach', zname], { stdin: 'pipe', stdout: 'ignore', stderr: 'ignore' })
+      await Bun.sleep(2000)
+    }
     pane = /terminal_\d+/.exec(z('run', '--cwd', win(FIX_DIR), '--', CLAUDE, ...args).text)?.[0]
     if (!pane) throw new Error('zellij run senza riquadro')
   } catch (err) {
     // zellij a volte si blocca all'avvio: il processo resterebbe vivo e la sessione nell'elenco
+    client?.kill()
     if (/^\d+$/.test(pid)) run([POWERSHELL, '-NoProfile', '-Command', `Stop-Process -Id ${pid} -Force`])
     run([ZELLIJ, 'delete-session', '--force', zname])
     throw err
@@ -213,7 +228,18 @@ async function session(name, fixtureId, real = false) {
     rows: () => readdirSync(project).filter(f => f.endsWith('.jsonl') && !before.has(f)).flatMap(f => readRows(join(project, f))),
     forkId: () => readdirSync(project).find(f => f.endsWith('.jsonl') && !before.has(f))?.replace(/\.jsonl$/, ''),
     logs: () => s.rows().filter(r => r.type === 'system' && /turn-forget/.test(String(r.content ?? ''))).map(r => String(r.content)),
-    close: () => run([ZELLIJ, 'delete-session', '--force', zname]),
+    close: () => {
+      client?.kill()
+      return run([ZELLIJ, 'delete-session', '--force', zname])
+    },
+    /** Riga e colonna dello schermo, da 1, del primo testo che `re` trova; undefined se non c'è. */
+    find(re) {
+      const lines = s.look().split('\n')
+      for (let y = 0; y < lines.length; y++) {
+        const x = lines[y].search(re)
+        if (x >= 0) return { x: x + 1, y: y + 1 }
+      }
+    },
     /** Aspetta la conversazione ripresa; il dialogo di fiducia ha «No, exit» come scelta predefinita. */
     async ready(word) {
       let trusted = false
@@ -468,6 +494,62 @@ const cases = {
       check('dopo la seconda rimozione il turno 4 non compare più', !/LIMONE/.test(top2))
       check('dopo la seconda rimozione niente durata del turno tolto', !/✻ \S+ for \d+s/.test(top2))
       check('dopo la seconda rimozione il turno 1 compare una volta sola', count(top2, 'Turno 1\\.') === 1)
+    } finally {
+      s.close()
+    }
+  },
+
+  async tui() {
+    const s = await session('tui', fixture('corti', SHORT_WORDS.map((w, i) => `T${i + 1} ${w}. Rispondi solo: OK ${i + 1}`)), false, { columns: 160, rows: 24 })
+    const show = label => log(`  ${label}:\n${s.look().split('\n').map(l => `    |${l}`).join('\n')}`)
+    // il pannello è aperto finché si vede il suo pulsante [annulla]
+    const isOpen = () => /\[ annulla \]/.test(s.look())
+    try {
+      await s.ready('OK 8')
+      // con --fork-session il transcript nasce al primo messaggio nuovo: il pannello lo legge
+      await s.type('T9 FINE. Rispondi solo: OK 9')
+      await until(() => s.ended('OK 9'), 120_000, 'fine del turno 9')
+      await s.type('/forget tui')
+      await until(() => /9 turni nel contesto/.test(s.look()), 30_000, 'pannello').catch(() => undefined)
+      await Bun.sleep(1000)
+      show('col pannello')
+      const head = s.find(/9 turni nel contesto/)
+      check('il pannello mostra i 9 turni del contesto', !!head)
+      log(`  il pannello comincia alla colonna ${head?.x} di 160`)
+      // il motore aggancia il pannello a destra della conversazione: l'API delle mod non sceglie il lato
+      check('il pannello è agganciato accanto alla conversazione', !!head && head.x > 80)
+      // la casella del turno 3
+      const box = s.find(/\[ \] 3 T3 CACTUS/)
+      if (box) s.click(box.x, box.y)
+      await until(() => /\[x\] 3 T3 CACTUS/.test(s.look()), 10_000, 'spunta').catch(() => undefined)
+      check('il clic sulla casella spunta il turno 3', /\[x\] 3 T3 CACTUS/.test(s.last) && /spuntati: 3/.test(s.last))
+      // il testo del turno 1: il suo prompt, fuori dallo schermo, torna in vista
+      const before = /❯\sT1 MELA/.test(s.look())
+      const text = s.find(/1 T1 MELA/)
+      if (text) s.click(text.x + 2, text.y)
+      await until(() => /❯\sT1 MELA/.test(s.look()), 10_000, 'turno 1 in vista').catch(() => undefined)
+      show('dopo il clic sul turno 1')
+      check('il clic sul testo porta la conversazione al prompt del turno 1', !before && /❯\sT1 MELA/.test(s.last))
+      // [forget]
+      const go = s.find(/\[ forget \]/)
+      if (go) s.click(go.x + 2, go.y)
+      const cut = await waitCut(s)
+      const { text: kept } = afterCut(s.rows())
+      check('[forget] toglie il turno spuntato, gli altri restano', !!cut && !kept.includes('T3 CACTUS') && kept.includes('T4 LIMONE') && kept.includes('T1 MELA'))
+      check('dopo [forget] il pannello è chiuso', !isOpen())
+      // di nuovo il pannello, poi [annulla]
+      await s.type('/forget tui')
+      await until(() => /8 turni nel contesto/.test(s.look()), 30_000, 'pannello di nuovo').catch(() => undefined)
+      check('riaperto, il pannello ha gli 8 turni rimasti', /8 turni nel contesto/.test(s.last))
+      const box1 = s.find(/\[ \] 1 T1 MELA/)
+      if (box1) s.click(box1.x, box1.y)
+      await until(() => /\[x\] 1 T1 MELA/.test(s.look()), 10_000, 'spunta').catch(() => undefined)
+      const cancel = s.find(/\[ annulla \]/)
+      if (cancel) s.click(cancel.x + 2, cancel.y)
+      await until(() => !isOpen(), 10_000, 'chiusura').catch(() => undefined)
+      await Bun.sleep(2000)
+      check('[annulla] chiude il pannello', !isOpen())
+      check('[annulla] non toglie nulla', s.rows().filter(r => r.subtype === 'compact_boundary').length === 1 && s.logs().some(t => t.includes('nessun turno tolto')))
     } finally {
       s.close()
     }

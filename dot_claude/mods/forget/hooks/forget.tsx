@@ -14,6 +14,13 @@
  * chiude la selezione. I numeri vengono dal transcript (`prompts.mjs`): prima di
  * togliere, la mod ritrova gli stessi prompt in `e.messages`.
  *
+ * `/forget tui` apre invece un pannello con i turni del contesto: la casella
+ * spunta un turno, un clic sul suo testo porta la conversazione a quel prompt
+ * (`$.ui.scroll`), [forget] toglie i turni spuntati come `/forget 3 5`, [annulla]
+ * chiude il pannello. Dove sta lo decide il motore: a schermo intero da 110
+ * colonne agganciato a destra della conversazione (nessuna opzione né tasto lo
+ * sposta a sinistra), altrimenti sopra il prompt.
+ *
  * Sopra l'ultima compattazione il motore disegna ancora la storia: `ui.render`
  * disegna vuote quelle righe (gli id da `hidden.mjs`, letti all'avvio e dopo ogni
  * rimozione), e anche le righe di tool dei turni tenuti, che il motore mostra una
@@ -42,8 +49,8 @@
  * stanno nella catena in ordine di cartella: prima di prismantis, che disegna i
  * prompt senza chiamare `next`, le caselle restano visibili.
  */
-import type { EngineInterface, Register, SessionMessage } from 'claude-code'
-import type { Prompts } from './transcript'
+import type { EngineInterface, Register, RenderElement, RenderInput, SessionMessage } from 'claude-code'
+import type { PromptRow, Prompts } from './transcript'
 
 const COMMAND = 'forget'
 /** L'inizio delle istruzioni di `/compact` che la mod tratta al posto del motore. */
@@ -67,6 +74,17 @@ let expected: readonly string[] | undefined
 
 /** Gli id delle righe sopra l'ultima compattazione, che lo schermo non disegna più (`hiddenIds`). */
 let hidden: Set<string> | undefined
+
+/** L'id del pannello di `/forget tui`. */
+const PANE = 'forget'
+
+/**
+ * Il pannello di `/forget tui`: i prompt del contesto (assenti finché il transcript non è letto), il turno di ogni
+ * id con cui lo schermo può disegnarne il prompt, l'id che ha disegnato davvero, i turni spuntati, l'errore di lettura.
+ * ponytail: una variabile del modulo come `selection`: se la mod si ricarica col pannello aperto le spunte si perdono e
+ * il pannello chiede di riaprirlo; passare a `$.state` se capita spesso.
+ */
+let panel: { prompts?: PromptRow[]; ids: Map<string, number>; drawn: Map<number, string>; picked: Set<number>; error?: string } | undefined
 
 /** Rilegge dal transcript le righe da nascondere e ridisegna; se non ci riesce la storia resta visibile. */
 async function loadHidden($: EngineInterface): Promise<void> {
@@ -243,14 +261,127 @@ function pick($: EngineInterface, turn: number): void {
   void $.prompt.fill({ text: `/${COMMAND} ${formatTurns(selection.picked)}`.trim() })
 }
 
+/**
+ * Toglie i turni `args` appena il comando o il clic che lo chiede ha finito; con `texts`, solo se la conversazione
+ * comincia ancora con quei prompt. Chiude caselle e pannello: dopo la rimozione i numeri cambiano.
+ */
+function remove($: EngineInterface, args: string, texts?: readonly string[]): void {
+  expected = texts
+  close($)
+  closePanel($)
+  // $.command.run è rifiutato dentro un hook che il turno aspetta: parte appena il comando ha finito
+  $.clock.after(0, () => {
+    $.command
+      .run({ command: 'compact', args: `${MARK} ${args}` })
+      .catch(err => $.ui.log(`conversazione invariata: ${err}`))
+      // una SessionStart non arrivata durante la compattazione non deve far saltare quella della prossima, che riassume
+      .finally(() => {
+        keepStart = false
+        expected = undefined
+      })
+  })
+}
+
+/** Il testo su una riga sola, tagliato a `width` caratteri. */
+export function fit(text: string, width: number): string {
+  const t = text.replace(/\s+/g, ' ').trim()
+  return t.length > width ? `${t.slice(0, Math.max(0, width - 1))}…` : t
+}
+
+/** Legge dal transcript i turni del contesto per il pannello e ridisegna; le spunte restano sui turni che ci sono ancora. */
+async function loadPanel($: EngineInterface): Promise<void> {
+  const r = await helper($, 'prompts.mjs')
+  if (!panel) return
+  try {
+    if (r.exitCode !== 0) throw new Error(r.stderr.trim().slice(0, 200))
+    const { current } = JSON.parse(r.stdout) as Prompts
+    panel.prompts = current
+    // il prompt si disegna sotto il suo uuid o, dopo un messaggio a più blocchi, sotto l'id derivato (rowsOf)
+    panel.ids = new Map(current.flatMap((p, i): [string, number][] => [[p.uuid, i + 1], [`${p.uuid.slice(0, 24)}${'0'.repeat(12)}`, i + 1]]))
+    for (const n of panel.picked) if (n > current.length) panel.picked.delete(n)
+    panel.error = undefined
+  } catch (err) {
+    panel.error = `turni non letti (${err instanceof Error ? err.message : err})`
+  }
+  $.ui.invalidate('ui.render')
+}
+
+/** Chiude il pannello, anche quello rimasto aperto dopo un ricaricamento della mod; un id non aperto resta com'è. */
+function closePanel($: EngineInterface, note?: string): void {
+  if (panel && note) $.ui.log(note)
+  panel = undefined
+  void $.ui.close({ id: PANE }).catch(() => undefined)
+}
+
+/** Spunta o toglie la spunta di un turno nel pannello. */
+function togglePanel($: EngineInterface, turn: number): void {
+  if (!panel) return
+  if (!panel.picked.delete(turn)) panel.picked.add(turn)
+  $.ui.invalidate('ui.render')
+}
+
+/** [forget]: toglie i turni spuntati, se la conversazione comincia ancora con i prompt del pannello. */
+function confirmPanel($: EngineInterface): void {
+  if (!panel?.prompts) return
+  if (!panel.picked.size) return $.ui.log('nessun turno spuntato nel pannello')
+  remove($, formatTurns(panel.picked), panel.prompts.map(p => p.text))
+}
+
+/** Clic sul testo di un turno: la conversazione scorre fino al suo prompt, che va in cima. */
+function goTo($: EngineInterface, turn: number): void {
+  const p = panel?.prompts?.[turn - 1]
+  if (!panel || !p) return
+  const fail = (why: unknown) => $.ui.log(`turno ${turn} non raggiunto: ${why}`)
+  void $.ui.scroll({ to: { requestId: panel.drawn.get(turn) ?? p.uuid }, block: 'start' }).then(r => r.deny && fail(r.deny), fail)
+}
+
+/** Il pannello: in cima i turni spuntati e i pulsanti, poi un turno per riga, la sua casella e il suo prompt. */
+function drawPanel($: EngineInterface, e: RenderInput<'Pane'>): RenderElement {
+  const { Box, Button, Text } = $.ui.resolve(e)
+  const width = Math.max(16, e.props.bodyColumns)
+  const cancel = <Button key="annulla" label="annulla" role="dismiss" onPress={() => closePanel($, 'nessun turno tolto')} />
+  if (!panel) {
+    // la mod si è ricaricata col pannello aperto: le spunte sono perse
+    return (
+      <Box flexDirection="column">
+        <Text dimColor>{fit(`pannello da riaprire: /${COMMAND} tui`, width)}</Text>
+        {cancel}
+      </Box>
+    )
+  }
+  const { prompts, picked, error } = panel
+  const head = !prompts ? 'lettura dei turni…' : prompts.length ? `${prompts.length} turni nel contesto` : 'nessun turno nel contesto'
+  return (
+    <Box flexDirection="column">
+      <Text weight="bold">{fit(head, width)}</Text>
+      <Text dimColor>{fit(picked.size ? `spuntati: ${formatTurns(picked)}` : 'casella: spunta · testo: vai al turno', width)}</Text>
+      <Box flexDirection="row" columnGap={1}>
+        <Button key="forget" label="forget" variant="primary" onPress={() => confirmPanel($)} />
+        {cancel}
+      </Box>
+      {error ? <Text color="red">{fit(error, width)}</Text> : null}
+      {(prompts ?? []).map((p, i) => {
+        const n = i + 1
+        const isPicked = picked.has(n)
+        return (
+          <Box key={`turno-${n}`} flexDirection="row" columnGap={1}>
+            <Button key={`spunta:${n}`} plain label={isPicked ? '[x]' : '[ ]'} onPress={() => togglePanel($, n)} />
+            <Button key={`vai:${n}`} plain dimColor={!isPicked} label={fit(`${n} ${p.text}`, width - 4)} onPress={() => goTo($, n)} />
+          </Box>
+        )
+      })}
+    </Box>
+  )
+}
+
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     const r = await next(e)
     await $.command
       .register({
         name: COMMAND,
-        description: 'Toglie dal contesto i turni indicati, senza riassunto (/forget 7-8); senza argomenti mostra le caselle per sceglierli',
-        argumentHint: '[turni, es. 7-8]',
+        description: 'Toglie dal contesto i turni indicati, senza riassunto (/forget 7-8); senza argomenti mostra le caselle per sceglierli; /forget tui apre il pannello dei turni',
+        argumentHint: '[turni, es. 7-8 | tui]',
       })
       .catch(err => $.ui.log(`/${COMMAND} non registrato: ${err}`))
     void loadHidden($)
@@ -259,7 +390,18 @@ export const register: Register = on => {
 
   on('command.run', { command: COMMAND }, async ($, e) => {
     const args = e.args.trim()
+    if (args === 'tui') {
+      close($)
+      panel = { ids: new Map(), drawn: new Map(), picked: new Set() }
+      // aperto qui, in risposta al comando, il pannello si mostra a ogni larghezza; i turni arrivano dopo
+      const opened = await $.ui.open({ id: PANE, title: 'forget', focus: true, columns: 48 }).catch(err => ({ isPlaced: false as const, reason: String(err) }))
+      if (!opened.isPlaced) $.ui.log(`pannello non mostrato: ${opened.reason}`)
+      // il transcript si legge in un processo a parte: fuori dal tempo che il comando ha
+      $.clock.after(0, () => void loadPanel($))
+      return {}
+    }
     if (!args) {
+      closePanel($)
       if (selection) close($, 'selezione chiusa, nessun turno tolto')
       // il transcript si legge in un processo a parte: fuori dal tempo che il comando ha
       else $.clock.after(0, () => void open($).catch(err => $.ui.log(`caselle non disponibili: ${err}`)))
@@ -270,19 +412,7 @@ export const register: Register = on => {
       return {}
     }
     // turni spuntati nelle caselle: i loro numeri valgono solo se la conversazione è ancora quella
-    expected = selection && args === formatTurns(selection.picked) ? selection.texts : undefined
-    close($)
-    // $.command.run è rifiutato dentro un hook che il turno aspetta: parte appena il comando ha finito
-    $.clock.after(0, () => {
-      $.command
-        .run({ command: 'compact', args: `${MARK} ${args}` })
-        .catch(err => $.ui.log(`conversazione invariata: ${err}`))
-        // una SessionStart non arrivata durante la compattazione non deve far saltare quella della prossima, che riassume
-        .finally(() => {
-          keepStart = false
-          expected = undefined
-        })
-    })
+    remove($, args, selection && args === formatTurns(selection.picked) ? selection.texts : undefined)
     return {}
   })
 
@@ -291,8 +421,9 @@ export const register: Register = on => {
     const args = ownArgs(e.instructions)
     if (e.agentId !== undefined) return next(e)
     if (args === undefined) {
-      // dopo un'altra compattazione le righe hanno altri uuid: le caselle non valgono più
+      // dopo un'altra compattazione le righe hanno altri uuid: caselle e pannello non valgono più
       close($)
+      closePanel($)
       return next(e)
     }
     // da qui mai next(e): con le istruzioni della mod il motore riassumerebbe tutta la conversazione
@@ -311,14 +442,19 @@ export const register: Register = on => {
     return r
   }).catch((_, e, next) => (next.called ? next(e) : { skip: 'turn-forget: errore interno, nessun turno tolto' }))
 
-  // la storia sopra l'ultima compattazione disegnata vuota (ogni componente), e la casella sopra ogni prompt della
-  // selezione; cartella prima di prismantis, che non chiama next
+  // il pannello di /forget tui, la storia sopra l'ultima compattazione disegnata vuota (ogni componente), e la casella
+  // sopra ogni prompt della selezione; cartella prima di prismantis, che non chiama next
   on('ui.render', async ($, e, next) => {
+    if (e.component === 'Pane') return e.requestId === PANE ? drawPanel($, e) : next(e)
     if (hidden?.has(e.requestId)) {
       const { Box } = $.ui.resolve(e)
       return <Box />
     }
-    if (e.component !== 'UserMessage' || !selection) return next(e)
+    if (e.component !== 'UserMessage') return next(e)
+    // l'id con cui il prompt di un turno del pannello è disegnato: quello a cui il clic sul turno porta
+    const shown = panel?.ids.get(e.requestId)
+    if (panel && shown !== undefined) panel.drawn.set(shown, e.requestId)
+    if (!selection) return next(e)
     const turn = selection.turns.get(e.requestId)
     const { Box, Button, Text } = $.ui.resolve(e)
     if (turn === undefined) {
@@ -338,6 +474,19 @@ export const register: Register = on => {
         {await next(e)}
       </Box>
     )
+  })
+
+  // il pannello chiuso dalla persona (il suo segno di chiusura, ctrl+x x): niente da togliere
+  on('ui.close', async (_, e, next) => {
+    if (e.id === PANE) panel = undefined
+    return next(e)
+  })
+
+  // un turno nuovo entra anche nel pannello aperto
+  on('turn.complete', async ($, e, next) => {
+    const r = await next(e)
+    if (panel && e.agentId === undefined) $.clock.after(0, () => void loadPanel($))
+    return r
   })
 
   // dopo una rimozione la conversazione ha ancora il testo di questi hook: rieseguirli lo duplicherebbe
