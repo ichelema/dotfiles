@@ -24,6 +24,10 @@
  * tolti non rientra nel contesto. Il motore mette il nome della mod davanti a
  * ogni riga.
  *
+ * La copia di un tool_result tenuto col suo handle resta agganciata, nel transcript, al tool_use di prima
+ * della compattazione: dopo ogni rimozione `relink.mjs` la ricollega alla copia di quel tool_use, così un
+ * --resume oltre i 5 MB, che legge il file solo dall'ultimo confine, non perde il contesto.
+ *
  * Dopo ogni compattazione il motore riesegue gli hook SessionStart (source
  * `compact`) per rimettere il testo che un riassunto perde. Una rimozione invece
  * lo tiene: la mod salta quella riesecuzione, che lo duplicherebbe.
@@ -155,26 +159,43 @@ export function forget(messages: readonly SessionMessage[], drop: Ranges): { mes
   const before = orphans(messages)
   const broken = [...orphans(kept)].filter(id => !before.has(id))
   if (broken.length) return { skip: `toglierei solo metà di una chiamata tool (${broken[0]})` }
-  // ponytail: tenuta col suo handle, la copia di un tool_result punta al tool_use di prima della
-  // compattazione; oltre i 5 MB --resume legge solo dall'ultimo confine, si ferma lì e perde tutto ciò
-  // che viene prima. Senza handle il motore la ricostruisce, ma perde immagini, dati strutturati e le
-  // righe agganciate al risultato (testo di una skill, avvisi). Togliere quando il motore riaggancia la copia.
+  // Fino al primo turno tolto i tool_result restano col loro handle: il motore li tiene interi, con le righe
+  // agganciate (promemoria, avvisi), e la richiesta dopo resta uguale fin lì, quindi in cache. La loro copia
+  // punta però al tool_use di prima del confine: dopo la compattazione relink.mjs la ricollega alla sua copia.
+  // ponytail: dopo il primo turno tolto il motore li ricostruisce senza handle e perde immagini, dati
+  // strutturati e righe agganciate; tenuti, se relink.mjs fallisse un --resume ritroverebbe i turni tolti.
+  // Togliere quando il motore riaggancia da solo la copia.
+  const first = Math.min(...drop.map(r => r[0]))
+  const same = new Set([...preamble, ...turns.slice(0, first - 1).flat()])
   return {
     messages: kept.map(m => {
-      if (!m.toolResults?.length) return m
+      if (same.has(m) || !m.toolResults?.length) return m
       const { handle: _, ...rebuilt } = m
       return rebuilt
     }),
   }
 }
 
+/** Esegue con bun un helper della mod sul transcript della sessione: la cartella di configurazione e l'id, poi `extra`. */
+async function helper($: EngineInterface, name: string, ...extra: string[]): Promise<{ exitCode: number; stdout: string; stderr: string }> {
+  try {
+    const config = (await $.env.get('CLAUDE_CONFIG_DIR')) ?? `${(await $.env.get('HOME')) ?? (await $.env.get('USERPROFILE'))}/.claude`
+    const id = await $.session.id()
+    return await $.process.run(['bun', `${$.plugin.root}/hooks/${name}`, config, id, ...extra], { timeoutMs: 30_000 })
+  } catch (err) {
+    return { exitCode: -1, stdout: '', stderr: String(err) }
+  }
+}
+
+/** Dopo una rimozione: ricollega nel transcript le copie dei tool_result (relink.mjs); avvisa solo se non ci riesce. */
+async function relink($: EngineInterface, since: number): Promise<void> {
+  const r = await helper($, 'relink.mjs', String(since))
+  if (r.exitCode !== 0) $.ui.log(`transcript non ricollegato (${r.stderr.trim().slice(0, 200)}): un --resume potrebbe perdere il contesto di prima della rimozione`)
+}
+
 /** Apre la selezione: legge i prompt dal transcript e ridisegna le righe con le caselle. */
 async function open($: EngineInterface): Promise<void> {
-  const config = (await $.env.get('CLAUDE_CONFIG_DIR')) ?? `${(await $.env.get('HOME')) ?? (await $.env.get('USERPROFILE'))}/.claude`
-  const id = await $.session.id()
-  const r = await $.process
-    .run(['bun', `${$.plugin.root}/hooks/prompts.mjs`, config, id], { timeoutMs: 30_000 })
-    .catch((err: unknown) => ({ exitCode: -1, stdout: '', stderr: String(err) }))
+  const r = await helper($, 'prompts.mjs')
   if (r.exitCode !== 0) {
     $.ui.log(`caselle non disponibili (${r.stderr.trim().slice(0, 200)}) · usa /${COMMAND} 7-8`)
     return
@@ -261,6 +282,9 @@ export const register: Register = on => {
     if ('skip' in r) return { skip: `turn-forget: ${r.skip}` }
     keepStart = true
     $.ui.log(`tolti dal contesto i turni ${args}`)
+    // il motore scrive il confine e le copie dopo questa risposta: relink.mjs aspetta di trovarli
+    const since = Date.now()
+    $.clock.after(0, () => void relink($, since))
     return r
   }).catch((_, e, next) => (next.called ? next(e) : { skip: 'turn-forget: errore interno, nessun turno tolto' }))
 

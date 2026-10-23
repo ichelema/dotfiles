@@ -2,6 +2,8 @@
  * I prompt della conversazione letti dal transcript (il file .jsonl della sessione), con l'uuid di
  * ogni riga: il `requestId` con cui `ui.render` disegna la riga del prompt. `SessionMessage` non ha
  * id, e `$.fs.read` rifiuta i file oltre 4 MiB: `prompts.mjs` legge il file in un processo a parte.
+ *
+ * E i collegamenti da correggere dopo una rimozione (`relinks`), che `relink.mjs` scrive nel file.
  */
 
 /** Una riga del transcript, con i soli campi che servono qui. */
@@ -9,6 +11,7 @@ export type TranscriptRow = {
   type?: string
   subtype?: string
   uuid?: string
+  parentUuid?: string | null
   isMeta?: boolean
   isSidechain?: boolean
   origin?: { kind?: string }
@@ -80,4 +83,72 @@ export function promptRows(rows: readonly TranscriptRow[]): Prompts {
     next = before
   }
   return { current, earlier }
+}
+
+/** Un collegamento da correggere: la riga `index` del file punta (parentUuid) a `from` e deve puntare a `to`. */
+export type Relink = { index: number; from: string; to: string }
+
+/** Gli id dei blocchi `type` (tool_use: `id`, tool_result: `tool_use_id`) di una riga. */
+function blockIds(row: TranscriptRow | undefined, type: 'tool_use' | 'tool_result'): string[] {
+  const c = row?.message?.content
+  if (!Array.isArray(c)) return []
+  const blocks = c as { type?: string; id?: unknown; tool_use_id?: unknown }[]
+  return blocks.filter(b => b?.type === type).map(b => String(type === 'tool_use' ? b.id : b.tool_use_id))
+}
+
+/**
+ * Dopo una rimozione di /forget il motore scrive dopo il confine la copia dei messaggi tenuti; la copia di
+ * un tool_result tenuto col suo handle punta però al tool_use originale, prima del confine. Oltre i 5 MB
+ * --resume legge il file solo dall'ultimo confine, e la catena si spezza lì: il contesto di prima si perde.
+ * Ogni copia va ricollegata alla copia della riga a cui puntava: l'ultima riga assistant prima di lei, dopo
+ * il confine, con gli stessi tool_use. `rows` sono le righe del file in ordine, undefined dove non si leggono.
+ */
+export function relinks(rows: readonly (TranscriptRow | undefined)[]): Relink[] {
+  const cut = rows.findLastIndex(r => r?.subtype === 'compact_boundary')
+  if (cut < 0) return []
+  const at = new Map<string, number>()
+  rows.forEach((r, i) => {
+    if (r?.uuid) at.set(r.uuid, i)
+  })
+  const out: Relink[] = []
+  for (let i = cut + 1; i < rows.length; i++) {
+    const r = rows[i]
+    const from = r?.parentUuid
+    if (r?.type !== 'user' || !from || !blockIds(r, 'tool_result').length) continue
+    const p = at.get(from)
+    if (p !== undefined && p > cut) continue
+    // la riga a cui puntava; se non è nel file, il tool_use del risultato stesso
+    const ids = (p === undefined ? blockIds(r, 'tool_result') : blockIds(rows[p], 'tool_use')).join()
+    if (!ids) continue
+    for (let j = i - 1; j > cut; j--) {
+      const c = rows[j]
+      if (c?.type === 'assistant' && c.uuid && blockIds(c, 'tool_use').join() === ids) {
+        out.push({ index: i, from, to: c.uuid })
+        break
+      }
+    }
+  }
+  return out
+}
+
+/**
+ * Vero se, risalendo come --resume dall'ultima risposta dopo l'ultimo confine, la catena arriva al confine
+ * senza uscire dalle righe che lo seguono; vero anche senza confine o senza risposte dopo.
+ */
+export function reachesBoundary(rows: readonly (TranscriptRow | undefined)[]): boolean {
+  const cut = rows.findLastIndex(r => r?.subtype === 'compact_boundary')
+  if (cut < 0) return true
+  const at = new Map<string, number>()
+  for (let i = cut; i < rows.length; i++) {
+    const u = rows[i]?.uuid
+    if (u) at.set(u, i)
+  }
+  let i = rows.findLastIndex((r, k) => k > cut && r?.type === 'assistant')
+  for (let steps = 0; i > cut && steps < rows.length; steps++) {
+    const p = rows[i]?.parentUuid
+    const j = p ? at.get(p) : undefined
+    if (j === undefined) return false
+    i = j
+  }
+  return i <= cut
 }

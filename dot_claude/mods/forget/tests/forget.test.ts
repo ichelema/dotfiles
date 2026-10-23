@@ -2,7 +2,7 @@
 import { describe, expect, test } from 'claude-code/testing'
 import type { SessionMessage } from 'claude-code'
 import { forget, formatTurns, ownArgs, parseTurns, rowsOf, sameStart, splitTurns } from '../hooks/forget'
-import { promptRows } from '../hooks/transcript'
+import { promptRows, reachesBoundary, relinks, type TranscriptRow } from '../hooks/transcript'
 
 const user = (text: string): SessionMessage => ({ role: 'user', text, toolUses: [] })
 const result = (id: string): SessionMessage => ({
@@ -148,18 +148,58 @@ describe('turn-forget', () => {
     expect(r.messages.some(m => m.toolUses.some(u => u.tool_use_id === 't8'))).toBe(false)
     expect(r.messages.some(m => m.toolResults?.some(x => x.tool_use_id === 't8'))).toBe(false)
     expect(r.messages.some(m => m.toolUses.some(u => u.tool_use_id === 't4'))).toBe(true)
+    // prima del primo turno tolto gli oggetti restano quelli del motore, tool_result e handle compresi:
+    // senza handle il motore perderebbe le righe agganciate al risultato e la cache da lì in poi
     expect(r.messages[0]).toBe(all[0])
+    const result4 = (list: readonly SessionMessage[]) => list.find(m => m.toolResults?.some(x => x.tool_use_id === 't4'))
+    expect(result4(r.messages)).toBe(result4(all))
   })
 
-  test('i tool_result tenuti perdono il loro handle, anche prima del primo turno tolto', () => {
+  test('dopo il primo turno tolto i tool_result perdono il loro handle', () => {
     const all = conversation()
-    const r = forget(all, [[9, 9]])
+    const r = forget(all, [[3, 3], [9, 9]])
     if (!('messages' in r)) throw new Error(r.skip)
     const kept4 = r.messages.find(m => m.toolResults?.some(x => x.tool_use_id === 't4'))!
     expect(kept4.handle).toBe(undefined)
     expect(kept4.toolResults).toEqual([{ tool_use_id: 't4', text: 'ok', isError: false }])
-    // gli altri messaggi restano quelli del motore
+    // gli altri messaggi dopo il turno tolto restano quelli del motore
     expect(r.messages.find(m => m.text === 'risposta 4')).toBe(all.find(m => m.text === 'risposta 4'))
+  })
+
+  test('relinks ricollega le copie dei tool_result dopo l\'ultimo confine alla copia della riga a cui puntavano', () => {
+    const row = (uuid: string, parentUuid: string | null, type: string, content: unknown): TranscriptRow => ({ uuid, parentUuid, type, message: { content } })
+    const use = (id: string) => [{ type: 'tool_use', id, name: 'Bash', input: {} }]
+    const res = (id: string) => [{ type: 'tool_result', tool_use_id: id, content: 'ok' }]
+    const rows: (TranscriptRow | undefined)[] = [
+      row('p1', null, 'user', 'prompt 1'),
+      row('a1', 'p1', 'assistant', use('t1')),
+      row('r1', 'a1', 'user', res('t1')),
+      { type: 'system', subtype: 'compact_boundary', uuid: 'b', parentUuid: null },
+      row('p1c', 'b', 'user', 'prompt 1'),
+      row('a1c', 'p1c', 'assistant', use('t1')),
+      // la copia tenuta col suo handle: punta al tool_use originale, prima del confine
+      row('r1c', 'a1', 'user', res('t1')),
+      row('x1c', 'r1c', 'assistant', 'fatto'),
+      undefined, // una riga che non si legge
+      // un tool_result nuovo punta già dopo il confine: resta com'è
+      row('a2', 'x1c', 'assistant', use('t2')),
+      row('r2', 'a2', 'user', res('t2')),
+      row('x2', 'r2', 'assistant', 'fatto'),
+    ]
+    expect(relinks(rows)).toEqual([{ index: 6, from: 'a1', to: 'a1c' }])
+    expect(reachesBoundary(rows)).toBe(false)
+    rows[6]!.parentUuid = 'a1c'
+    expect(reachesBoundary(rows)).toBe(true)
+    expect(relinks(rows)).toEqual([])
+  })
+
+  test('senza compattazioni relinks non cambia niente e la catena è intera', () => {
+    const rows: TranscriptRow[] = [
+      { uuid: 'p', parentUuid: null, type: 'user', message: { content: 'ciao' } },
+      { uuid: 'a', parentUuid: 'p', type: 'assistant', message: { content: 'ok' } },
+    ]
+    expect(relinks(rows)).toEqual([])
+    expect(reachesBoundary(rows)).toBe(true)
   })
 
   test('forget non tocca nulla per un turno inesistente o una chiamata tool spezzata', () => {

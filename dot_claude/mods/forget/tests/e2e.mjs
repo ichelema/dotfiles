@@ -4,12 +4,16 @@
 // zellij parte in una console nascosta (Start-Process -WindowStyle Hidden): con stdout su una pipe i
 // riquadri del ConPTY ereditano la pipe e lo schermo resta vuoto. Nel riquadro gira
 // `claude --resume <conversazione di prova> --fork-session`: la conversazione di prova resta intatta.
+// Lo schermo si legge con screen.mjs da `zellij subscribe --format json`, una riga per ogni riga dello schermo:
+// `dump-screen` unisce alcune righe e salta quelle vuote, e i clic finirebbero sulla riga sbagliata.
 // settings.json può impostare CLAUDE_CODE_PLUGIN_DIRS nel suo env, che vince sulla variabile del
 // processo: i casi isolano le mod con --settings e caricano questa con --plugin-dir; «utente» no.
 //
 // Uso: bun tests/e2e.mjs [caso…]   (senza casi: tutti, circa 5 minuti)
 //   numeri       /forget 2 su tre turni con un echo: turno tolto senza riassunto, dopo il confine
 //                nessuna riga punta a prima, dopo --resume il turno 2 non torna
+//   cache        /forget dell'ultimo turno: la richiesta dopo ha identici i messaggi prima di quel
+//                turno (i promemoria agganciati ai tool_result compresi), quindi la cache resta
 //   inesistente  /forget 9: «Not compacted», nessuna compattazione
 //   clic         /forget, clic sulla casella, secondo clic, terzo clic, Invio: turno tolto
 //   due          /forget, due caselle spuntate, prompt «/forget 7-8», Invio: tolti tutti e due
@@ -39,7 +43,7 @@ const POWERSHELL = `${process.env.SystemRoot ?? 'C:/Windows'}/System32/WindowsPo
 const ISOLATE = ['--settings', JSON.stringify({ env: { CLAUDE_CODE_PLUGIN_DIRS: win(NOMODS) } })]
 const TOOL_WORDS = ['MELA', 'TRENO', 'CACTUS']
 const SHORT_WORDS = ['MELA', 'TRENO', 'CACTUS', 'LIMONE', 'PERA', 'NAVE', 'SOLE', 'LUNA']
-const CASES = ['numeri', 'inesistente', 'clic', 'due', 'storico', 'utente', 'blocchi']
+const CASES = ['numeri', 'cache', 'inesistente', 'clic', 'due', 'storico', 'utente', 'blocchi']
 
 mkdirSync(FIX_DIR, { recursive: true })
 mkdirSync(NOMODS, { recursive: true })
@@ -53,7 +57,12 @@ const log = s => {
 }
 
 // la sessione di prova non deve agganciarsi a quella che lancia il test, né scrivere nella memoria Hindsight
-const env = { ...process.env, HS_CFG_RETAIN_ENABLED: 'false', HS_CFG_RECALL_ENABLED: 'false', HS_CFG_FAILCHECK_ENABLED: 'false', HS_CFG_MENTAL_MODELS_INJECT_ON_START: 'false' }
+// e niente aggiornamento automatico: se fallisce, la sua riga in fondo sposta lo schermo sotto i clic.
+// CLAUDE_CODE_NO_FLICKER: schermo intero sempre, anche se l'avvio di prima non è finito, e nessun controllo degli
+// avvii. Con "tui": "fullscreen" una sessione chiusa di forza conta come avvio fallito: dopo una, la successiva parte
+// col renderer classico (i clic sulle caselle non arrivano); dopo due, il motore spegne lo schermo intero per quella
+// versione in ~/.claude.json (fullscreenAutoDisabled), anche nelle sessioni di chi usa la mod
+const env = { ...process.env, HS_CFG_RETAIN_ENABLED: 'false', HS_CFG_RECALL_ENABLED: 'false', HS_CFG_FAILCHECK_ENABLED: 'false', HS_CFG_MENTAL_MODELS_INJECT_ON_START: 'false', DISABLE_AUTOUPDATER: '1', CLAUDE_CODE_NO_FLICKER: '1' }
 for (const k of ['CLAUDECODE', 'CLAUDE_CODE_SESSION_ID', 'CLAUDE_CODE_CHILD_SESSION', 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDE_CODE_MESSAGING_SOCKET',
   'CLAUDE_CODE_MESSAGING_TOKEN', 'CLAUDE_CODE_SESSION_ATTENDED', 'CLAUDE_PID', 'CLAUDE_ENV_FILE', 'CLAUDE_CODE_EXECPATH', 'CLAUDE_CODE_SSE_PORT']) delete env[k]
 
@@ -145,29 +154,49 @@ function fixtureBlocks() {
 
 /** Una sessione interattiva in zellij sulla conversazione di prova; `real`: le mod vere, senza isolamento. */
 async function session(name, fixtureId, real = false) {
-  const zname = `forget-e2e-${name}`
+  // un nome per giro: una sessione rimasta bloccata in un giro di prima non ferma questo
+  const zname = `forget-e2e-${name}-${process.pid}`
   const z = (...a) => run([ZELLIJ, '--session', zname, ...a])
   const screens = join(WORK, `${name}.screens.log`)
   writeFileSync(screens, '')
   run([ZELLIJ, 'delete-session', '--force', zname])
-  run([POWERSHELL, '-NoProfile', '-Command', `Start-Process -WindowStyle Hidden -FilePath '${ZELLIJ}' -ArgumentList 'attach','-b','${zname}'`])
-  await until(() => /terminal_0/.test(z('action', 'list-panes').text), 20_000, 'sessione zellij', 250)
+  const pid = run([POWERSHELL, '-NoProfile', '-Command', `(Start-Process -WindowStyle Hidden -PassThru -FilePath '${ZELLIJ}' -ArgumentList 'attach','-b','${zname}').Id`]).text
   const args = ['--model', 'haiku', '--resume', fixtureId, '--fork-session', ...(real ? [] : [...ISOLATE, '--plugin-dir', MOD])]
-  const pane = /terminal_\d+/.exec(z('run', '--cwd', win(FIX_DIR), '--', CLAUDE, ...args).text)?.[0]
-  if (!pane) throw new Error('zellij run senza riquadro')
+  let pane
+  try {
+    await until(() => /terminal_0/.test(z('action', 'list-panes').text), 20_000, 'sessione zellij', 250)
+    pane = /terminal_\d+/.exec(z('run', '--cwd', win(FIX_DIR), '--', CLAUDE, ...args).text)?.[0]
+    if (!pane) throw new Error('zellij run senza riquadro')
+  } catch (err) {
+    // zellij a volte si blocca all'avvio: il processo resterebbe vivo e la sessione nell'elenco
+    if (/^\d+$/.test(pid)) run([POWERSHELL, '-NoProfile', '-Command', `Stop-Process -Id ${pid} -Force`])
+    run([ZELLIJ, 'delete-session', '--force', zname])
+    throw err
+  }
   z('action', 'toggle-fullscreen')
+  let escAt = 0
   const project = projectOf(fixtureId)
   const before = new Set(readdirSync(project))
   const s = {
     last: '',
     look() {
-      const text = z('action', 'dump-screen', '--pane-id', pane).text
-      if (text !== s.last) appendFileSync(screens, `\n===== ${at()}\n${text}\n`)
-      return (s.last = text)
+      // una riga per ogni riga dello schermo (screen.mjs): la riga di una casella è quella da cliccare
+      const r = Bun.spawnSync([process.execPath, join(import.meta.dir, 'screen.mjs'), ZELLIJ, zname, pane], { stdout: 'pipe', stderr: 'ignore', stdin: 'ignore', timeout: 10_000, env })
+      const view = r.exitCode === 0 ? String(r.stdout).replace(/\n$/, '') : ''
+      // in modalità auto il motore apre da solo questo dialogo, anche a turno avviato: Esc vale «Not now», nessuna
+      // impostazione cambia. Un secondo Esc a dialogo già chiuso interromperebbe il turno: al massimo uno ogni 2 s
+      if (/Teach auto mode about your environment/.test(view) && Date.now() - escAt > 2000) {
+        escAt = Date.now()
+        s.keys(27)
+        log('  chiuso con Esc il dialogo «Teach auto mode about your environment?»')
+      }
+      if (view !== s.last) appendFileSync(screens, `\n===== ${at()}\n${view}\n`)
+      return (s.last = view)
     },
     keys: (...bytes) => z('action', 'write', '--pane-id', pane, ...bytes.map(String)),
     seq: text => s.keys(...Buffer.from(text)),
     async type(text) {
+      s.look()
       z('action', 'write-chars', '--pane-id', pane, text)
       await Bun.sleep(800)
       s.keys(13)
@@ -201,7 +230,7 @@ async function session(name, fixtureId, real = false) {
       await Bun.sleep(2000)
     },
     /** Fine del turno: la riga «✻ … for Ns» dopo `word`; prima, un comando resterebbe in coda. */
-    ended: word => new RegExp(`${word}[\\s\\S]*✻ \\S+ for \\d+s`).test(s.look()),
+    ended: word => new RegExp(`${word}[\\s\\S]*✻ \\S+ for (\\d+m )?\\d+s`).test(s.look()),
   }
   return s
 }
@@ -230,12 +259,14 @@ const cases = {
     const s = await session('numeri', fixture('echo', TOOL_WORDS.map((w, i) => `Turno ${i + 1}. La parola segreta numero ${i + 1} è ${w}. Esegui con il tool Bash il comando: echo ${w}. Poi rispondi solo: OK ${i + 1}`), true))
     try {
       await s.ready('OK 3')
+      // con --fork-session il transcript nasce al primo messaggio nuovo: senza, la storia copiata finirebbe dopo il confine
+      await s.type('Turno 4. La parola segreta numero 4 è LIMONE. Rispondi solo: OK 4')
+      await until(() => s.ended('OK 4'), 120_000, 'fine del turno 4')
       await s.type('/forget 2')
       const boundary = await waitCut(s)
       const rows = s.rows()
       const { after } = afterCut(rows)
-      // dopo il confine --fork-session copia anche la storia della prova: conta solo la catena che parte dal confine.
-      // Oltre i 5 MB --resume legge solo dall'ultimo confine: una copia che punta a prima spezza la catena lì
+      // oltre i 5 MB --resume legge solo dall'ultimo confine: una copia che punta a prima spezza la catena lì
       const chain = []
       for (let link = boundary; (link = after.find(r => r.parentUuid === link.uuid)); ) chain.push(link)
       const text = chain.filter(r => r.type === 'user' || r.type === 'assistant').map(r => JSON.stringify(r.message?.content ?? '')).join('\n')
@@ -246,7 +277,7 @@ const cases = {
       log(`  risalendo dall'ultima riga la catena si ferma su: ${back?.type} ${JSON.stringify(back?.message?.content ?? '').slice(0, 80)}`)
       check('compattazione senza chiamata al modello', !!boundary && boundary.compactMetadata?.durationMs < 1000)
       check('nessun riassunto', !text.includes('being continued from a previous conversation'))
-      check('la catena dal confine arriva all\'ultima risposta (OK 3)', text.includes('OK 3'))
+      check('la catena dal confine arriva all\'ultima risposta (OK 4)', text.includes('OK 4'))
       check('risalendo dall\'ultima riga si arriva al confine senza uscire', back?.parentUuid === boundary?.uuid)
       check('il turno 2 (TRENO) è uscito, 1 e 3 sono rimasti', !text.includes('TRENO') && text.includes('MELA') && text.includes('CACTUS'))
       check('gli hook SessionStart:compact non sono ripartiti', !rows.some(r => r.attachment?.hookName === 'SessionStart:compact'))
@@ -259,6 +290,48 @@ const cases = {
       const answer = String(r.stdout ?? '').trim()
       log(`  --resume ${fork}: ${JSON.stringify(answer)}`)
       check('dopo --resume il turno 2 non torna', answer.includes('MELA') && answer.includes('CACTUS') && !answer.includes('TRENO'))
+    } finally {
+      s.close()
+    }
+  },
+
+  async cache() {
+    const s = await session('cache', fixture('echo', TOOL_WORDS.map((w, i) => `Turno ${i + 1}. La parola segreta numero ${i + 1} è ${w}. Esegui con il tool Bash il comando: echo ${w}. Poi rispondi solo: OK ${i + 1}`), true))
+    try {
+      await s.ready('OK 3')
+      await s.type('Turno 4. La parola segreta numero 4 è LIMONE. Rispondi solo: OK 4')
+      await until(() => s.ended('OK 4'), 120_000, 'fine del turno 4')
+      await s.type('/forget 4')
+      await waitCut(s)
+      await s.type('Rispondi solo: OK 5')
+      await until(() => s.ended('OK 5'), 120_000, 'fine del turno 5')
+      await Bun.sleep(1500)
+      // i messaggi di ogni richiesta all'API: le righe api-request li elencano per hash, a partire da una richiesta di base
+      const rows = s.rows()
+      const cut = rows.findLastIndex(r => r.subtype === 'compact_boundary')
+      const all = rows.map((r, i) => [r, i]).filter(([r]) => r.type === 'api-request')
+      const byId = new Map(all.map(([r]) => [r.id, r]))
+      const msgs = r => {
+        const base = r.base && byId.get(r.base)
+        if (r.base && !base) throw new Error(`la richiesta di base ${r.base} non è nel transcript`)
+        return [...(base ? msgs(base).slice(0, r.keep ?? 0) : []), ...(r.tail ?? [])]
+      }
+      // solo le richieste della conversazione, non quelle di servizio (titolo, riassunti)
+      const reqs = all.filter(([r]) => String(r.querySource ?? '').startsWith('repl_main_thread'))
+      const blobs = new Map(rows.filter(r => r.type === 'api-request-blob').map(r => [r.hash, r.message]))
+      const before = reqs.filter(([, i]) => i < cut).at(-1)?.[0]
+      const after = reqs.find(([, i]) => i > cut)?.[0]
+      if (!before || !after) throw new Error(`richieste all'API non trovate (prima: ${!!before}, dopo: ${!!after})`)
+      const A = msgs(before), B = msgs(after)
+      // il prompt del turno tolto, da cui la richiesta cambia per forza: il motore registra il contenuto (blob) solo
+      // dei messaggi sintetici, come i promemoria; la richiesta del turno 4 finisce col suo prompt, l'ultimo senza blob
+      const removed = A.findLastIndex(h => !blobs.has(h))
+      let same = 0
+      while (same < A.length && same < B.length && A[same] === B[same]) same++
+      // i numeri della cache qui non si confrontano: la prova è nata con claude -p, e dopo la compattazione il motore
+      // passa dal prompt di sistema dell'SDK a quello di Claude Code
+      log(`  messaggi: prima ${A.length}, dopo ${B.length}, uguali dall'inizio ${same}, il turno tolto comincia al ${removed}`)
+      check('la richiesta dopo /forget ha identici tutti i messaggi prima del turno tolto', removed > 0 && same >= removed)
     } finally {
       s.close()
     }
@@ -295,13 +368,15 @@ const cases = {
       const k = Number(target.m[1])
       const word = [...SHORT_WORDS, 'FINE'][k - 1]
       log(`  caselle visibili: ${boxes.map(b => b.m[1]).join(', ')} · bersaglio: turno ${k} (${word})`)
-      s.click(1, target.y + 1)
+      // la riga della casella si rilegge prima di ogni clic: una riga che compare o sparisce in fondo sposta lo schermo
+      const row = () => s.look().split('\n').findIndex((l, y) => y > 0 && /^\[[ x]\] turno (\d+)$/.exec(l)?.[1] === String(k)) + 1
+      s.click(1, row())
       await until(() => s.look().includes(`[x] turno ${k}`) && s.prompt(`/forget ${k}`), 10_000, 'spunta').catch(() => undefined)
       check(`il clic spunta la casella e il prompt diventa «/forget ${k}»`, s.last.includes(`[x] turno ${k}`) && s.prompt(`/forget ${k}`))
-      s.click(1, target.y + 1)
+      s.click(1, row())
       await until(() => s.look().includes(`[ ] turno ${k}`) && s.prompt('/forget'), 10_000, 'spunta tolta').catch(() => undefined)
       check('un secondo clic toglie la spunta e il prompt torna «/forget»', s.last.includes(`[ ] turno ${k}`) && s.prompt('/forget'))
-      s.click(1, target.y + 1)
+      s.click(1, row())
       await until(() => s.look().includes(`[x] turno ${k}`) && s.prompt(`/forget ${k}`), 10_000, 'spunta di nuovo').catch(() => undefined)
       s.keys(13)
       const boundary = await waitCut(s)
