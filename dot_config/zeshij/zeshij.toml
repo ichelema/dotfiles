@@ -10,8 +10,8 @@ show_icons = true
 show_windows = true
 # Pannello del picker (un intero = colonne, "80%" = percentuale dello schermo).
 # La preview (Tab) è la miniatura della tab. Più largo = più testo in ogni pane della miniatura.
-width = "62%"
-height = "90%"
+width = "60%"
+height = "80%"
 # Preview al 90% del pannello: la lista scende al minimo di 40 colonne.
 preview_width = 90
 
