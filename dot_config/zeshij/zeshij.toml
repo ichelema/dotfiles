@@ -9,10 +9,11 @@ show_icons = true
 # Le tab in grigio accanto alle sessioni aperte.
 show_windows = true
 # Pannello del picker (un intero = colonne, "80%" = percentuale dello schermo).
-# La preview (Tab) è la miniatura della tab: la lista tiene al massimo 60 colonne, il resto va
-# alla preview. Più largo = più testo in ogni pane della miniatura.
-width = "70%"
+# La preview (Tab) è la miniatura della tab. Più largo = più testo in ogni pane della miniatura.
+width = "62%"
 height = "90%"
+# Preview al 90% del pannello: la lista scende al minimo di 40 colonne.
+preview_width = 90
 
 [default_session]
 # Preview delle cartelle (Tab nel picker, `zeshij preview <nome>`).
