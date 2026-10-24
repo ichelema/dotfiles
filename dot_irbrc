@@ -52,7 +52,7 @@ begin
     warn "     Command: Looksee.help          => mosta introduzione"
     warn "     Command: [].look               => mosta tutti i metodi"
     warn "     Command: [].look :noprivate    => mosta tutti i metodi ma non quelli privati"
-    warn "     Command: [].look.edit :to_set  => mi apre gvim su quel metodo"
+    warn "     Command: [].look.edit :to_set  => mi apre vim su quel metodo"
     require 'looksee'
     Looksee.editor = "vim +%l %f"
   end
