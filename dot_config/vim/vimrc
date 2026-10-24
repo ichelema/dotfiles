@@ -2246,7 +2246,10 @@
         " Global {{{
             if OSX()
               let macvim_skip_cmd_opt_movement = 1
-              set macmeta
+              " macmeta esiste solo in MacVim: nel vim da terminale darebbe E518
+              if exists('+macmeta')
+                set macmeta
+              endif
               nmap <D-j> <M-j>
               nmap <D-k> <M-k>
               vmap <D-j> <M-j>
