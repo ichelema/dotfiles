@@ -1,0 +1,10 @@
+function spf() {
+	# superfile scrive qui "cd '<dir>'" all'uscita quando cd_on_quit = true
+	local lastdir="${XDG_STATE_HOME:-$HOME/.local/state}/superfile/lastdir"
+	# superfile abilita kitty graphics solo con TERM_PROGRAM in allowlist (herdr ha TERM_PROGRAM=herdr)
+	TERM_PROGRAM=ghostty command spf "$@"
+	if [ -f "$lastdir" ]; then
+		. "$lastdir"
+		command rm -f -- "$lastdir"
+	fi
+}

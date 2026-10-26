@@ -216,6 +216,7 @@ autoload -Uz _df
 autoload -Uz y
 autoload -Uz rg
 autoload -Uz zeshij
+autoload -Uz spf
 
 #  ╔═╗╦  ╦╔═╗╔═╗
 #  ╠═╣║  ║╠═╣╚═╗
@@ -256,7 +257,6 @@ alias rip="expac --timefmt='%Y-%m-%d %T' '%l\t%n %v' | sort | tail -200 | nl" # 
 alias sv="sudo -E vim" # Vim with sudo
 alias sn="sudo -E nvim" # Neovim with sudo
 alias kitty="kitty --single-instance "
-alias spf='TERM_PROGRAM=ghostty spf' # superfile abilita kitty graphics solo con TERM_PROGRAM in allowlist (herdr ha TERM_PROGRAM=herdr)
 
 alias ..='cd ..'
 alias ...='cd ../..'
