@@ -64,6 +64,12 @@ export ENABLE_LSP_TOOL=1
 
 alias claude='claude --system-prompt-file "$HOME/.claude/system-prompt.md" --disallowedTools="DesignSync,NotebookEdit,PowerShell,Artifact,ArtifactComments,ArtifactData,ArtifactCheck,SendFeedback"'
 
+# Claude Code dentro herdr: herdr ridisegna le immagini kitty con a=p, ma Claude Code accetta solo
+# kitty e Ghostty (herdr risponde "libghostty"). Fuori da herdr WezTerm non gestisce i placeholder U=1
+if [[ $TERM_PROGRAM == herdr ]]; then
+  export CLAUDE_CODE_FORCE_TERMINAL_IMAGES=1
+fi
+
 #  ╔═╗╦ ╦╔╦╗╔═╗╔═╗╔═╗╔╦╗╔═╗╦  ╔═╗╔╦╗╔═╗
 #  ╠═╣║ ║ ║ ║ ║║  ║ ║║║║╠═╝║  ║╣  ║ ║╣
 #  ╩ ╩╚═╝ ╩ ╚═╝╚═╝╚═╝╩ ╩╩  ╩═╝╚═╝ ╩ ╚═╝

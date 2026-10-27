@@ -50,11 +50,5 @@ export XDG_CONFIG_HOME XDG_CONFIG_DIR XDG_DATA_HOME XDG_STATE_HOME XDG_CACHE_HOM
 # mosh: chiude mosh-server dopo 7 giorni senza contatti dal client (sessioni orfane)
 export MOSH_SERVER_NETWORK_TMOUT=604800
 
-# Claude Code dentro herdr: herdr ridisegna le immagini kitty con a=p, ma Claude Code accetta solo
-# kitty e Ghostty (herdr risponde "libghostty"). Fuori da herdr WezTerm non gestisce i placeholder U=1
-if [[ $TERM_PROGRAM == herdr ]]; then
-  export CLAUDE_CODE_FORCE_TERMINAL_IMAGES=1
-fi
-
 # API key AI/LLM: file a parte, gestito cifrato da chezmoi
 [ -r "$ZDOTDIR/api-keys.zsh" ] && source "$ZDOTDIR/api-keys.zsh"
