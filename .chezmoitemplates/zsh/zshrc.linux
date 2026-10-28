@@ -62,6 +62,9 @@ export PATH
 # Enable LSP for claude code
 export ENABLE_LSP_TOOL=1
 
+# ssh-agent come servizio utente systemd: la passphrase si chiede una volta per sessione
+export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent.socket"
+
 alias claude='claude --system-prompt-file "$HOME/.claude/system-prompt.md" --disallowedTools="DesignSync,NotebookEdit,PowerShell,Artifact,ArtifactComments,ArtifactData,ArtifactCheck,SendFeedback"'
 
 # Claude Code dentro herdr: herdr ridisegna le immagini kitty con a=p, ma Claude Code accetta solo
