@@ -31,6 +31,8 @@ keybinds clear-defaults=true {
         bind "p" { SwitchToMode "pane"; }
         bind "t" { SwitchToMode "tab"; }
         bind "w" { SwitchToMode "session"; }
+        // zeshij: picker delle sessioni, come sesh (plugins/zeshij.wasm)
+        bind "s" { LaunchOrFocusPlugin "zeshij" { floating true; move_to_focused_tab true; }; SwitchToMode "locked"; }
         // freccia: sposta il focus e resta in Pannelli, come in WezTerm
         bind "left" { MoveFocus "left"; SwitchToMode "pane"; }
         bind "down" { MoveFocus "down"; SwitchToMode "pane"; }
@@ -243,8 +245,6 @@ keybinds clear-defaults=true {
         bind "Alt PageUp" { PageScrollUp; }
         bind "Alt PageDown" { PageScrollDown; }
         bind "Alt f" { ToggleFloatingPanes; }
-        // zeshij: picker delle sessioni, come sesh (plugins/zeshij.wasm)
-        bind "Alt s" { LaunchOrFocusPlugin "zeshij" { floating true; move_to_focused_tab true; }; }
     }
     shared_except "locked" "entersearch" {
         bind "enter" { SwitchToMode "locked"; }
@@ -271,7 +271,7 @@ plugins {
     welcome-screen location="zellij:session-manager" {
         welcome_screen true
     }
-    // sessioni come sesh: Alt s apre il picker, `zellij pipe --plugin zeshij -- "<comando>"`
+    // sessioni come sesh: prefisso → s apre il picker, `zellij pipe --plugin zeshij -- "<comando>"`
     zeshij location="file:{{ $home }}/.config/zellij/plugins/zeshij.wasm" {
         hide_duplicates true
     }
