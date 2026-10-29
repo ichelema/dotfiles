@@ -1,0 +1,23 @@
+{
+  "languages": {
+    "ruby_override": {
+      "languageId": "ruby",
+      "extensions": [
+        ".rb",
+        ".rake",
+        ".gemspec",
+        ".ru"
+      ],
+      "servers": [
+        {
+          "command": "solargraph",
+          "args": [
+            "stdio"
+          ]
+        }
+      ]
+    }
+  },
+  "showStatus": true,
+  "enabled": true
+}
