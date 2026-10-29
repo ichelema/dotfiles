@@ -1,5 +1,5 @@
 # zeshij.toml — sessioni Zellij dei progetti (Linux).
-# Picker: Alt s. Pipe: zellij pipe --plugin zeshij -- "<comando>".
+# Picker: Alt+. → s. Pipe: zellij pipe --plugin zeshij -- "<comando>".
 # /Dati è un link a /mnt/data: i path usano la grafia che zoxide conosce già.
 # Niente startup_command né windows: con questi zeshij genera un layout suo e le sessioni
 # non usano il default_layout di Zellij.
