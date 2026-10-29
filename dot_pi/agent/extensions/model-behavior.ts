@@ -9,6 +9,9 @@ const files: Record<string, string> = {
 	"gpt-6-astra": "AGENTS_Astra.md",
 	"gpt-5.6": "AGENTS_Sol.md",
 	"gpt-5.6-sol": "AGENTS_Sol.md",
+	"claude-sonnet-5-5": "AGENTS_SONNET.md",
+	"claude-fable-5-1": "AGENTS_FABLE.md",
+	"anthropic/claude-opus-5.5": "AGENTS_OPUS.md",
 };
 
 function stripModelBehavior(prompt: string) {

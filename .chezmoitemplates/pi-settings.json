@@ -1,68 +1,123 @@
 {
-  "theme": {{ if eq .chezmoi.hostname "browserino" }}"theme"{{ else }}"nord"{{ end }},
+  "defaultThinkingLevel": "medium",
   "editorPaddingX": 1,
-  "steeringMode": "one-at-a-time",
   "enableInstallTelemetry": false,
-  "hideThinkingBlock": false,
-  "treeFilterMode": "all",
-  "tuiMode": "fullscreen",
-  "showCacheMissNotices": true,
+  "extensions": [
+    "-builtin:mcp",
+    "-builtin:llama.cpp"
+  ],
   "enabledModels": [
     "deepseek/deepseek-flash",
-    "openai-codex/gpt-5.3-codex-spark",
     "openai-codex/gpt-5.6-luna",
     "openai-codex/gpt-5.6-sol",
-    "openai-codex/gpt-6-sol",
+    "openai-codex/gpt-6.1-sol",
+    "openai-codex/gpt-6.1-terra",
     "openai-codex/gpt-6-luna",
     "openai-codex/gpt-6-astra",
-    "openrouter/moonshotai/kimi-k3",
-    "openrouter/z-ai/glm-5.3-flash"
+    "openrouter/moonshotai/kimi-k3.1-pro",
+    "openrouter/z-ai/glm-5.3-flash",
+    "openrouter/z-ai/glm-5.3",
+    "anthropic/claude-fable-5-1",
+    "openrouter/anthropic/claude-opus-5.5",
+    "anthropic/claude-haiku-5-5",
+    "anthropic/claude-sonnet-5-5"
   ],
-  "defaultThinkingLevel": "medium",
-  "modelThinkingLevels": {
-    "openai-codex/gpt-5.6-sol": "medium",
-    "openai-codex/gpt-6-luna": "high",
-    "openrouter/z-ai/glm-5.3-flash": "high",
-    "groq/qwen/qwen3.8-27b": "high"
-  },
-  "outputPad": 1,
-  "terminal": {
-    "images": "kitty",
-    "trueColor": true
-  },
+  "hideThinkingBlock": true,
   "kendex": {
     "extensionManager": {
       "config": {
         "@vanillagreen/pi-tool-renderer": {
-          "enabled": true,
           "alignAssistantMessages": false,
-          "styledCodeBlocks": false,
+          "enabled": true,
           "registerBatchTool": true,
           "renderMutationTools": true,
-          "splitDiffs": true
+          "splitDiffs": true,
+          "styledCodeBlocks": false
         }
       }
     }
   },
+  "modelThinkingLevels": {
+    "groq/qwen/qwen3.8-27b": "high",
+    "openai-codex/gpt-5.6-sol": "medium",
+    "openai-codex/gpt-6-luna": "high",
+    "openrouter/z-ai/glm-5.3-flash": "high"
+  },
+  "outputPad": 1,
   "packages": [
     "git:github.com/pasky/chrome-cdp-skill@v1.1.0",
 {{- if eq .chezmoi.os "linux" }}
     "npm:pi-codex-tools",
 {{- end }}
     {
-      "source": "npm:pi-tool-display",
-      "extensions": []
+      "extensions": [],
+      "source": "npm:pi-tool-display"
     },
     "npm:pi-omplike-advisor",
     "npm:@juancrg90/nightfox-themes",
     "npm:@pi-archimedes/image-paste",
-    "git:github.com/DietrichGebert/ponytail",
+    {
+      "source": "git:github.com/DietrichGebert/ponytail",
+      "skills": [
+        "+skills/ponytail-help/SKILL.md",
+        "+skills/ponytail-gain/SKILL.md",
+        "+skills/ponytail-debt/SKILL.md",
+        "+skills/ponytail-audit/SKILL.md"
+      ]
+    },
     "npm:@tintinweb/pi-subagents",
     "npm:pi-web-search",
     "npm:@sting8k/pi-vcc",
 {{- if eq .chezmoi.os "linux" }}
     "npm:@xynogen/pix-sudo",
 {{- end }}
-    "npm:@vanillagreen/pi-tool-renderer"
+    "npm:@vanillagreen/pi-tool-renderer",
+    "npm:pi-context-inspector",
+    "npm:pi-diet-lsp"
+  ],
+  "showCacheMissNotices": true,
+  "steeringMode": "one-at-a-time",
+  "terminal": {
+    "images": "kitty",
+    "trueColor": true,
+    "showTerminalProgress": false
+  },
+  "theme": {{ if eq .chezmoi.hostname "browserino" }}"theme"{{ else }}"nord"{{ end }},
+  "treeFilterMode": "all",
+  "tuiMode": "fullscreen",
+  "markdown": {
+    "mermaid": "streaming"
+  },
+  "skills": [
+    "-skills/mattpocock-skills/engineering/ask-matt/SKILL.md",
+    "-skills/mattpocock-skills/engineering/code-review/SKILL.md",
+    "-skills/mattpocock-skills/productivity/writing-for-agents/SKILL.md",
+    "-skills/mattpocock-skills/engineering/wizard/SKILL.md",
+    "-skills/mattpocock-skills/engineering/wayfinder/SKILL.md",
+    "-skills/mattpocock-skills/productivity/wait-what/SKILL.md",
+    "-skills/mattpocock-skills/engineering/triage/SKILL.md",
+    "-skills/mattpocock-skills/engineering/to-tickets/SKILL.md",
+    "-skills/mattpocock-skills/engineering/to-spec/SKILL.md",
+    "-skills/mattpocock-skills/productivity/to-questionnaire/SKILL.md",
+    "-skills/mattpocock-skills/productivity/teach/SKILL.md",
+    "-skills/mattpocock-skills/engineering/tdd/SKILL.md",
+    "-skills/mattpocock-skills/engineering/setup-matt-pocock-skills/SKILL.md",
+    "-skills/mattpocock-skills/engineering/resolving-merge-conflicts/SKILL.md",
+    "-skills/mattpocock-skills/engineering/research/SKILL.md",
+    "-skills/mattpocock-skills/engineering/prototype/SKILL.md",
+    "-skills/openai-docs/SKILL.md",
+    "-skills/mattpocock-skills/engineering/improve-codebase-architecture/SKILL.md",
+    "-skills/mattpocock-skills/engineering/implement/SKILL.md",
+    "-skills/mattpocock-skills/productivity/handoff/SKILL.md",
+    "-skills/mattpocock-skills/productivity/grilling/SKILL.md",
+    "-skills/mattpocock-skills/engineering/grill-with-docs/SKILL.md",
+    "-skills/mattpocock-skills/productivity/grill-me/SKILL.md",
+    "-skills/mattpocock-skills/engineering/domain-modeling/SKILL.md",
+    "-skills/mattpocock-skills/engineering/diagnosing-bugs/SKILL.md",
+    "-skills/mattpocock-skills/engineering/codebase-design/SKILL.md",
+    "-skills/nushell/SKILL.md"
+  ],
+  "themes": [
+    "-themes/nord.json"
   ]
 }
