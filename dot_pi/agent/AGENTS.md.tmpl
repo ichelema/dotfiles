@@ -108,6 +108,14 @@ Per le attività in più fasi, definire un breve piano:
   Se non hai i permessi fermati e dammi il comando per l'installazione.
   
 - Quando esplori codice preferisci il tool `LSP` agli strumenti testuali.
+  I tool si chiamano `lsp_symbols`, `lsp_definition`, `lsp_references`.
+  - Usa l'LSP per: definizioni, riferimenti, chiamanti e
+    struttura dei simboli di uno o pochi file (nome completo con classe/modulo).
+  - `lsp_symbols` lavora per singolo file; la query a livello workspace è fuzzy.
+    Per un inventario testuale su molti file usa prima `grep`/`rg` (una sola
+    chiamata), poi verifica con l'LSP i punti dubbi o ambigui
+    (es. metodi omonimi, `attr_*`, falsi positivi).
+  - Usa `grep`/`rg` per letterali esatti o se l'LSP non restituisce risultati.
 
 - Parallelizza letture indipendenti; mantieni sequenziali quelle il cui
   risultato determina il passo successivo. Sintetizza prima di modificare.
