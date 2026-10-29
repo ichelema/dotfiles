@@ -1,5 +1,8 @@
 {
   "defaultThinkingLevel": "medium",
+  "defaultTools": [
+    "+tool_search"
+  ],
   "editorPaddingX": 1,
   "enableInstallTelemetry": false,
   "extensions": [
