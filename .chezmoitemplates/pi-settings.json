@@ -1,7 +1,8 @@
 {
   "defaultThinkingLevel": "medium",
   "defaultTools": [
-    "+tool_search"
+    "+tool_search",
+    "+codemode"
   ],
   "editorPaddingX": 1,
   "enableInstallTelemetry": false,
