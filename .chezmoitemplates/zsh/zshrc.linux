@@ -166,7 +166,9 @@ function load_zsh_plugins {
 
     local desired_plugins=(
         git
+{{- if not (index . "vps") }}
         vi-mode
+{{- end }}
         fzf
         extract
         colored-man-pages
