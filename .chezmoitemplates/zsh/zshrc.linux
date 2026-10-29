@@ -228,6 +228,7 @@ autoload -Uz y
 autoload -Uz rg
 autoload -Uz zeshij
 autoload -Uz spf
+autoload -Uz q
 
 #  ╔═╗╦  ╦╔═╗╔═╗
 #  ╠═╣║  ║╠═╣╚═╗
@@ -285,6 +286,9 @@ alias ffe='_fuzzy_edit_search_file'
 
 # Show space disk
 alias df='_df'
+
+# Domanda veloce a Claude Haiku
+alias q='noglob q'   # così "?" e "*" nella domanda non vengono espansi da zsh
 
 # Better Rg: funzione autoload in functions/rg (niente _rg: oscurava la completion di ripgrep)
 
