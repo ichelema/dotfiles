@@ -16,7 +16,11 @@ Colored markdown for Claude Code replies: **bold**, *italic*, ~~struck~~, \`inli
 
 Paths like ~/src/app.ts, ./README.md and /tmp/app.ts open on click in a terminal that draws hyperlinks, and so does a local link that shows its own path, like [/tmp/notes.md](file:///tmp/notes.md), while slash commands like /config stay text. A local link with any other name, like [notes](file:///tmp/notes.md), draws as its name and target, so it cannot hide where a click goes.
 
+Paths written without ./, like docs/guide/ or src/app.ts:42, and Windows paths like C:\\work\\plan.md link too, once a check finds them on disk; prose like and/or stays text.
+
 Programs and launchers stay plain text, so a click never runs one: ./install.sh, ~/Desktop/setup.command and /Applications/Calculator.app keep the path color without a link.
+
+Obsidian links that open a note open on click, like [a note](obsidian://open?vault=notes&file=todo), while one that writes, like [a new note](obsidian://new?vault=notes&name=x&content=y), and other app links like [diagnostics](ms-msdt:/id) stay text.
 
 Code-shaped prose stays as written: f(*args, **kwargs), a link with parentheses [Foo_(bar)](https://en.wikipedia.org/wiki/Foo_(bar)), a file link [\`render.tsx\`](https://github.com/NahumLitvin/prismantis/blob/main/hooks/render.tsx) and **bold with *italic* inside**.
 
@@ -27,7 +31,7 @@ Code-shaped prose stays as written: f(*args, **kwargs), a link with parentheses 
 | \`/prismantis\` | This screen |
 | \`/prismantis theme <name>\` | Switch theme on the spot (\`/prismantis <name>\` works too), \`random\` for a new dark one now and each time the mod loads |
 | \`/prismantis copy\` | Copy the last reply, or \`copy code\` for its last code block |
-| \`/prismantis setup\` | Pick a theme and how tables, tasks, headings, copy buttons, prompts, times, tool rows, tool output, diffs and pie charts look, from drawn samples |
+| \`/prismantis setup\` | Pick a theme and how tables, tasks, headings, copy buttons, prompts, replies, times, tool rows, tool output, diffs and pie charts look, from drawn samples |
 | \`/config\` | Edit any option |
 
 > [!NOTE]
@@ -53,7 +57,7 @@ Code-shaped prose stays as written: f(*args, **kwargs), a link with parentheses 
 
 ### Copy tables
 
-Use \`⧉ md\` for Markdown, \`⧉ art\` for chat, or \`⧉ html\` for a formatted table. \`⧉ html\` shows in a local macOS, Linux or Windows terminal and writes HTML and tab-separated plain text together; Linux needs CopyQ running. Pasted into Slack it makes a native table; Slack keeps cell text but drops bold, links and alignment. If that fails, it copies the plain text alone. Set \`copyButtonStyle\` to \`hover\` in \`/config\` and each block shows a dim ⧉ instead: point at it for its buttons.
+Use \`⧉ md\` for Markdown, \`⧉ art\` for chat, or \`⧉ html\` for a formatted table. \`⧉ html\` shows in a local macOS, Linux or Windows terminal and writes HTML and tab-separated plain text together; Linux needs CopyQ running. Pasted into Slack it makes a native table; Slack keeps cell text but drops bold, links and alignment. If that fails, it copies the plain text alone. \`▣ png\` puts a picture of the drawn table, diagram or chart on the clipboard in the theme's colors, ready to paste into Slack, docs or slides; it shows in a local macOS or Windows terminal. Set \`copyButtonStyle\` to \`hover\` in \`/config\` and each block shows a dim ⧉ instead: point at it for its buttons.
 
 | Item | Quantity[^count] | Status |
 |:-----|---------:|:------:|
@@ -82,7 +86,7 @@ Use \`⧉ md\` for Markdown, \`⧉ art\` for chat, or \`⧉ html\` for a formatt
 
 ### Your prompts
 
-Scroll up: what you typed draws in a bubble. \`promptStyle\` switches to \`bar\`, \`chevron\`, \`framed\` or \`off\` in \`/config\`. Set \`clock\` to \`24h\` or \`12h\` and each prompt shows when you sent it, and each turn's last line when it finished. A paste of 4 lines or more draws in a double frame of its own, folded to one button that opens it as highlighted code.
+Scroll up: what you typed sits on the right under \`You ⬤\` and Claude's replies on the left under \`⬤ Claude\`, each in a bubble of its own, like a chat app. \`promptStyle\` switches to \`wide\`, \`bar\`, \`chevron\`, \`framed\` or \`off\` in \`/config\`, which also brings back the dot before Claude's replies; \`replyStyle\` picks \`solid\`, \`framed\` or \`off\` for Claude's side. Set \`clock\` to \`24h\` or \`12h\` and each prompt shows when you sent it, and each turn's last line when it finished. A paste of 4 lines or more draws in a double frame of its own, folded to one button that opens it as highlighted code.
 
 ### Tool rows
 
@@ -211,7 +215,7 @@ xychart-beta
     line "west" [12, 18, 25, 20, 14]
 \`\`\`
 
-A pie draws round with a legend. Set \`pieStyle\` to \`bars\` in \`/config\` for one bar per slice:
+A pie draws round with a legend, as a smooth picture in kitty and Ghostty. Set \`pieStyle\` to \`bars\` in \`/config\` for one bar per slice:
 
 \`\`\`mermaid
 pie showData title Time per reply stage
@@ -267,7 +271,7 @@ export const helpText = (themes: readonly string[]): string => `
 |---------|------|
 | \`/prismantis theme <name>\` | Switch theme on the spot (\`/prismantis <name>\` works too), \`random\` for a new dark one now and each time the mod loads |
 | \`/prismantis copy\` | Copy the last reply, or \`copy code\` for its last code block |
-| \`/prismantis setup\` | Pick a theme and how tables, tasks, headings, copy buttons, prompts, times, tool rows, tool output, diffs and pie charts look, from drawn samples |
+| \`/prismantis setup\` | Pick a theme and how tables, tasks, headings, copy buttons, prompts, replies, times, tool rows, tool output, diffs and pie charts look, from drawn samples |
 | \`/prismantis demo\` | Full showcase, every element and diagram, plus a section in your language (Korean so far, or \`demo ko\`) |
 | \`/prismantis demo-rtl\` | Hebrew right-to-left showcase |
 
@@ -285,7 +289,7 @@ Docs and issues: https://github.com/NahumLitvin/prismantis
 ### Task lists
 
 - [x] Tables, diagrams and charts drawn in the terminal
-- [x] Copy tables as Markdown, art or HTML (macOS/Linux)
+- [x] Copy tables as Markdown, art or HTML (macOS/Linux), and tables, diagrams and charts as a PNG image (macOS/Windows)
 - [ ] Pick a \`taskStyle\` in \`/config\`: checks, ticks, box or progress
 
 \`\`\`mermaid
@@ -335,6 +339,10 @@ export const rtlShowcaseText = (): string => `
 ls -la # רשימת הקבצים בתיקייה
 \`\`\`
 
+\`\`\`text
+טיוטה להודעה: הגרסה עלתה ב-14:20
+\`\`\`
+
 \`\`\`mermaid
 flowchart LR
   A[בקשה חדשה] --> B{האם יש cache?}
@@ -376,7 +384,7 @@ flowchart LR
 
 export const languageShowcase = (lang: string): string => (/^ko/i.test(lang) ? KOREAN_SHOWCASE : '')
 
-export type SetupStep = { name: string; key: 'theme' | 'tableStyle' | 'taskStyle' | 'headingStyle' | 'copyButtonStyle' | 'promptStyle' | 'clock' | 'toolStyle' | 'toolOutput' | 'diffStyle' | 'pieStyle'; title: string; note: string; options: readonly string[]; sample: string }
+export type SetupStep = { name: string; key: 'theme' | 'tableStyle' | 'taskStyle' | 'headingStyle' | 'copyButtonStyle' | 'promptStyle' | 'replyStyle' | 'clock' | 'toolStyle' | 'toolOutput' | 'diffStyle' | 'pieStyle'; title: string; note: string; options: readonly string[]; sample: string }
 
 export const setupSteps = (themes: readonly string[]): SetupStep[] => [
   { name: 'theme', key: 'theme', title: 'Theme', note: 'Each theme draws the same line. `random` picks a new dark one each time the mod loads.', options: themes, sample: '**Bold**, `inline code`, 250ms and ~/src/app.ts.' },
@@ -384,12 +392,13 @@ export const setupSteps = (themes: readonly string[]): SetupStep[] => [
   { name: 'tasks', key: 'taskStyle', title: 'Tasks', note: 'How `- [ ]` and `- [x]` items draw.', options: ['checks', 'ticks', 'box', 'progress'], sample: '- [x] Parse the reply\n- [x] Draw it\n- [ ] Ship it' },
   { name: 'headings', key: 'headingStyle', title: 'Headings', note: 'How `#` and `##` headings draw. Terminals have one font size, so headings stand out through style and color.', options: ['banner', 'bold', 'underline', 'uppercase'], sample: '# Release notes\n\n## Fixes\n\nTables keep their width.' },
   { name: 'copy', key: 'copyButtonStyle', title: 'Copy buttons', note: 'Where the copy buttons on tables, code, diagrams and replies sit. `inline` shows them beside or above each block. `hover` puts a dim ⧉ beside each block instead and shows its buttons only while the pointer is on that ⧉, so they take no line; ctrl+x tab does not reach a hidden one, and the mobile app draws them inline. Needs `copyButtons` on.', options: ['inline', 'hover'], sample: '' },
-  { name: 'prompts', key: 'promptStyle', title: 'Your prompts', note: 'How what you type draws in the transcript. `off` keeps Claude Code\'s own look.', options: ['bubble', 'bar', 'chevron', 'off', 'framed'], sample: '' },
+  { name: 'prompts', key: 'promptStyle', title: 'Your prompts', note: 'How what you type draws in the transcript. `bubble` puts it on the right like a chat app, under `You ⬤`, and Claude\'s replies in a bubble of their own. The other styles keep Claude\'s replies as they were. `off` keeps Claude Code\'s own look.', options: ['bubble', 'wide', 'bar', 'chevron', 'off', 'framed'], sample: '' },
+  { name: 'replies', key: 'replyStyle', title: 'Claude\'s replies', note: 'How Claude\'s replies draw in the transcript. `auto` draws them as `bubble` while your prompts are a `bubble`, so the transcript reads as a chat, and as `off` with any other prompt style. `bubble` puts each one under `⬤ Claude` in a rounded frame of Claude\'s orange on a fill a step off the background, `solid` fills it to the edge with no frame, `framed` keeps the frame with no fill. A reply that calls tools between its sentences draws one bubble per block of text. `off` keeps a dot before the first line.', options: ['auto', 'bubble', 'solid', 'framed', 'off'], sample: '' },
   { name: 'clock', key: 'clock', title: 'Times', note: 'Whether your prompts show when you sent them and the line that closes each turn when it finished. A time from another day gets its date.', options: ['off', '24h', '12h'], sample: '' },
   { name: 'tools', key: 'toolStyle', title: 'Tool rows', note: 'How tool rows sit next to Claude\'s sentences. Sharing sessions as screenshots? `chat` and `tree-dim` draw tool rows in dim gray, the first thing to blur when an image gets resized, so pick `tree-bold` or `classic`.', options: ['chat', 'tree-dim', 'tree-bold', 'classic', 'folded', 'hide'], sample: '' },
   { name: 'output', key: 'toolOutput', title: 'Tool output', note: 'How much of a tool call shows. `full` keeps Claude Code\'s own results under each row. `quiet` names a shell call by what it does and shows a failure\'s last real line instead of its whole output; it also shows reads, searches and listings as their row only and drops approval lines. Edits keep their diff either way. Needs `toolRows` on.', options: ['full', 'quiet'], sample: '' },
   { name: 'diffs', key: 'diffStyle', title: 'Diffs', note: 'How an edit or a new file draws under its row. `card` frames the lines in a rounded box, `full` drops the box and tints each changed line across the width, `marks` drops the tint and colors only the `+` and `−` marks, `bar` puts a colored `▌` before each changed line. Every look highlights the code and the words that changed. Needs `toolRows` on.', options: ['card', 'full', 'marks', 'bar'], sample: '' },
-  { name: 'pies', key: 'pieStyle', title: 'Pie charts', note: 'How mermaid `pie` charts draw. `round` falls back to bars in ascii mode, with more slices than the theme has distinct colors (mono always) or in a narrow terminal.', options: ['round', 'bars'], sample: '```mermaid\npie title Time per reply stage\n    "Draw" : 9\n    "Paint" : 5\n    "Parse" : 3\n```' },
+  { name: 'pies', key: 'pieStyle', title: 'Pie charts', note: 'How mermaid `pie` charts draw. `round` draws a smooth picture in kitty and Ghostty and text elsewhere, and falls back to bars in ascii mode, with more slices than the theme has distinct colors (mono always) or in a narrow terminal.', options: ['round', 'bars'], sample: '```mermaid\npie title Time per reply stage\n    "Draw" : 9\n    "Paint" : 5\n    "Parse" : 3\n```' },
 ]
 
 export type SetupParts = { head: string; options: { value: string; text: string }[]; tail: string }

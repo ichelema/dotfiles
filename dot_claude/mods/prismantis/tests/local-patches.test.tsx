@@ -115,21 +115,15 @@ test('setup: framed and folded are steps too, each sample drawn in its own style
   const mount = async (at: number) =>
     $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'CommandOutput', props: { command: 'prismantis', args: 'setup', text: `Tables set to box.\n\n${setupText(setupParts(PRESET_NAMES, at))}`, isErrored: false }, viewport: { columns: 100, rows: 40 } })
   const prompts = await mount(5)
-  expect(setupParts(PRESET_NAMES, 5).options.map(o => o.value)).toEqual(['bubble', 'bar', 'chevron', 'off', 'framed'])
-  expect(await prompts.findAll({ type: 'Text', text: /fix the failing test/ })).toHaveLength(5)
+  expect(setupParts(PRESET_NAMES, 5).options.map(o => o.value)).toEqual(['bubble', 'wide', 'bar', 'chevron', 'off', 'framed'])
+  expect(await prompts.findAll({ type: 'Text', text: /fix the failing test/ })).toHaveLength(6)
   expect(await prompts.find({ type: 'Text', text: /^⠀⡖⣶⣶⢲⠀$/ })).toBeTruthy()
   await prompts.unmount()
-  const tools = await mount(7)
-  expect(setupParts(PRESET_NAMES, 7).options.map(o => o.value)).toEqual(['chat', 'tree-dim', 'tree-bold', 'classic', 'folded', 'hide'])
+  const tools = await mount(8)
+  expect(setupParts(PRESET_NAMES, 8).options.map(o => o.value)).toEqual(['chat', 'tree-dim', 'tree-bold', 'classic', 'folded', 'hide'])
   expect(await tools.find({ type: 'Text', text: /⎿/ })).toBeTruthy()
   expect(await tools.findAll({ type: 'Text', text: /^Read$/ })).toHaveLength(5)
   await tools.unmount()
-})
-
-test('bubble: the prompt bubble takes the full width', async $ => {
-  const ui = await $.ui.mount({ plugin: 'prismantis', component: 'UserMessage', props: { text: 'ciao', origin: { kind: 'composer' } as never, isExpanded: true }, viewport: { columns: 80, rows: 10 }, surface: 'terminal' })
-  expect((await ui.findAll({ type: 'Box' })).find(b => b.props.borderStyle === 'round')?.props.width).toBe('100%')
-  await ui.unmount()
 })
 
 test('diagramHints: the hint goes with the first prompt only', async ($, on) => {

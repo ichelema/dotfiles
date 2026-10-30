@@ -19,16 +19,16 @@
   <a href="docs/CHANGELOG.md">Changelog</a>
 </p>
 
-![Plain Claude Code replies wiping into prismantis: a table, a bar chart and a mermaid flowchart](docs/tour.gif)
+![Plain Claude Code replies wiping into prismantis: the chat layout, a table and a line chart](docs/tour.gif)
 
-<sub>Same prompt, same model: plain Claude Code, then with prismantis. <a href="https://github.com/user-attachments/assets/7f4744fc-ca52-4ea3-adb3-43467190dc62">▶ Watch the full 44-second tour</a> (tables, charts, diagrams, diffs, callouts, right-to-left text).</sub>
+<sub>Same prompt, same model: plain Claude Code, then with prismantis. <a href="https://github.com/user-attachments/assets/6a7f627c-3270-46f5-8a9d-2703fc4b9f50">▶ Watch the full 49-second tour</a> (chat layout, tables, charts, diagrams, pie charts, diffs, callouts).</sub>
 
 ## TL;DR
 
 - Claude Code prints mermaid as source and tool calls as walls of text. prismantis draws them: real charts and flowcharts, typeset LaTeX math in kitty and Ghostty, colored tables and code, and quiet tool rows.
-- 15 palettes plus `mono`, and copy buttons on everything.
+- 16 palettes plus `mono`, and copy buttons on everything.
 - Two commands to install, `/plugin` to turn it off. Claude Code's own renderer comes back the moment you do.
-- No network calls. It runs a program only when you click `⧉ html` (the clipboard helper) or turn on LaTeX (RaTeX's renderer).
+- No network calls. It runs a program only when you click `⧉ html` or `▣ png` (the clipboard helper) or turn on LaTeX (RaTeX's renderer).
 
 ```
 /plugin marketplace add NahumLitvin/prismantis
@@ -66,31 +66,31 @@ prismantis also runs in Codex, with themes for code, tables and diagrams and the
 
 | Feature | What you get |
 | --- | --- |
-| [Themes](#themes) | `/prismantis theme <name>` switches on the spot. 16 themes and 20 color slots you can override |
+| [Themes](#themes) | `/prismantis theme <name>` switches on the spot. 17 themes and 20 color slots you can override |
 | [Tables](#tables) | colored headers, rules, column alignment, colored numbers, sized to the terminal |
 | [Code](#code) | a language header and copy button, Prism highlighting in two dozen languages, shell lines colored like a prompt |
 | [Diagrams and charts](#diagrams-and-charts) | flowcharts, sequence, state, class and ER diagrams, bar and line charts, one color per box, participant and bar |
 | [Figures](#figures) | ` ```figure ` text pictures drawn as written in the theme's colors, for timelines, layouts and before and after; glyphs and markup checked before they are drawn |
 | [LaTeX math](#latex-math) | `$$` and ` ```math ` formulas typeset as images in kitty and Ghostty by [RaTeX](https://github.com/erweixin/RaTeX), text everywhere else |
 | [Layout](#layout) | back-to-back tables and diagrams sit side by side and wrap on narrow terminals |
-| [Copy buttons](#copy-buttons) | `⧉ md`, `⧉ art` and `⧉ html` on tables, `[ ⧉ copy ]` on code, lists and quotes, `/prismantis copy` without a mouse |
+| [Copy buttons](#copy-buttons) | `⧉ md`, `⧉ art`, `⧉ html` and `▣ png` on tables, `[ ⧉ copy ]` on code, lists and quotes, `/prismantis copy` without a mouse |
 | [Tool rows](#tool-rows) | `Ran gh pr view 12`, `Read ~/src/app.ts`, groups summed up as `Ran 3 commands, read 2 files`, with status dots; `toolOutput: quiet` hides what Claude only read and says in plain words what each call did |
 | [Turn footer](#turn-footer) | `✻ Baked for 6m 20s` with the duration in the number color |
 | [Slash commands](#slash-commands) | command output (`/cost`, `/context`, plugin commands) gets the same tables and code styling |
 | [Diagram hints](#diagram-hints) | a short model-only note on each prompt so Claude reaches for diagrams, charts and figures when they help, and builds explaining replies around the pictures |
 | [Text](#text) | bold, italic, strikethrough, inline code, links, versions, durations, percentages and clickable paths in their own colors |
 | [Headings, lists, quotes](#headings-lists-quotes) | 4 heading styles, nested lists, task lists, quotes with an accent bar |
-| [Your prompts](#your-prompts) | what you type draws in a bubble, an accent bar or a chevron, so you find your turns when you scroll back, and `clock` adds when you sent it and when the turn finished |
+| [Your prompts](#your-prompts) | yours on the right and Claude's on the left, each in a bubble like a chat app, or an accent bar or a chevron, so you find your turns when you scroll back, and `clock` adds when you sent it and when the turn finished |
 | [Right to left](#right-to-left) | Hebrew and Arabic read right to left, with bullets, quote bars and table columns mirrored |
 | [Other mods](#other-mods) | `$.prismantis.markdown` draws any markdown the way replies are drawn, for mod authors |
 
 ### Themes
 
-![The same reply in all 15 color themes, ten dark and five light: a tip box, a task list, a flowchart and a bar chart](docs/themes.png)
+![The same reply in all 16 color themes, eleven dark and five light: a tip box, a task list, a flowchart and a bar chart](docs/themes.png)
 
 ![Random theme: plain Claude Code on the left, prismantis with theme random on the right](docs/compare/random-theme.png)
 
-Dark: `catppuccin-mocha` (default), `dracula`, `nord`, `tokyo-night`, `gruvbox-dark`, `rose-pine`, `everforest`, `github-dark`, `one-dark`, `solarized-dark`.
+Dark: `catppuccin-mocha` (default), `dracula`, `nord`, `tokyo-night`, `gruvbox-dark`, `rose-pine`, `everforest`, `github-dark`, `one-dark`, `solarized-dark`, `neon`.
 
 Light: `catppuccin-latte`, `gruvbox-light`, `rose-pine-dawn`, `github-light`, `solarized-light`.
 
@@ -125,12 +125,12 @@ Code blocks tagged `mermaid` draw as colored text art:
 
 - flowcharts (`graph LR`, `graph TD`, decisions), sequence, state, class and ER diagrams
 - bar and line charts with `xychart-beta`, sized to the terminal width
-- `pie` charts as a circle with a colored legend, largest slice first, and `gantt` schedules as bars on a shared date or time axis, starting on a half cell and ending on an eighth so close durations draw apart
+- `pie` charts as a circle with a colored legend, largest slice first, drawn as a smooth picture in kitty and Ghostty, and `gantt` schedules as bars on a shared date or time axis, starting on a half cell and ending on an eighth so close durations draw apart
 - each box and participant gets its own theme color, the same at both ends of a sequence diagram
 - bars in a multi-series chart get their own colors; a single-series chart prints each value above its bar and colors the tallest one
 - gridlines stay dim, axis numbers use the number color
 
-`pieStyle` picks how a pie draws. `round` falls back to bars in ascii mode, with more slices than the theme has distinct colors (mono always) or in a narrow terminal:
+`pieStyle` picks how a pie draws. `round` draws the circle as a smooth picture in kitty and Ghostty, outside tmux, and as text elsewhere; `⧉ art` still copies the text circle. It falls back to bars in ascii mode, with more slices than the theme has distinct colors (mono always) or in a narrow terminal:
 
 | `round` (default) | `bars` |
 |---|---|
@@ -203,6 +203,7 @@ When tables, diagrams and figures follow each other, they share a row and wrap o
 - **Tables:** `⧉ md` copies the original Markdown and `⧉ art` a boxed table that pastes well into Slack. `⧉ html` copies a formatted table (headers, alignment, inline formatting) plus a tab-separated plain-text copy.
 - **Code, lists and quotes:** `[ ⧉ copy ]` on each. Code copies without its fences, lists as markdown, quotes without their `> ` markers.
 - **Diagrams and figures:** `⧉ source` copies the mermaid or figure source, `⧉ art` the drawn art.
+- **As an image:** `▣ png` on tables, diagrams and figures puts a PNG of the drawn art on the clipboard, monospace in the theme's text and background colors, ready to paste into Slack, docs or slides. It shows in a local macOS or Windows terminal and draws with the OS's own fonts (`osascript` on macOS, `powershell.exe` on Windows), so it needs nothing installed. If that fails, it copies the drawn text and the toast says why.
 - **Whole replies:** replies with more than one block, or any Hebrew or Arabic, end with `⧉ copy reply`, which copies the reply as Claude wrote it. Selecting right-to-left text on screen copies letters in drawn order, not reading order.
 - **No mouse:** `/prismantis copy` copies the last reply, `/prismantis copy code` its last code block.
 
@@ -270,6 +271,10 @@ The note costs about 630 tokens per prompt: about 275 for the main part and abou
 
 Paths open their file or folder on click, as do `file://` links that show their own path, from Claude Code 2.1.289 on. A path that starts with `~/`, `./` or `../` links to its file, with `~` read as your home folder and `./` from the session's project folder. A path that starts with `/` links once it has two parts, like `/tmp/app.ts`, so a slash command like `/config` stays text, and so does a top folder like `/tmp`. A `:12` after a path stays text. The files in tool rows of Claude Code's own file tools (Read, Edit, MultiEdit, Write, NotebookEdit, Grep, Glob) and the headers of shell-edit diff cards link too, a one-part path like `/etc` included, to the whole path even where the row shortens it. A `file://` link shows its own path when its text, apart from trailing punctuation, is the link itself or the path the link opens: `/tmp/a.md`, `C:\Users\me\a.md` and `\\server\share\a.md` as written, or a `~/`, `./` or `../` path read as above. A link with any other text, such as `[the docs](file:///tmp/setup.command)`, draws as `the docs (file:///tmp/setup.command)` in plain text, so a reply cannot hide what a click opens behind a harmless name. Under WSL the link goes through `wsl.localhost`, so Windows Terminal opens the file from the Linux side; a Linux terminal under WSLg (GNOME Terminal, Konsole, kitty) gets plain `file:///` links, which it opens itself. Paths link only in a terminal that draws hyperlinks, judged the way Claude Code judges it (`FORCE_HYPERLINK`, Windows Terminal, iTerm2, WezTerm, kitty, Ghostty, VS Code 1.72 and later, and others), so a terminal without them never shows a URL after each path. In a session over SSH (`SSH_CONNECTION` or `SSH_TTY` set) paths and `file://` links stay text, since a file link would open a file on the computer the terminal runs on rather than the one Claude Code runs on. A link longer than the 2048 characters Claude Code draws stays text too. Paths in inline code stay plain, and the desktop app draws paths and `file://` links as before.
 
+Links that open a file in an editor are clickable from Claude Code 2.1.294 on: `vscode://file/…`, `vscode-insiders://file/…`, `cursor://file/…`, `windsurf://file/…` and `zed://file/…`, with an optional `:line` or `:line:column`. Other links of these editors stay text, the label then the target, since they reach extensions or actions such as cloning a repository or opening settings.
+
+Obsidian links that open a note, `obsidian://open` and `obsidian:///path`, open Obsidian on click from Claude Code 2.1.294 on, outside fullscreen mode, where the terminal opens the click. In fullscreen mode Claude Code opens the click itself and refuses `obsidian:`, so these links stay text there. One that carries `append` or `prepend` or targets a file Obsidian would hand to another app, such as a `.app` or `.command`, any other Obsidian action such as `new` or a plugin's `adv-uri`, and links to any other app stay text, so a click cannot write a note or run a command.
+
 Programs and launchers never link, so a click on one cannot run it. A path, a tool row's file or a `file://` link whose last name ends in one of these extensions stays text, a path in the path color and a `file://` link as its text and target, and so does anything inside an `.app` bundle: on macOS `.app`, `.command`, `.tool`, `.terminal`, `.pkg`, `.mpkg`, `.mobileconfig`, `.prefPane`, `.workflow`, `.action`, `.fileloc`, `.inetloc` and `.webloc`; on Windows `.exe`, `.com`, `.scr`, `.pif`, `.cpl`, `.msi`, `.msp`, `.msu`, `.msix`, `.msixbundle`, `.appx`, `.appxbundle`, `.appinstaller`, `.application`, `.appref-ms`, `.vsix`, `.bat`, `.cmd`, `.ps1`, `.psc1`, `.vbs`, `.vbe`, `.js`, `.jse`, `.wsf`, `.wsh`, `.wsc`, `.hta`, `.chm`, `.msc`, `.reg`, `.xll`, `.wsb`, `.diagcab`, `.ahk`, `.au3`, `.lnk`, `.url`, `.scf` and `.settingcontent-ms`; on Linux `.desktop`, `.sh`, `.bash`, `.zsh`, `.csh`, `.ksh`, `.run`, `.AppImage`, `.deb`, `.rpm`, `.snap`, `.flatpak` and `.flatpakref`; and anywhere `.jar`, `.jnlp`, `.py`, `.pyw`, `.pyz`, `.pyzw`, `.pyc`, `.pl`, `.rb` and `.rbw`. Case does not matter, and neither does a trailing slash, a `?query` or `#fragment`, percent-encoding, trailing dots or spaces, or an NTFS `:stream` after the name. So `.js`, `.sh` and `.py` files in a reply or a tool row do not open on click. The check reads names only: a program without one of these extensions, such as a Unix executable with no extension, still links, and an `.html` file still opens in the browser, scripts and all.
 
 Footnotes draw as superscript marks, with the notes under a dim rule at the end of the reply. Click a mark, in a sentence, a list, a quote or a table cell, to see its note in a toast. Point at a note to light every mark that cites it, or at a mark to light its note. Clicks and pointing work where the terminal passes the mouse through, as fullscreen mode does, and in the desktop app. They need Claude Code 2.1.295 or later; earlier versions draw the marks as before.
@@ -295,11 +300,11 @@ Task lists draw as `[ ]` and `[✓]`, with done items dimmed and struck through.
 
 ![Your prompts: plain Claude Code on the left, prismantis on the right](docs/compare/prompts.png)
 
-What you type, at the prompt or through Remote Control, draws in the theme's colors. `promptStyle` picks the look, and `off` keeps Claude Code's own. Task notifications and teammate messages are left alone.
+What you type, at the prompt or through Remote Control, draws in the theme's colors. `promptStyle` picks the look, and `off` keeps Claude Code's own. `bubble` draws it on the right like a chat app, as wide as its longest line and at most three quarters of the window, under `You ⬤`, in a rounded frame of the theme's green on a deep green fill, a pale one in a light theme, and Claude's replies in a bubble of their own. The other styles keep Claude's replies as they were. `promptFillColor` and `replyFillColor` change the two fills. Task notifications and teammate messages are left alone.
 
-| `bubble` (default) | `bar` | `chevron` |
-|---|---|---|
-| ![a prompt in a rounded box](docs/prompts/bubble.png) | ![a prompt with an accent bar](docs/prompts/bar.png) | ![a prompt with a bold chevron](docs/prompts/chevron.png) |
+| `bubble` (default) | `wide` | `bar` | `chevron` |
+|---|---|---|---|
+| ![your prompt on the right under You in a green bubble, Claude's reply on the left under Claude in an orange one](docs/prompts/bubble.png) | ![a prompt in a rounded box across the full width](docs/prompts/wide.png) | ![a prompt with an accent bar](docs/prompts/bar.png) | ![a prompt with a bold chevron](docs/prompts/chevron.png) |
 
 `clock` adds the time: each prompt shows when you sent it, and the line that closes each turn when it finished (`✻ Baked for 1m 55s · 14:32`). It reads `24h` or `12h`, and a time from another day gets its date. With `promptStyle: off` the time goes in front of Claude Code's own prompt row. Off by default.
 
@@ -307,6 +312,12 @@ What you type, at the prompt or through Remote Control, draws in the theme's col
 |---|---|---|
 | `24h` | ![a prompt bubble that starts with the time it was sent](docs/clock/prompt.png) | ![a turn line that ends with the time it finished](docs/clock/turn.png) |
 | `12h` | ![a prompt bubble that starts with 5:45 PM](docs/clock/prompt-12h.png) | ![a turn line that ends with 5:45 PM](docs/clock/turn-12h.png) |
+
+`replyStyle` does the same for Claude's replies, so the two sides of the conversation read apart at a glance. Its default, `auto`, draws them as `bubble` while your prompts are a `bubble` and as `off` with any other `promptStyle`. `bubble` heads a reply with `⬤ Claude` and draws it in a rounded frame of Claude's orange, as Claude Code's theme draws it, on a midnight blue fill a step off the background, `solid` fills it to the edge with half blocks top and bottom and no frame, `framed` keeps the frame with no fill. A reply that calls tools between its sentences draws one bubble per block of text, and only the first gets `⬤ Claude`. In a theme with no colors to fill with, such as `mono`, `solid` draws the frame. `off` keeps the dot before the first line.
+
+| `bubble` (with `auto`) | `solid` | `framed` |
+|---|---|---|
+| ![Claude's reply under Claude in an orange frame on a filled background](docs/prompts/bubble.png) | ![Claude's reply on a filled background with no frame](docs/prompts/reply-solid.png) | ![Claude's reply in an orange frame with no fill](docs/prompts/reply-framed.png) |
 
 ### Right to left
 
@@ -342,7 +353,8 @@ Options sit under `options`, keyed by the plugin's install name. Project setting
 | `theme` | see [Themes](#themes), or `random` for a new dark color preset each time the mod loads | `catppuccin-mocha` |
 | `tableStyle` | `box`, `rules`, `grid`, `minimal` | `box` |
 | `taskStyle` | `checks` (`[ ]` `[✓]`, done struck through), `ticks` (`○` `✓`), `box` (`□` `✓`), `progress` (ticks with a done-count bar) | `checks` |
-| `promptStyle` | `bubble`, `bar`, `chevron`, `off` | `bubble` |
+| `promptStyle` | `bubble`, `wide`, `bar`, `chevron`, `off` | `bubble` |
+| `replyStyle` | `auto` (`bubble` while `promptStyle` is `bubble`, else `off`), `bubble`, `solid`, `framed`, `off` | `auto` |
 | `clock` | `off`, `24h`, `12h` | `off` |
 | `headingStyle` | `banner`, `bold`, `underline`, `uppercase` | `banner` |
 | `highlightNumbers` | `true`, `false` | `true` |
@@ -386,6 +398,8 @@ A color is hex (`#a6e3a1`, `#fc0`), `rgb(166,227,161)`, `ansi256(114)` or a name
 | `diagramText` | diagram labels, LaTeX formulas and figure text |
 | `diffAdded` | added diff lines: their tint, `+` marks and count (the theme's own green) |
 | `diffRemoved` | removed diff lines: their tint, `−` marks and count (the theme's own red) |
+| `promptFill` | the fill behind your prompts with `promptStyle: bubble` (a deep shade of the theme's green, a pale one in a light theme) |
+| `replyFill` | the fill behind Claude's replies with `replyStyle: bubble` or `solid` (a midnight blue a step off the background, a pale one in a light theme) |
 
 ## Troubleshooting
 
@@ -411,7 +425,7 @@ To change the code, read [AGENTS.md](AGENTS.md) instead.
 - **What it is:** a Claude Code mod (function hooks in TypeScript) that redraws assistant replies, slash-command output, tool rows, the turn footer and user prompts. It changes how things look, and with `diagramHints` on (the default) it also asks Claude to build a reply around pictures when they make it easier to grasp, with the core on the first screen as a picture or a sentence. The one thing it sends the model is the optional diagram hint below.
 - **Install:** `/plugin marketplace add NahumLitvin/prismantis`, then `/plugin install prismantis@prismantis`. Needs Claude Code 2.1.287+. Changes apply after `/reload`.
 - **Configure:** `/prismantis theme <name>` and `/prismantis setup` set options at runtime. Every option is a key under `pluginConfigs["prismantis@prismantis"].options` in `~/.claude/settings.json` (or a row in `/config`), then `/reload`. Options and defaults are in the [Configure](#configure) table; the machine-readable source is `userConfig` in [.claude-plugin/plugin.json](.claude-plugin/plugin.json). Color values that don't parse are ignored.
-- **Side effects:** no network. Programs it runs: the `⧉ html` clipboard helper (`/usr/bin/osascript` on macOS, `copyq` on Linux, 5 second timeout, only on a click), and `ratex-render` while `latex` is on. With `diagramHints` on, it adds about 630 tokens of model-only context (about 710 while `latex` is on) to each prompt you type and each prompt another plugin sends, as broken down under [Diagram hints](#diagram-hints).
+- **Side effects:** no network. Programs it runs: the `⧉ html` and `▣ png` clipboard helper (`/usr/bin/osascript` on macOS, `powershell.exe` on Windows, `copyq` on Linux for `⧉ html` only, 5 second timeout, 15 on Windows, only on a click), and `ratex-render` while `latex` is on. With `diagramHints` on, it adds about 630 tokens of model-only context (about 710 while `latex` is on) to each prompt you type and each prompt another plugin sends, as broken down under [Diagram hints](#diagram-hints).
 - **Turning it off:** `"enabled": false`, or disable the plugin in `/plugin`.
 - **For other mods:** `$.prismantis.markdown({ surface, text, columns })`, typed in [types/index.d.ts](types/index.d.ts). See [Other mods](#other-mods).
 

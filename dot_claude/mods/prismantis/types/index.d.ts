@@ -22,6 +22,7 @@ declare module 'claude-code' {
       setupAt: number
       setupFocus: string
       setupLand: string
+      foundPaths: string[]
       drawn: StateFamily<number>
       // local: toolStyle folded. Se il risultato di una chiamata di tool è aperto (un valore per chiamata).
       resultOpen: StateFamily<boolean>

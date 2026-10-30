@@ -8,7 +8,7 @@ import { TERMINALS } from './rtl'
 
 export const TOKENS = [
   'accent', 'heading', 'strong', 'emphasis', 'inlineCode', 'codeText', 'codeCommand', 'codeFlag', 'codeString', 'codeComment',
-  'link', 'path', 'number', 'quote', 'rule', 'tableHeader', 'tableRule', 'bullet', 'diagram', 'diagramText', 'diffAdded', 'diffRemoved',
+  'link', 'path', 'number', 'quote', 'rule', 'tableHeader', 'tableRule', 'bullet', 'diagram', 'diagramText', 'diffAdded', 'diffRemoved', 'promptFill', 'replyFill',
 ] as const
 
 export type Theme = Partial<Record<(typeof TOKENS)[number], string>>
@@ -21,7 +21,8 @@ export type Style = {
   headingStyle: 'bold' | 'underline' | 'uppercase' | 'banner'
   tableStyle: 'box' | 'rules' | 'grid' | 'minimal'
   taskStyle: 'checks' | 'ticks' | 'box' | 'progress'
-  promptStyle: 'bubble' | 'bar' | 'chevron' | 'off' | 'framed'
+  promptStyle: 'bubble' | 'wide' | 'bar' | 'chevron' | 'off' | 'framed'
+  replyStyle: 'auto' | 'bubble' | 'solid' | 'framed' | 'off'
   clock: Clock
   toolStyle: 'chat' | 'tree-dim' | 'tree-bold' | 'classic' | 'folded' | 'hide'
   toolOutput: 'full' | 'quiet'
@@ -38,11 +39,15 @@ export type Style = {
   copyButtons: boolean
   copyButtonStyle: 'inline' | 'hover'
   htmlCopy: ClipboardBackend | null
+  images: boolean
   nativeCode?: boolean
+  gridFace?: boolean
   httpLinks: boolean
   editorLinks: boolean
+  obsidianLinks: boolean
   fileLinks: string | null
   pathLinks: boolean
+  found?: ReadonlySet<string>
   // local: testo di un `code`/path -> href vscode://file/ (hooks/filelink.ts)
   editorPaths?: Map<string, string>
   diagramHints: boolean
@@ -84,7 +89,8 @@ export const resolveStyle = (options: PluginOptions): Style => {
     headingStyle: pick(options.headingStyle, ['bold', 'underline', 'uppercase', 'banner'] as const, 'banner'),
     tableStyle: pick(options.tableStyle, ['box', 'rules', 'grid', 'minimal'] as const, 'box'),
     taskStyle: pick(options.taskStyle, ['checks', 'ticks', 'box', 'progress'] as const, 'checks'),
-    promptStyle: pick(options.promptStyle, ['bubble', 'bar', 'chevron', 'off', 'framed'] as const, 'bubble'),
+    promptStyle: pick(options.promptStyle, ['bubble', 'wide', 'bar', 'chevron', 'off', 'framed'] as const, 'bubble'),
+    replyStyle: pick(options.replyStyle, ['auto', 'bubble', 'solid', 'framed', 'off'] as const, 'auto'),
     clock: pick(options.clock, ['off', '24h', '12h'] as const, 'off'),
     toolStyle: pick(options.toolStyle, ['chat', 'tree-dim', 'tree-bold', 'classic', 'folded', 'hide'] as const, 'chat'),
     toolOutput: pick(options.toolOutput, ['full', 'quiet'] as const, 'full'),
@@ -97,8 +103,10 @@ export const resolveStyle = (options: PluginOptions): Style => {
     copyButtons: options.copyButtons !== false,
     copyButtonStyle: pick(options.copyButtonStyle, ['inline', 'hover'] as const, 'inline'),
     htmlCopy: null,
+    images: false,
     httpLinks: false,
     editorLinks: false,
+    obsidianLinks: false,
     fileLinks: null,
     pathLinks: false,
     diagramHints: options.diagramHints !== false && options.mermaid !== false,
