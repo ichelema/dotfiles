@@ -90,6 +90,9 @@ CLAUDE.md
 # superfile: config in ~/.config/superfile, solo Linux
 .config/superfile
 .config/superfile/**
+# kitty: terminale grafico, solo Linux (su Windows non esiste)
+.config/kitty
+.config/kitty/**
 {{- end }}
 {{- if not (stat (joinPath .chezmoi.homeDir ".config/chezmoi/key.txt")) }}
 # segreti cifrati age: saltati finche' la chiave non e' copiata su questa macchina
@@ -97,6 +100,10 @@ CLAUDE.md
 .config/zsh/api-keys.zsh
 # wezterm: IP del VPS e utente SSH; senza il file wezterm.lua parte senza connessioni SSH
 .config/wezterm/config/domains.lua
+{{- end }}
+{{- if index . "vps" }}
+# kitty quick-access-terminal: finestra Wayland/Hyprland, inutile sulla VPS senza display
+.config/kitty/quick-access-terminal.conf
 {{- end }}
 {{- if not (index . "vps") }}
 # notifiche ntfy degli hook di Claude Code: solo sul VPS
