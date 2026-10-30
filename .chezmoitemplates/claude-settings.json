@@ -195,7 +195,8 @@
       "typesafeApiKey": {{ . | toJson }},
       "provider": "typesafe",
       "timeoutMs": 1500,
-      "gateThreshold": 0.5,
+      "gateThreshold": 0.3,
+      "fitsThreshold": 0.8,
       "inject": "suggest",
       "logDecisions": false,
       "neverSuggested": "trinity:dream,trinity:nota_del_giorno,trinity:promote,trinity:reflect,trinity:ponytail,trinity:ponytail:ponytail,trinity:ponytail:ponytail-audit,trinity:ponytail:ponytail-debt,trinity:ponytail:ponytail-gain,trinity:ponytail:ponytail-help,trinity:ponytail:ponytail-review,trinity:workflow:0_create-issue,trinity:workflow:1_create-worktree,trinity:workflow:2_work-issue,trinity:workflow:3_independent-review,trinity:workflow:4_remove-worktree,trinity:workflow:5_review-fix-loop"
