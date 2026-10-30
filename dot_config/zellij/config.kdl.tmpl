@@ -33,6 +33,10 @@ keybinds clear-defaults=true {
         bind "w" { SwitchToMode "session"; }
         // zeshij: picker delle sessioni, come sesh (plugins/zeshij.wasm)
         bind "s" { LaunchOrFocusPlugin "zeshij" { floating true; move_to_focused_tab true; }; SwitchToMode "locked"; }
+{{- if ne .chezmoi.os "windows" }}
+        // zj-radar: prossimo tab che ti aspetta, in errore o finito
+        bind "a" { MessagePlugin "radar" { name "zj_radar.cmd.v1"; payload "attention-next"; }; SwitchToMode "locked"; }
+{{- end }}
         // freccia: sposta il focus e resta in Pannelli, come in WezTerm
         bind "left" { MoveFocus "left"; SwitchToMode "pane"; }
         bind "down" { MoveFocus "down"; SwitchToMode "pane"; }
