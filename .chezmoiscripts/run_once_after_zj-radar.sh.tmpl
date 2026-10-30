@@ -1,0 +1,17 @@
+{{- if eq .chezmoi.os "linux" -}}
+#!/usr/bin/env bash
+# Installa la sidebar zj-radar di zellij: wasm, alias e permessi.
+# run_once: gira una volta per macchina; gli aggiornamenti dopo con `zj-radar update`.
+# Alias e layout sono già nei template di chezmoi: qui serve soprattutto il wasm.
+set -euo pipefail
+if ! command -v zellij >/dev/null 2>&1; then
+  echo "SALTATO: zellij non trovato, installalo e rilancia chezmoi apply" >&2
+  exit 0
+fi
+zjr="$HOME/.local/bin/zj-radar"
+if [ ! -x "$zjr" ]; then
+  curl --proto '=https' --tlsv1.2 -LsSf \
+    https://github.com/marktoda/zj-radar/releases/latest/download/install.sh | sh
+fi
+"$zjr" setup zellij --download -y
+{{- end }}
