@@ -16,6 +16,6 @@ fi
 "$zjr" setup zellij --download -y
 # setup riscrive l'alias gestito e perde le opzioni: rimetti quelle di config.kdl.tmpl.
 # Lo fa anche `zj-radar update`: poi basta `chezmoi apply`.
-sed -i '/managed plugin alias begin/,/managed plugin alias end/{/glyphs "nerd"/d; s/^\( *\)naming "managed"$/&\n\1glyphs "nerd"/}' \
+sed -i '/managed plugin alias begin/,/managed plugin alias end/{/glyphs "nerd"/d; /spinner_fps 6/d; s/^\( *\)naming "managed"$/&\n\1glyphs "nerd"\n\1spinner_fps 6/}' \
   "$HOME/.config/zellij/config.kdl"
 {{- end }}
