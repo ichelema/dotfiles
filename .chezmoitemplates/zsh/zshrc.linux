@@ -290,6 +290,9 @@ alias df='_df'
 # Domanda veloce a Claude Haiku
 alias q='noglob q'   # così "?" e "*" nella domanda non vengono espansi da zsh
 
+# pi con la chiave Anthropic (riusa HINDSIGHT_ANTHROPIC_API_KEY da api-keys.zsh)
+alias pi='ANTHROPIC_API_KEY="$HINDSIGHT_ANTHROPIC_API_KEY" command pi'
+
 # Better Rg: funzione autoload in functions/rg (niente _rg: oscurava la completion di ripgrep)
 
 #  ╔╦╗╔═╗╦═╗╔╦╗╦╔╗╔╔═╗╦    ╔╦╗╦╔╦╗╦  ╔═╗
