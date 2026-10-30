@@ -155,7 +155,8 @@
     "lua-lsp@claude-plugins-official": true,
     "prismantis@inline": true,
     "replay@inline": false,
-    "filetree@claude-code-filetree": true
+    "filetree@claude-code-filetree": true{{ if ne .chezmoi.os "windows" }},
+    "zj-radar-claude@zj-radar": true{{ end }}
   },
   "extraKnownMarketplaces": {
     "claude-code-filetree": {
@@ -163,7 +164,13 @@
         "source": "github",
         "repo": "data-goblin/claude-code-filetree"
       }
-    }
+    }{{ if ne .chezmoi.os "windows" }},
+    "zj-radar": {
+      "source": {
+        "source": "github",
+        "repo": "marktoda/zj-radar"
+      }
+    }{{ end }}
   },
   "outputStyle": "My",
   "language": "italiano",
