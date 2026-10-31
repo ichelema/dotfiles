@@ -19,6 +19,7 @@
     "CLAUDE_CODE_AUTO_MODE_SERVER": "0",
 {{- if not (index . "vps") }}
     "HINDSIGHT_SSH_TUNNEL": "hindsight-vps",
+    "LITELLM_SSH_TUNNEL": "litellm-vps",
 {{- end }}
 {{- if eq .chezmoi.os "windows" }}
     "CLAUDE_CODE_GIT_BASH_PATH": "d:\\msys64\\usr\\bin\\bash.exe",
