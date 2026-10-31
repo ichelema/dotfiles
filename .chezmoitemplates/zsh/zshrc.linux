@@ -268,6 +268,11 @@ alias q='noglob q'   # così "?" e "*" nella domanda non vengono espansi da zsh
 # pi con la chiave Anthropic (riusa HINDSIGHT_ANTHROPIC_API_KEY da api-keys.zsh)
 alias pi='ANTHROPIC_API_KEY="$HINDSIGHT_ANTHROPIC_API_KEY" command pi'
 
+# navi: il comando scelto va sulla riga del prompt (print -z) invece di essere eseguito,
+# così gira nella shell corrente con alias, funzioni e cd. nai git fetch = apre già filtrato
+na() { local c; c=$(navi --print --query "$*") && [[ -n $c ]] && print -z -- "$c" }
+alias nai=na
+
 #  ╔╦╗╔═╗╦═╗╔╦╗╦╔╗╔╔═╗╦    ╔╦╗╦╔╦╗╦  ╔═╗
 #   ║ ║╣ ╠╦╝║║║║║║║╠═╣║     ║ ║ ║ ║  ║╣
 #   ╩ ╚═╝╩╚═╩ ╩╩╝╚╝╩ ╩╩═╝   ╩ ╩ ╩ ╩═╝╚═╝

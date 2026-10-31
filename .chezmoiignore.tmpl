@@ -35,6 +35,8 @@ CLAUDE.md
 .config/zellij/plugins/zellij-which-key/target
 .config/zellij/plugins/zellij-which-key/target/**
 .config/zellij/**/*.bak*
+# navi: backup locali della config
+.config/navi/*.bak*
 {{- if ne .chezmoi.os "windows" }}
 # Versioni Windows-specifiche: su Linux restano quelle locali (README Trinity §13.1)
 .local/bin/litellm-proxy-run.py
@@ -94,6 +96,11 @@ CLAUDE.md
 # kitty: terminale grafico, solo Linux (su Windows non esiste)
 .config/kitty
 .config/kitty/**
+# navi: config e cheat con pacman/systemd, solo Linux
+.config/navi
+.config/navi/**
+.local/share/navi
+.local/share/navi/**
 {{- end }}
 {{- if not (stat (joinPath .chezmoi.homeDir ".config/chezmoi/key.txt")) }}
 # segreti cifrati age: saltati finche' la chiave non e' copiata su questa macchina
