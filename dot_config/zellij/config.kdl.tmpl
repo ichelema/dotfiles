@@ -284,6 +284,10 @@ plugins {
     welcome-screen location="zellij:session-manager" {
         welcome_screen true
     }
+    // sessioni come sesh: prefisso → s apre il picker, `zellij pipe --plugin zeshij -- "<comando>"`
+    zeshij location="file:{{ $home }}/.config/zellij/plugins/zeshij.wasm" {
+        hide_duplicates true
+    }
 {{- if ne .chezmoi.os "windows" }}
     // zj-radar: gestito da `zj-radar setup zellij` (non c'è build Windows)
     // zj-radar: managed plugin alias begin
@@ -294,10 +298,6 @@ plugins {
     }
     // zj-radar: managed plugin alias end
 {{- end }}
-    // sessioni come sesh: prefisso → s apre il picker, `zellij pipe --plugin zeshij -- "<comando>"`
-    zeshij location="file:{{ $home }}/.config/zellij/plugins/zeshij.wasm" {
-        hide_duplicates true
-    }
 }
 
 // Plugins to load in the background when a new session starts
