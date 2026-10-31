@@ -31,8 +31,6 @@ export EDITOR='nvim'
 export COLORTERM=truecolor
 {{ end -}}
 export VISUAL="${EDITOR}"
-# export VISUAL='vim'
-# export EDITOR="$VISUAL"
 {{ if not (index . "vps") -}}
 export BROWSER='vivaldi'
 {{ end -}}
@@ -44,7 +42,6 @@ export TTS_HOME='/Dati/Development/MODELLI_AI/'
 export FZF_BASE=/usr/share/fzf
 # stesso file di Windows, gestito da chezmoi (prima era ~/.ripgreprc, locale)
 export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/ripgreprc"
-# LESSOPEN="|lesspipe.sh %s"; export LESSOPEN
 
 {{ if not (index . "vps") -}}
 # CUDA
@@ -80,7 +77,6 @@ fi
 zstyle ':completion:*:git-checkout:*' sort false
 zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
 zstyle ':completion:*' verbose true
-zstyle ':completion:*:*:*:*:*' menu select
 zstyle ':completion:*' list-max-items 20
 zstyle ':completion:*' ignored-patterns '*.o' '*.class' '.DS_Store'
 zstyle ':completion:*:warnings' format "%B%F{red}No matches for:%f %F{magenta}%d%b"
@@ -92,40 +88,24 @@ zstyle ':completion:*' matcher-list \
 # Save zsh_coredump in $HOME/.local/state/zsh
 export ZSH_COMPDUMP="$XDG_STATE_HOME/zsh/zcompdump"
 [[ -d "$(dirname "$ZSH_COMPDUMP")" ]] || mkdir -p "$(dirname "$ZSH_COMPDUMP")"
-
-autoload -Uz compinit
-
-for dump in ${ZSH_COMPDUMP}(N.mh+24); do
-  compinit -d "${ZSH_COMPDUMP}"
-done
-compinit -C -d "${ZSH_COMPDUMP}"
-
-# mise - version manager (Ruby, Node, Python, ...) — sostituisce asdf
-eval "$(mise activate zsh)"
+# compinit lo esegue oh-my-zsh (load_zsh_plugins): un secondo compinit qui gli fa rigenerare la cache
 
 
 #  ╦ ╦╦╔═╗╔╦╗╔═╗╦ ╦
 #  ╠═╣║╚═╗ ║ ║ ║╚╦╝
 #  ╩ ╩╩╚═╝ ╩ ╚═╝ ╩
 export HISTFILE="$XDG_STATE_HOME/zsh/history"
-#HISTFILE=~/.config/zsh/zhistory
 [[ -d "$(dirname "$HISTFILE")" ]] || mkdir -p "$(dirname "$HISTFILE")"
 
 HISTSIZE=5000
 SAVEHIST=5000
-HISTDUP=erase
-setopt appendhistory
-setopt sharehistory
-setopt hist_ignore_space
-setopt hist_ignore_all_dups
-setopt hist_save_no_dups
-setopt hist_find_no_dups
-setopt INC_APPEND_HISTORY     # Write to the history file immediately, not when the shell exits
+setopt SHARE_HISTORY          # Share history between all sessions (scrive subito: niente INC_APPEND_HISTORY)
 setopt EXTENDED_HISTORY       # Write the history file in the ':start:elapsed;command' format
-setopt SHARE_HISTORY          # Share history between all sessions
-setopt HIST_EXPIRE_DUPS_FIRST # Expire a duplicate event first when trimming history
-setopt HIST_IGNORE_DUPS       # Do not record an event that was just recorded again
+setopt HIST_IGNORE_SPACE      # Do not record commands starting with a space
 setopt HIST_IGNORE_ALL_DUPS   # Delete an old recorded event if a new event is a duplicate
+setopt HIST_SAVE_NO_DUPS      # Do not write duplicate events to the history file
+setopt HIST_FIND_NO_DUPS      # Do not show duplicates when searching history
+setopt HIST_EXPIRE_DUPS_FIRST # Expire a duplicate event first when trimming history
 export HISTORY_IGNORE="(ls|cd|pwd|exit|sudo reboot|history|cd -|cd ..|fg|bg)"
 
 #  ╔═╗╔═╗╦ ╦  ╔═╗╔═╗╔═╗╦    ╔═╗╔═╗╔╦╗╦╔═╗╔╗╔╔═╗
@@ -133,7 +113,6 @@ export HISTORY_IGNORE="(ls|cd|pwd|exit|sudo reboot|history|cd -|cd ..|fg|bg)"
 #  ╚═╝╚═╝╩ ╩  ╚═╝╚═╝╚═╝╩═╝  ╚═╝╩   ╩ ╩╚═╝╝╚╝╚═╝
 setopt AUTOCD              # change directory just by typing its name
 setopt PROMPT_SUBST        # enable command substitution in prompt
-setopt MENU_COMPLETE       # Automatically highlight first element of completion menu
 setopt LIST_PACKED         # The completion menu takes less space.
 setopt AUTO_LIST           # Automatically list choices on ambiguous completion.
 setopt COMPLETE_IN_WORD    # Complete from both ends of a word.
@@ -171,7 +150,6 @@ function load_zsh_plugins {
         fzf
         extract
         colored-man-pages
-        zsh-256color
         zsh-autosuggestions
         zsh-syntax-highlighting
         fzf-tab
@@ -192,14 +170,23 @@ function load_zsh_plugins {
         # Configurazione specifica di fzf-tab usando zstyle
         zstyle ':fzf-tab:*' show-group brief
         zstyle ':fzf-tab:*' switch-group '<' '>'
+        # OMZ (lib/completion.zsh) imposta "menu select": fzf-tab chiede "menu no"
+        zstyle ':completion:*:*:*:*:*' menu no
 
     fi
 
 
 }
 
+# Prima di OMZ: così il suo compinit registra anche i completamenti in functions/ (es. _zeshij)
+fpath=(~/.config/zsh/functions $fpath)
+
 # Esegui la funzione per caricare OMZ e i plugin
 load_zsh_plugins
+
+# mise - version manager (Ruby, Node, Python, ...) — sostituisce asdf
+# Dopo OMZ: se compdef non esiste ancora, l'hook di mise lancia un suo compinit in più
+eval "$(mise activate zsh)"
 
 # Smarter cd command for your terminal
 eval "$(zoxide init zsh --cmd cd)"
@@ -207,8 +194,6 @@ eval "$(zoxide init zsh --cmd cd)"
 #  ╔═╗╦ ╦╔╗╔╔═╗╔╦╗╦╔═╗╔╗╔
 #  ╠╣ ║ ║║║║║   ║ ║║ ║║║║
 #  ╚  ╚═╝╝╚╝╚═╝ ╩ ╩╚═╝╝╚╝
-
-fpath=(~/.config/zsh/functions $fpath)
 
 autoload -Uz command_not_found_handler
 autoload -Uz handle_init_error
@@ -220,8 +205,6 @@ autoload -Uz zf
 autoload -Uz _df
 autoload -Uz y
 autoload -Uz rg
-# zeshij: il binario in ~/.local/bin; il completamento sta qui, ma fpath arriva dopo compinit
-autoload -Uz _zeshij && compdef _zeshij zeshij
 autoload -Uz spf
 autoload -Uz q
 
@@ -237,24 +220,23 @@ if [[ -x "$(which eza)" ]]; then
           ld='eza -1D --icons=auto' \
           lf='eza -1f --icons=auto' \
           lt='eza -T --icons=auto' \
-          lt1='exa -aT --level=1 --color=always --icons' \
-          lt2='exa -aT --level=2 --color=always --icons' \
-          lt3='exa -aT --level=3 --color=always --icons' \
-
+          lt1='eza -aT --level=1 --icons=auto' \
+          lt2='eza -aT --level=2 --icons=auto' \
+          lt3='eza -aT --level=3 --icons=auto'
 fi
 
+# array, non stringa: zsh non divide "$aurhelper" in parole, e "sudo pacman" deve restare due argomenti
 if pacman -Qi yay &>/dev/null; then
-   aurhelper="yay"
-elif pacman -Qi paru &>/dev/null; then
-   aurhelper="paru"
+   aurhelper=(yay)
+else
+   aurhelper=(sudo pacman)
 fi
 
 alias un='$aurhelper -Rns' # uninstall package
-alias up='$aurhelper -Syu' # update system/package/aur
+alias update='$aurhelper -Syu' # update system/package/aur
 alias pl='$aurhelper -Qs' # list installed package
 alias pa='$aurhelper -Ss' # list available package
 alias pc='$aurhelper -Sc' # remove unused cache
-alias cleanup="sudo pacman -Rsn $(pacman -Qtdq)" # Cleanup orphaned packages
 alias po='$aurhelper -Qtdq | $aurhelper -Rns -' # remove unused packages, also try > $aurhelper -Qqd | $aurhelper -Rsu --print -
 alias ss="sudo"
 alias cat="bat --paging=never --style=plain --theme=base16-256" # bat senza pager e senza numeri di riga
@@ -272,8 +254,6 @@ alias .4='cd ../../../..'
 alias .5='cd ../../../../..'
 
 alias mkdir='mkdir -p'
-#alias imgcat='wezterm imgcat'
-alias update='sudo pacman  -Syu'
 # FZF
 alias ffec='_fuzzy_edit_search_file_content'
 alias ffcd='_fuzzy_change_directory'
@@ -288,11 +268,11 @@ alias q='noglob q'   # così "?" e "*" nella domanda non vengono espansi da zsh
 # pi con la chiave Anthropic (riusa HINDSIGHT_ANTHROPIC_API_KEY da api-keys.zsh)
 alias pi='ANTHROPIC_API_KEY="$HINDSIGHT_ANTHROPIC_API_KEY" command pi'
 
-# Better Rg: funzione autoload in functions/rg (niente _rg: oscurava la completion di ripgrep)
-
 #  ╔╦╗╔═╗╦═╗╔╦╗╦╔╗╔╔═╗╦    ╔╦╗╦╔╦╗╦  ╔═╗
 #   ║ ║╣ ╠╦╝║║║║║║║╠═╣║     ║ ║ ║ ║  ║╣
 #   ╩ ╚═╝╩╚═╩ ╩╩╝╚╝╩ ╩╩═╝   ╩ ╩ ╩ ╩═╝╚═╝
+autoload -Uz add-zsh-hook
+
 function xterm_title_precmd () {
 	print -Pn -- '\e]2;%n@%m %~\a'
 }
@@ -306,19 +286,9 @@ if [[ "$TERM" == (kitty*|alacritty*|tmux*|xterm*) ]]; then
 	add-zsh-hook -Uz preexec xterm_title_preexec
 fi
 
-#  ╔═╗╦═╗╔═╗╔╦╗╔═╗╔╦╗  ╔═╗╔═╗╔╦╗╔╦╗╦╔╗╔╔═╗
-#  ╠═╝╠╦╝║ ║║║║╠═╝ ║   ╚═╗║╣  ║  ║ ║║║║║ ╦
-#  ╩  ╩╚═╚═╝╩ ╩╩   ╩   ╚═╝╚═╝ ╩  ╩ ╩╝╚╝╚═╝
-
-
-# Add event hook
-autoload -Uz add-zsh-hook
-
 #  ╔╗ ╦╔╗╔╔╦╗╦╔╗╔╔═╗
 #  ╠╩╗║║║║ ║║║║║║║ ╦
 #  ╚═╝╩╝╚╝═╩╝╩╝╚╝╚═╝
-# bindkey "^I" expand-or-complete-with-dots
-
 bindkey -v
 
 # Widget custom che va sempre a fine linea
@@ -350,15 +320,11 @@ bindkey -M vicmd '.' insert-last-word-eol
 # Finziana TAB per complete anche in vim cmd mode
 bindkey -M vicmd '^I' expand-or-complete
 
-# Assicurati che ESC sia solo per vi mode
-#bindkey -M viins '^[' vi-cmd-mode
-
 # Con il plugin zsh-autosuggestions
 # ->            accetto il suggeriento (default)
 # Alt ->        accetazione parziale (default)
 # Ctrl ->       accetto e eseguo
 # Ctrl -Q       pulisco il suggerimento
-#bindkey '^[[C' autosuggest-accept
 bindkey '^[[1;5C' autosuggest-execute
 bindkey '^Q' autosuggest-clear
 
@@ -408,9 +374,3 @@ echo -ne '\e[5 q'
 {{ if not (index . "vps") -}}
 pokego --no-title -s -r 1,3,6
 {{ end }}
-
-export ZELLIJ_AUTO_EXIT=true
-# if [[ -z "$ZELLIJ" ]]; then
-#     exec zellij
-# fi
-# eval "$(zellij setup --generate-auto-start zsh)"
