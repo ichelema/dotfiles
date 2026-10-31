@@ -85,46 +85,65 @@ $ dimensione: printf '%s\n' 100M 500M 1G
 % file, alias
 
 # Entra in una cartella scelta con fzf e anteprima (ffcd)
+; alias di  _fuzzy_change_directory (~/.config/zsh/functions)
+; esegue  find . -maxdepth 7 -type d (salta .git node_modules .venv target .cache)
+;         | fzf --preview 'ls -p {}'  poi  cd nella cartella scelta
 ```sh
 ffcd
 ```
 
 # Entra in una cartella frequente scelta con fzf (zf, da zoxide)
+; funzione  zf (~/.config/zsh/functions)
+; esegue  zoxide query -ls | fzf --preview 'eza -T --level=2 {}'  poi  cd
 ```sh
 zf
 ```
 
 # Salta a una cartella frequente scrivendo parte del nome (cd di zoxide)
+; cd è sostituito da zoxide (zoxide init zsh --cmd cd)
+; esegue  __zoxide_z <parte_nome>: va alla cartella più usata che corrisponde
 ```sh
 cd <parte_nome>
 ```
 
 # Apri nell'editor un file scelto con fzf e anteprima (ffe)
+; alias di  _fuzzy_edit_search_file (~/.config/zsh/functions)
+; esegue  find . -maxdepth 5 -type f | fzf  poi  $EDITOR sul file scelto
 ```sh
 ffe
 ```
 
 # Cerca un testo nei file e apri quello scelto nell'editor (ffec)
+; alias di  _fuzzy_edit_search_file_content (~/.config/zsh/functions)
+; esegue  grep -irl "<testo>" ./ | fzf --preview 'cat {}'  poi  $EDITOR
 ```sh
 ffec "<testo>"
 ```
 
 # File manager yazi, all'uscita resti nella cartella scelta (y)
+; funzione  y (~/.config/zsh/functions)
+; esegue  yazi --cwd-file=<tmp>  poi  cd nella cartella in cui sei uscito
 ```sh
 y
 ```
 
 # File manager superfile, all'uscita resti nella cartella scelta (spf)
+; funzione  spf (~/.config/zsh/functions)
+; esegue  TERM_PROGRAM=ghostty command spf  poi  cd nell'ultima cartella (lastdir)
 ```sh
 spf
 ```
 
 # Cerca testo con risultati colorati da delta (rg)
+; funzione  rg (~/.config/zsh/functions)
+; esegue  command rg --json --smart-case "<testo>" | delta  (senza delta: | less)
 ```sh
 rg "<testo>"
 ```
 
 # Estrai qualsiasi archivio (x, plugin extract)
+; alias di  extract (plugin oh-my-zsh extract)
+; sceglie il programma dall'estensione: tar, unzip, 7z, unrar, gunzip...
 ```sh
 x <archivio>
 ```
