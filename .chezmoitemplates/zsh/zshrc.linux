@@ -229,6 +229,7 @@ autoload -Uz q
 #  ╠═╣║  ║╠═╣╚═╗
 #  ╩ ╩╩═╝╩╩ ╩╚═╝
 alias c='clear' # clear terminal
+alias() { if (( $# || ${funcstack[(I)als]} )); then builtin alias "$@"; else als; fi }  # senza argomenti: lista a gruppi (als); con argomenti o da dentro als: alias builtin
 if [[ -x "$(which eza)" ]]; then
     alias ls='eza -1a --icons=auto'  \
           l='eza -1 --icons=auto' \
