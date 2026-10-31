@@ -1,7 +1,9 @@
 zeshij() {
   # i comandi di sesh verso il plugin zeshij di Zellij, con zellij pipe (da un pannello di Zellij)
   # connect -c/--command <cmd> diventa --args command=<cmd> (Zellij divide --args sulle virgole)
-  (( $# )) || { print -u2 "uso: zeshij connect|mkdir|last|list|preview|root …"; return 2; }
+  # senza argomenti: il picker. Dentro Zellij apre il plugin, fuori usa fzf su sessioni vive,
+  # voci di zeshij.toml e cartelle di zoxide
+  (( $# )) || { _zeshij_pick; return; }
   local -a extra words=("$1")
   shift
   while (( $# )); do
@@ -13,3 +15,39 @@ zeshij() {
   done
   zellij pipe --plugin zeshij "${extra[@]}" -- "${words[*]}"
 }
+
+_zeshij_pick() {
+  if [[ -n $ZELLIJ ]]; then
+    zellij action launch-or-focus-plugin zeshij --floating --move-to-focused-tab >/dev/null
+    return
+  fi
+  local conf=${XDG_CONFIG_HOME:-$HOME/.config}/zeshij/zeshij.toml
+  local -a live rows
+  local -A seen
+  local name dir line kind
+  live=(${(f)"$(zellij list-sessions --short --no-formatting 2>/dev/null)"})
+  for name in $live; do rows+=("session"$'\t'"$name"$'\t'); seen[s:$name]=1; done
+  if [[ -r $conf ]]; then
+    tomlq -r '.session[]? | "\(.name)\t\(.path)"' $conf 2>/dev/null | while IFS=$'\t' read -r name dir; do
+      dir=${dir/#\~/$HOME}
+      seen[d:$dir]=1
+      (( ${+seen[s:$name]} )) || rows+=("config"$'\t'"$name"$'\t'"$dir")
+    done
+  fi
+  for dir in ${(f)"$(zoxide query -l 2>/dev/null)"}; do
+    (( ${+seen[d:$dir]} )) || rows+=("zoxide"$'\t'"${${dir:t}// /_}"$'\t'"$dir")
+  done
+  line=$(print -rl -- $rows | fzf --delimiter=$'\t' --with-nth=1,2,3 \
+    --height=60% --layout=reverse --info=inline --tabstop=10 \
+    --preview '[ -n {3} ] && eza --all --git --icons=always --color=always {3} || echo "sessione zellij attiva: {2}"' \
+    --preview-window=right:50%) || return
+  IFS=$'\t' read -r kind name dir <<< "$line"
+  if [[ -z $dir ]]; then
+    zellij attach "$name"
+  else
+    (cd -- "$dir" && zellij attach -c "$name")
+  fi
+}
+
+# autoload: con due funzioni nel file la prima chiamata esegue il file, quindi richiama zeshij
+zeshij "$@"
