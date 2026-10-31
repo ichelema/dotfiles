@@ -260,7 +260,6 @@ alias pa='$aurhelper -Ss' # list available package
 alias pc='$aurhelper -Sc' # remove unused cache
 alias cleanup="sudo pacman -Rsn $(pacman -Qtdq)" # Cleanup orphaned packages
 alias po='$aurhelper -Qtdq | $aurhelper -Rns -' # remove unused packages, also try > $aurhelper -Qqd | $aurhelper -Rsu --print -
-alias vc='code' # gui code editor
 alias ss="sudo"
 alias cat="bat --paging=never --style=plain --theme=base16-256" # bat senza pager e senza numeri di riga
 alias bat="bat --theme=base16-256"                              # bat completo: pager automatico + numeri di riga
@@ -318,12 +317,6 @@ fi
 
 # Add event hook
 autoload -Uz add-zsh-hook
-# Information in repository (git, svn, hg, etc.)
-autoload -Uz vcs_info
-# precmd hook lo load vcs_info
-precmd () { vcs_info }
-
-zstyle ':vcs_info:*' formats ' %B%s-[%F{magenta}%f %F{yellow}%b%f]-'
 
 #  ╔╗ ╦╔╗╔╔╦╗╦╔╗╔╔═╗
 #  ╠╩╗║║║║ ║║║║║║║ ╦
