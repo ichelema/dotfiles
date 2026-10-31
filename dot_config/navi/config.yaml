@@ -5,7 +5,7 @@ style:
     min_width: 12
   comment:
     color: blue
-    width_percentage: 78  # tag+comment+separatori < 100%, altrimenti fzf tronca con "··"
+    width_percentage: 88  # tag+comment = 100%: la colonna comando finisce fuori schermo ma resta cercabile
   snippet:
     color: white
 
@@ -13,7 +13,7 @@ finder:
   command: fzf
   # fzf non può mettere la preview tra prompt e lista: uso l'header (in reverse sta lì),
   # riscritto a ogni spostamento da header.sh: descrizione + comando, a capo alla larghezza
-  overrides: --with-nth 1,2 --layout=reverse --preview-window=hidden --header-border=rounded --bind 'focus:transform-header($HOME/.config/navi/header.sh {5} {6})'
+  overrides: --no-hscroll --ellipsis= --layout=reverse --preview-window=hidden --header-border=rounded --bind 'focus:transform-header($HOME/.config/navi/header.sh {5} {6})'
 
 shell:
   command: zsh

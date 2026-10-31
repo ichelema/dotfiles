@@ -46,7 +46,7 @@ git switch <branch>
 git switch -c <nuovo_branch>
 ```
 
-# Aggiorna il branch dal remoto con rebase (niente merge commit)
+# Scarica i commit nuovi dal remoto e poi rimette i commit locali sopra quelli, invece di creare un commit di unione.
 ```sh
 git pull --rebase
 ```
