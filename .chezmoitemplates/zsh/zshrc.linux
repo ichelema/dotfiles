@@ -165,7 +165,6 @@ function load_zsh_plugins {
     fi
 
     local desired_plugins=(
-        git
 {{- if not (index . "vps") }}
         vi-mode
 {{- end }}
