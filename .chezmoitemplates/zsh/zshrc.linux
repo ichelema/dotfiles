@@ -179,7 +179,6 @@ function load_zsh_plugins {
         fzf-tab-source
 {{- end }}
         aliases       #     als mostra tutti gli alias per gruppo als -h per vedere opzioni
-        alias-finder
     )
     plugins=( "${desired_plugins[@]}" )
 
@@ -196,9 +195,6 @@ function load_zsh_plugins {
 
     fi
 
-     # Abilita suggeriento alias da usare
-    zstyle ':omz:plugins:alias-finder' autoload yes
-    zstyle ':omz:plugins:alias-finder' cheaper yes
 
 }
 
