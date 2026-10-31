@@ -15,6 +15,9 @@ fi
 ```
 
 # Fetch e conta i commit avanti/indietro
+; --left-right  separa i commit solo locali (sinistra) da quelli solo remoti (destra)
+; --count  conta invece di elencare
+; HEAD...@{u}  confronto con il branch remoto collegato
 ```sh
 git fetch --quiet && git rev-list --left-right --count HEAD...@{u} | awk '{print "avanti (solo locali): " $1 "\nindietro (solo remoti): " $2}'
 ```
@@ -27,6 +30,8 @@ git fetch --quiet && git diff --stat HEAD...@{u}
 % git
 
 # Stato sintetico con branch e avanti/indietro
+; -s  formato breve
+; -b  mostra branch e commit avanti/indietro
 ```sh
 git status -sb
 ```
@@ -67,16 +72,23 @@ git restore --staged <file_in_stage>
 ```
 
 # Aggiungi le modifiche in stage all'ultimo commit senza cambiare messaggio
+; --amend  sostituisce l'ultimo commit
+; --no-edit  tiene lo stesso messaggio
+; non usarlo su commit già pushati
 ```sh
 git commit --amend --no-edit
 ```
 
 # Annulla l'ultimo commit tenendo le modifiche in stage
+; --soft  sposta il branch indietro, le modifiche restano in stage
+; HEAD~1  il commit prima dell'ultimo
 ```sh
 git reset --soft HEAD~1
 ```
 
 # Metti da parte le modifiche, anche i file nuovi (stash)
+; -u  include i file nuovi non tracciati
+; -m  messaggio per riconoscere lo stash
 ```sh
 git stash push -u -m "<messaggio>"
 ```

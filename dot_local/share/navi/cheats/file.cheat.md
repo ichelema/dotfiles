@@ -1,51 +1,78 @@
 % file, cartelle
 
 # Lista dettagliata, cartelle prima (alias ll)
+; -l  formato lungo
+; -h  riga di intestazione delle colonne
+; -a  anche i file nascosti
+; --group-directories-first  cartelle prima dei file
 ```sh
 eza -lha --icons=auto --sort=name --group-directories-first <cartella>
 ```
 
 # Solo le cartelle (alias ld)
+; -1  una voce per riga
+; -D  solo cartelle
 ```sh
 eza -1D --icons=auto <cartella>
 ```
 
 # Albero con profondità scelta (alias lt1, lt2, lt3)
+; -a  anche i file nascosti
+; -T  vista ad albero
+; --level  profondità massima
 ```sh
 eza -aT --level=<livello> --icons=auto <cartella>
 ```
 
 # Albero senza i file ignorati da git
+; --git-ignore  nasconde i file ignorati da .gitignore
+; -T  vista ad albero
+; --level  profondità massima
 ```sh
 eza -T --git-ignore --level=<livello> --icons=auto <cartella>
 ```
 
 # File ordinati per data di modifica (i più recenti in fondo)
+; -l  formato lungo
+; -h  riga di intestazione delle colonne
+; --sort=modified  ordina per data di modifica
 ```sh
 eza -lh --sort=modified --icons=auto <cartella>
 ```
 
 # Dimensione delle sottocartelle, ordinate
+; -h  dimensioni leggibili
+; -d1  profondità 1: solo le sottocartelle dirette
+; sort -h  ordina dimensioni leggibili
 ```sh
 du -h -d1 <cartella> 2>/dev/null | sort -h
 ```
 
 # Cerca file e cartelle per nome
+; -H  include i file nascosti
 ```sh
 fd -H <nome> <cartella>
 ```
 
 # File modificati di recente
+; -H  include i file nascosti
+; -t f  solo file
+; --changed-within  modificati entro: 1h, 1d, 7d...
 ```sh
 fd -H -t f --changed-within <tempo> . <cartella>
 ```
 
 # File più grandi di una dimensione
+; -H  include i file nascosti
+; -t f  solo file
+; -S +N  più grandi di N
+; -X  passa tutti i risultati insieme a du
 ```sh
 fd -H -t f -S +<dimensione> . <cartella> -X du -h | sort -h
 ```
 
 # Cerca un testo nei file
+; --smart-case  ignora maiuscole se il testo è tutto minuscolo
 ```sh
 rg --smart-case "<testo>" <cartella>
 ```
