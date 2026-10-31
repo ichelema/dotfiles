@@ -12,8 +12,8 @@ style:
 finder:
   command: fzf
   # fzf non può mettere la preview tra prompt e lista: uso l'header (in reverse sta lì),
-  # riscritto a ogni spostamento con la riga del comando di "navi preview"
-  overrides: --with-nth 1,2 --layout=reverse --preview-window=hidden --header-border=rounded --bind 'focus:transform-header(navi preview {} | sed -n 2p)'
+  # riscritto a ogni spostamento da header.sh: descrizione + comando, a capo alla larghezza
+  overrides: --with-nth 1,2 --layout=reverse --preview-window=hidden --header-border=rounded --bind 'focus:transform-header($HOME/.config/navi/header.sh {5} {6})'
 
 shell:
   command: zsh
