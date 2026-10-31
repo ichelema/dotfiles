@@ -1,0 +1,34 @@
+zsesh() {
+  # picker delle sessioni Zellij, come sesh: dentro Zellij apre il plugin zeshij,
+  # fuori usa fzf su sessioni vive, voci di zeshij.toml e cartelle di zoxide
+  if [[ -n $ZELLIJ ]]; then
+    zellij action launch-or-focus-plugin zeshij --floating --move-to-focused-tab >/dev/null
+    return
+  fi
+  local conf=${XDG_CONFIG_HOME:-$HOME/.config}/zeshij/zeshij.toml
+  local -a live rows
+  local -A seen
+  local name dir line kind
+  live=(${(f)"$(zellij list-sessions --short --no-formatting 2>/dev/null)"})
+  for name in $live; do rows+=("session"$'\t'"$name"$'\t'); seen[s:$name]=1; done
+  if [[ -r $conf ]]; then
+    tomlq -r '.session[]? | "\(.name)\t\(.path)"' $conf 2>/dev/null | while IFS=$'\t' read -r name dir; do
+      dir=${dir/#\~/$HOME}
+      seen[d:$dir]=1
+      (( ${+seen[s:$name]} )) || rows+=("config"$'\t'"$name"$'\t'"$dir")
+    done
+  fi
+  for dir in ${(f)"$(zoxide query -l 2>/dev/null)"}; do
+    (( ${+seen[d:$dir]} )) || rows+=("zoxide"$'\t'"${${dir:t}// /_}"$'\t'"$dir")
+  done
+  line=$(print -rl -- $rows | fzf --query="${*:-}" --delimiter=$'\t' --with-nth=1,2,3 \
+    --height=60% --layout=reverse --info=inline --tabstop=10 \
+    --preview '[ -n {3} ] && eza --all --git --icons=always --color=always {3} || echo "sessione zellij attiva: {2}"' \
+    --preview-window=right:50%) || return
+  IFS=$'\t' read -r kind name dir <<< "$line"
+  if [[ -z $dir ]]; then
+    zellij attach "$name"
+  else
+    (cd -- "$dir" && zellij attach -c "$name")
+  fi
+}
