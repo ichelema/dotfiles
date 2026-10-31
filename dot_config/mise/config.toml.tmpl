@@ -37,7 +37,7 @@ starship = "latest"
 {{- end }}
 {{- end }}
 
-# Entrando in un repository Git: fetch (max 5 s, al più uno al minuto), così il prompt p10k mostra ⇣ e ⇡ aggiornati.
+# Entrando in un repository Git: fetch (max 5 s, al più uno al minuto), così il prompt mostra ⇣ e ⇡ aggiornati.
 [hooks]
 cd = { shell = "bash -c", run = '''
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || exit 0
