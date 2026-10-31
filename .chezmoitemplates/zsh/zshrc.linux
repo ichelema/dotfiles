@@ -178,7 +178,6 @@ function load_zsh_plugins {
 {{- if not (index . "vps") }}
         fzf-tab-source
 {{- end }}
-        direnv
         aliases       #     als mostra tutti gli alias per gruppo als -h per vedere opzioni
         alias-finder
     )
