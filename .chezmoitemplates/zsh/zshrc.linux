@@ -315,19 +315,6 @@ fi
 #  ╠═╝╠╦╝║ ║║║║╠═╝ ║   ╚═╗║╣  ║  ║ ║║║║║ ╦
 #  ╩  ╩╚═╚═╝╩ ╩╩   ╩   ╚═╝╚═╝ ╩  ╩ ╩╝╚╝╚═╝
 
-# We are loading the prompt on start so users can see the prompt immediately
-# Powerlevel10k theme path
-{{ if index . "vps" -}}
-P10k_THEME=${P10k_THEME:-$ZDOTDIR/oh-my-zsh/custom/themes/powerlevel10k/powerlevel10k.zsh-theme}
-{{- else -}}
-P10k_THEME=${P10k_THEME:-/usr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme}
-{{- end }}
-[[ -r $P10k_THEME ]] && source $P10k_THEME
-
-[[ ! -f "$ZDOTDIR/.p10k.zsh" ]] || source "$ZDOTDIR/.p10k.zsh"
-
-# Segment mise per il prompt (definisce prompt_mise, usato in RIGHT_PROMPT_ELEMENTS)
-[[ ! -f "$ZDOTDIR/p10k.mise.zsh" ]] || source "$ZDOTDIR/p10k.mise.zsh"
 
 # Add event hook
 autoload -Uz add-zsh-hook
@@ -416,6 +403,12 @@ function zle-line-finish {
   echo -ne '\e[5 q'  # torna al cursore modalità inserimento
 }
 zle -N zle-line-finish
+
+# Prompt: Starship. Va DOPO i widget zle: così wrappa il tuo zle-keymap-select e il prompt si ridisegna in modalità vi.
+if command -v starship >/dev/null 2>&1; then
+  export STARSHIP_CONFIG="$HOME/.config/starship/starship.toml"
+  eval "$(starship init zsh)"
+fi
 
 # Inizializza il cursore corretto all'avvio
 echo -ne '\e[5 q'

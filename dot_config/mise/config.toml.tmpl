@@ -32,6 +32,9 @@ uv = "latest"
 "pipx:pyprland" = "latest"
 "pipx:terminaltexteffects" = "latest"
 {{- end }}
+{{- if index . "vps" }}
+starship = "latest"
+{{- end }}
 {{- end }}
 
 # Entrando in un repository Git: fetch (max 5 s, al più uno al minuto), così il prompt p10k mostra ⇣ e ⇡ aggiornati.
