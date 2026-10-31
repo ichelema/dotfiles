@@ -1,0 +1,143 @@
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.TH zeshij 1  "zeshij 0.1.0" 
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.SH NAME
+zeshij \- Smart session manager for Zellij
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.SH SYNOPSIS
+\fBzeshij\fR [\fB\-h\fR|\fB\-\-help\fR] [\fB\-V\fR|\fB\-\-version\fR] [\fIsubcommands\fR]
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.SH DESCRIPTION
+Smart session manager for Zellij, a port of sesh. Every command goes to the zeshij plugin: inside Zellij through `zellij pipe`, outside through a short\-lived bridge session; there the terminal shows Zellij only for the picker and for the session it connects to. Without a command, zeshij opens the picker.
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.SH OPTIONS
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+Print help (see a summary with \*(Aq\-h\*(Aq)
+.TP
+\fB\-V\fR, \fB\-\-version\fR
+Print version
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.SH COMMANDS
+.TP
+\fBzeshij connect [OPTIONS] <TARGET>...\fR
+.RS 4
+Connect to the given session (aliases: cn)
+.TP
+\fB\-s, \-\-switch\fR
+Switch the session (rather than attach); zeshij always moves the client, as sesh does from inside tmux
+.TP
+\fB\-c, \-\-command <CMD>\fR
+Execute a command when connecting to a new session. Will be ignored if the session exists
+.TP
+\fB\-r, \-\-root\fR
+Connect to the git root of the target
+.TP
+\fB<TARGET>\fR
+Alias, session name, layout, config entry, path or zoxide query
+.RE
+.TP
+\fBzeshij last\fR
+.RS 4
+Connect to the last session (aliases: L)
+.RE
+.TP
+\fBzeshij list [OPTIONS]\fR
+.RS 4
+List sessions (aliases: l)
+.TP
+\fB\-c, \-\-config\fR
+Show configured sessions
+.TP
+\fB\-t, \-\-tmux, \-\-zellij\fR
+Show Zellij sessions, live and exited
+.TP
+\fB\-z, \-\-zoxide\fR
+Show zoxide results
+.TP
+\fB\-T, \-\-tmuxinator, \-\-layout\fR
+Show Zellij layouts
+.TP
+\fB\-H, \-\-hide\-attached\fR
+Don\*(Aqt show the current session
+.TP
+\fB\-d, \-\-hide\-duplicates\fR
+Hide duplicate entries
+.TP
+\fB\-b, \-\-blacklisted\fR
+Show blacklisted sessions
+.TP
+\fB\-i, \-\-icons\fR
+Show icons
+.TP
+\fB\-j, \-\-json\fR
+Output as json
+.TP
+\fB\-n, \-\-no\-color\fR
+Show icons without color (requires \-\-icons); also drops the colors of \-\-format
+.TP
+\fB\-\-icons\-exclude <SOURCES>\fR
+Don\*(Aqt show source icons for these session sources (for example: zellij,zoxide)
+.TP
+\fB\-\-format <FORMAT>\fR
+Format each session row ({name}, {session}, {source}, {path}, {active_window_name}, {active_window_name_prefix}; colors: {fg:yellow}...{/fg})
+.RE
+.TP
+\fBzeshij mkdir [OPTIONS] <PATH>\fR
+.RS 4
+Create a directory and connect to it as a session (aliases: md)
+.TP
+\fB\-s, \-\-switch\fR
+Switch the session (rather than attach); zeshij always moves the client
+.TP
+\fB\-c, \-\-command <CMD>\fR
+Execute a command when connecting to the new session
+.TP
+\fB<PATH>\fR
+The directory to create (`mkdir \-p`); a relative path starts from the current directory
+.RE
+.TP
+\fBzeshij preview [OPTIONS] <NAME>\fR
+.RS 4
+Preview a session or directory (aliases: p)
+.TP
+\fB\-w, \-\-watch\fR
+Continuously refresh the preview; zeshij prints one frame (use `watch \-c`)
+.TP
+\fB\-\-interval <DURATION>\fR
+Refresh interval when watching [default: 500ms]
+.TP
+\fB<NAME>\fR
+A name printed by `zeshij list` (also with the glyph of `\-i`) or a directory
+.RE
+.TP
+\fBzeshij root [PATH]\fR
+.RS 4
+Show the root name of the current session, or of PATH (aliases: r)
+.TP
+\fB<PATH>\fR
+A directory; required outside Zellij
+.RE
+.TP
+\fBzeshij picker\fR
+.RS 4
+Interactive session picker (the default command) (aliases: pick, pk)
+.RE
+.TP
+\fBzeshij completion <SHELL>\fR
+.RS 4
+Generate the autocompletion script for the specified shell
+.TP
+\fB<SHELL>\fR
+The shell to complete [possible values: bash, elvish, fish, powershell, zsh]
+.RE
+.ie \n(.g .ds Aq \(aq
+.el .ds Aq '
+.SH VERSION
+v0.1.0

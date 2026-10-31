@@ -1,0 +1,417 @@
+#compdef zeshij
+
+autoload -U is-at-least
+
+_zeshij() {
+    typeset -A opt_args
+    typeset -a _arguments_options
+    local ret=1
+
+    if is-at-least 5.2; then
+        _arguments_options=(-s -S -C)
+    else
+        _arguments_options=(-s -C)
+    fi
+
+    local context curcontext="$curcontext" state line
+    _arguments "${_arguments_options[@]}" : \
+'-h[Print help (see more with '\''--help'\'')]' \
+'--help[Print help (see more with '\''--help'\'')]' \
+'-V[Print version]' \
+'--version[Print version]' \
+":: :_zeshij_commands" \
+"*::: :->zeshij" \
+&& ret=0
+    case $state in
+    (zeshij)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:zeshij-command-$line[1]:"
+        case $line[1] in
+            (connect)
+_arguments "${_arguments_options[@]}" : \
+'-c+[Execute a command when connecting to a new session. Will be ignored if the session exists]:CMD:_default' \
+'--command=[Execute a command when connecting to a new session. Will be ignored if the session exists]:CMD:_default' \
+'-s[Switch the session (rather than attach); zeshij always moves the client, as sesh does from inside tmux]' \
+'--switch[Switch the session (rather than attach); zeshij always moves the client, as sesh does from inside tmux]' \
+'-r[Connect to the git root of the target]' \
+'--root[Connect to the git root of the target]' \
+'-h[Print help]' \
+'--help[Print help]' \
+'*::target -- Alias, session name, layout, config entry, path or zoxide query:_default' \
+&& ret=0
+;;
+(cn)
+_arguments "${_arguments_options[@]}" : \
+'-c+[Execute a command when connecting to a new session. Will be ignored if the session exists]:CMD:_default' \
+'--command=[Execute a command when connecting to a new session. Will be ignored if the session exists]:CMD:_default' \
+'-s[Switch the session (rather than attach); zeshij always moves the client, as sesh does from inside tmux]' \
+'--switch[Switch the session (rather than attach); zeshij always moves the client, as sesh does from inside tmux]' \
+'-r[Connect to the git root of the target]' \
+'--root[Connect to the git root of the target]' \
+'-h[Print help]' \
+'--help[Print help]' \
+'*::target -- Alias, session name, layout, config entry, path or zoxide query:_default' \
+&& ret=0
+;;
+(last)
+_arguments "${_arguments_options[@]}" : \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(L)
+_arguments "${_arguments_options[@]}" : \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" : \
+'*--icons-exclude=[Don'\''t show source icons for these session sources (for example\: zellij,zoxide)]:SOURCES:_default' \
+'--format=[Format each session row ({name}, {session}, {source}, {path}, {active_window_name}, {active_window_name_prefix}; colors\: {fg\:yellow}...{/fg})]:FORMAT:_default' \
+'-c[Show configured sessions]' \
+'--config[Show configured sessions]' \
+'-t[Show Zellij sessions, live and exited]' \
+'--tmux[Show Zellij sessions, live and exited]' \
+'--zellij[Show Zellij sessions, live and exited]' \
+'-z[Show zoxide results]' \
+'--zoxide[Show zoxide results]' \
+'-T[Show Zellij layouts]' \
+'--tmuxinator[Show Zellij layouts]' \
+'--layout[Show Zellij layouts]' \
+'-H[Don'\''t show the current session]' \
+'--hide-attached[Don'\''t show the current session]' \
+'-d[Hide duplicate entries]' \
+'--hide-duplicates[Hide duplicate entries]' \
+'-b[Show blacklisted sessions]' \
+'--blacklisted[Show blacklisted sessions]' \
+'-i[Show icons]' \
+'--icons[Show icons]' \
+'-j[Output as json]' \
+'--json[Output as json]' \
+'-n[Show icons without color (requires --icons); also drops the colors of --format]' \
+'--no-color[Show icons without color (requires --icons); also drops the colors of --format]' \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(l)
+_arguments "${_arguments_options[@]}" : \
+'*--icons-exclude=[Don'\''t show source icons for these session sources (for example\: zellij,zoxide)]:SOURCES:_default' \
+'--format=[Format each session row ({name}, {session}, {source}, {path}, {active_window_name}, {active_window_name_prefix}; colors\: {fg\:yellow}...{/fg})]:FORMAT:_default' \
+'-c[Show configured sessions]' \
+'--config[Show configured sessions]' \
+'-t[Show Zellij sessions, live and exited]' \
+'--tmux[Show Zellij sessions, live and exited]' \
+'--zellij[Show Zellij sessions, live and exited]' \
+'-z[Show zoxide results]' \
+'--zoxide[Show zoxide results]' \
+'-T[Show Zellij layouts]' \
+'--tmuxinator[Show Zellij layouts]' \
+'--layout[Show Zellij layouts]' \
+'-H[Don'\''t show the current session]' \
+'--hide-attached[Don'\''t show the current session]' \
+'-d[Hide duplicate entries]' \
+'--hide-duplicates[Hide duplicate entries]' \
+'-b[Show blacklisted sessions]' \
+'--blacklisted[Show blacklisted sessions]' \
+'-i[Show icons]' \
+'--icons[Show icons]' \
+'-j[Output as json]' \
+'--json[Output as json]' \
+'-n[Show icons without color (requires --icons); also drops the colors of --format]' \
+'--no-color[Show icons without color (requires --icons); also drops the colors of --format]' \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(mkdir)
+_arguments "${_arguments_options[@]}" : \
+'-c+[Execute a command when connecting to the new session]:CMD:_default' \
+'--command=[Execute a command when connecting to the new session]:CMD:_default' \
+'-s[Switch the session (rather than attach); zeshij always moves the client]' \
+'--switch[Switch the session (rather than attach); zeshij always moves the client]' \
+'-h[Print help]' \
+'--help[Print help]' \
+':path -- The directory to create (`mkdir -p`); a relative path starts from the current directory:_default' \
+&& ret=0
+;;
+(md)
+_arguments "${_arguments_options[@]}" : \
+'-c+[Execute a command when connecting to the new session]:CMD:_default' \
+'--command=[Execute a command when connecting to the new session]:CMD:_default' \
+'-s[Switch the session (rather than attach); zeshij always moves the client]' \
+'--switch[Switch the session (rather than attach); zeshij always moves the client]' \
+'-h[Print help]' \
+'--help[Print help]' \
+':path -- The directory to create (`mkdir -p`); a relative path starts from the current directory:_default' \
+&& ret=0
+;;
+(preview)
+_arguments "${_arguments_options[@]}" : \
+'--interval=[Refresh interval when watching]:DURATION:_default' \
+'-w[Continuously refresh the preview; zeshij prints one frame (use \`watch -c\`)]' \
+'--watch[Continuously refresh the preview; zeshij prints one frame (use \`watch -c\`)]' \
+'-h[Print help]' \
+'--help[Print help]' \
+':name -- A name printed by `zeshij list` (also with the glyph of `-i`) or a directory:_default' \
+&& ret=0
+;;
+(p)
+_arguments "${_arguments_options[@]}" : \
+'--interval=[Refresh interval when watching]:DURATION:_default' \
+'-w[Continuously refresh the preview; zeshij prints one frame (use \`watch -c\`)]' \
+'--watch[Continuously refresh the preview; zeshij prints one frame (use \`watch -c\`)]' \
+'-h[Print help]' \
+'--help[Print help]' \
+':name -- A name printed by `zeshij list` (also with the glyph of `-i`) or a directory:_default' \
+&& ret=0
+;;
+(root)
+_arguments "${_arguments_options[@]}" : \
+'-h[Print help]' \
+'--help[Print help]' \
+'::path -- A directory; required outside Zellij:_default' \
+&& ret=0
+;;
+(r)
+_arguments "${_arguments_options[@]}" : \
+'-h[Print help]' \
+'--help[Print help]' \
+'::path -- A directory; required outside Zellij:_default' \
+&& ret=0
+;;
+(picker)
+_arguments "${_arguments_options[@]}" : \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(pick)
+_arguments "${_arguments_options[@]}" : \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(pk)
+_arguments "${_arguments_options[@]}" : \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(completion)
+_arguments "${_arguments_options[@]}" : \
+'-h[Print help]' \
+'--help[Print help]' \
+':shell -- The shell to complete:(bash elvish fish powershell zsh)' \
+&& ret=0
+;;
+(man)
+_arguments "${_arguments_options[@]}" : \
+'-h[Print help]' \
+'--help[Print help]' \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+":: :_zeshij__subcmd__help_commands" \
+"*::: :->help" \
+&& ret=0
+
+    case $state in
+    (help)
+        words=($line[1] "${words[@]}")
+        (( CURRENT += 1 ))
+        curcontext="${curcontext%:*:*}:zeshij-help-command-$line[1]:"
+        case $line[1] in
+            (connect)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(last)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(list)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(mkdir)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(preview)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(root)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(picker)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(completion)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(man)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+(help)
+_arguments "${_arguments_options[@]}" : \
+&& ret=0
+;;
+        esac
+    ;;
+esac
+;;
+        esac
+    ;;
+esac
+}
+
+(( $+functions[_zeshij_commands] )) ||
+_zeshij_commands() {
+    local commands; commands=(
+'connect:Connect to the given session' \
+'cn:Connect to the given session' \
+'last:Connect to the last session' \
+'L:Connect to the last session' \
+'list:List sessions' \
+'l:List sessions' \
+'mkdir:Create a directory and connect to it as a session' \
+'md:Create a directory and connect to it as a session' \
+'preview:Preview a session or directory' \
+'p:Preview a session or directory' \
+'root:Show the root name of the current session, or of PATH' \
+'r:Show the root name of the current session, or of PATH' \
+'picker:Interactive session picker (the default command)' \
+'pick:Interactive session picker (the default command)' \
+'pk:Interactive session picker (the default command)' \
+'completion:Generate the autocompletion script for the specified shell' \
+'man:Print the man page' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'zeshij commands' commands "$@"
+}
+(( $+functions[_zeshij__subcmd__completion_commands] )) ||
+_zeshij__subcmd__completion_commands() {
+    local commands; commands=()
+    _describe -t commands 'zeshij completion commands' commands "$@"
+}
+(( $+functions[_zeshij__subcmd__connect_commands] )) ||
+_zeshij__subcmd__connect_commands() {
+    local commands; commands=()
+    _describe -t commands 'zeshij connect commands' commands "$@"
+}
+(( $+functions[_zeshij__subcmd__help_commands] )) ||
+_zeshij__subcmd__help_commands() {
+    local commands; commands=(
+'connect:Connect to the given session' \
+'last:Connect to the last session' \
+'list:List sessions' \
+'mkdir:Create a directory and connect to it as a session' \
+'preview:Preview a session or directory' \
+'root:Show the root name of the current session, or of PATH' \
+'picker:Interactive session picker (the default command)' \
+'completion:Generate the autocompletion script for the specified shell' \
+'man:Print the man page' \
+'help:Print this message or the help of the given subcommand(s)' \
+    )
+    _describe -t commands 'zeshij help commands' commands "$@"
+}
+(( $+functions[_zeshij__subcmd__help__subcmd__completion_commands] )) ||
+_zeshij__subcmd__help__subcmd__completion_commands() {
+    local commands; commands=()
+    _describe -t commands 'zeshij help completion commands' commands "$@"
+}
+(( $+functions[_zeshij__subcmd__help__subcmd__connect_commands] )) ||
+_zeshij__subcmd__help__subcmd__connect_commands() {
+    local commands; commands=()
+    _describe -t commands 'zeshij help connect commands' commands "$@"
+}
+(( $+functions[_zeshij__subcmd__help__subcmd__help_commands] )) ||
+_zeshij__subcmd__help__subcmd__help_commands() {
+    local commands; commands=()
+    _describe -t commands 'zeshij help help commands' commands "$@"
+}
+(( $+functions[_zeshij__subcmd__help__subcmd__last_commands] )) ||
+_zeshij__subcmd__help__subcmd__last_commands() {
+    local commands; commands=()
+    _describe -t commands 'zeshij help last commands' commands "$@"
+}
+(( $+functions[_zeshij__subcmd__help__subcmd__list_commands] )) ||
+_zeshij__subcmd__help__subcmd__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'zeshij help list commands' commands "$@"
+}
+(( $+functions[_zeshij__subcmd__help__subcmd__man_commands] )) ||
+_zeshij__subcmd__help__subcmd__man_commands() {
+    local commands; commands=()
+    _describe -t commands 'zeshij help man commands' commands "$@"
+}
+(( $+functions[_zeshij__subcmd__help__subcmd__mkdir_commands] )) ||
+_zeshij__subcmd__help__subcmd__mkdir_commands() {
+    local commands; commands=()
+    _describe -t commands 'zeshij help mkdir commands' commands "$@"
+}
+(( $+functions[_zeshij__subcmd__help__subcmd__picker_commands] )) ||
+_zeshij__subcmd__help__subcmd__picker_commands() {
+    local commands; commands=()
+    _describe -t commands 'zeshij help picker commands' commands "$@"
+}
+(( $+functions[_zeshij__subcmd__help__subcmd__preview_commands] )) ||
+_zeshij__subcmd__help__subcmd__preview_commands() {
+    local commands; commands=()
+    _describe -t commands 'zeshij help preview commands' commands "$@"
+}
+(( $+functions[_zeshij__subcmd__help__subcmd__root_commands] )) ||
+_zeshij__subcmd__help__subcmd__root_commands() {
+    local commands; commands=()
+    _describe -t commands 'zeshij help root commands' commands "$@"
+}
+(( $+functions[_zeshij__subcmd__last_commands] )) ||
+_zeshij__subcmd__last_commands() {
+    local commands; commands=()
+    _describe -t commands 'zeshij last commands' commands "$@"
+}
+(( $+functions[_zeshij__subcmd__list_commands] )) ||
+_zeshij__subcmd__list_commands() {
+    local commands; commands=()
+    _describe -t commands 'zeshij list commands' commands "$@"
+}
+(( $+functions[_zeshij__subcmd__man_commands] )) ||
+_zeshij__subcmd__man_commands() {
+    local commands; commands=()
+    _describe -t commands 'zeshij man commands' commands "$@"
+}
+(( $+functions[_zeshij__subcmd__mkdir_commands] )) ||
+_zeshij__subcmd__mkdir_commands() {
+    local commands; commands=()
+    _describe -t commands 'zeshij mkdir commands' commands "$@"
+}
+(( $+functions[_zeshij__subcmd__picker_commands] )) ||
+_zeshij__subcmd__picker_commands() {
+    local commands; commands=()
+    _describe -t commands 'zeshij picker commands' commands "$@"
+}
+(( $+functions[_zeshij__subcmd__preview_commands] )) ||
+_zeshij__subcmd__preview_commands() {
+    local commands; commands=()
+    _describe -t commands 'zeshij preview commands' commands "$@"
+}
+(( $+functions[_zeshij__subcmd__root_commands] )) ||
+_zeshij__subcmd__root_commands() {
+    local commands; commands=()
+    _describe -t commands 'zeshij root commands' commands "$@"
+}
+
+if [ "$funcstack[1]" = "_zeshij" ]; then
+    _zeshij "$@"
+else
+    compdef _zeshij zeshij
+fi

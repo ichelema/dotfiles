@@ -226,7 +226,8 @@ autoload -Uz zf
 autoload -Uz _df
 autoload -Uz y
 autoload -Uz rg
-autoload -Uz zeshij
+# zeshij: il binario in ~/.local/bin; il completamento sta qui, ma fpath arriva dopo compinit
+autoload -Uz _zeshij && compdef _zeshij zeshij
 autoload -Uz spf
 autoload -Uz q
 
