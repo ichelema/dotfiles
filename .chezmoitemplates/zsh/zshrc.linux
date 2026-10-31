@@ -271,7 +271,17 @@ alias pi='ANTHROPIC_API_KEY="$HINDSIGHT_ANTHROPIC_API_KEY" command pi'
 # navi: il comando scelto va sulla riga del prompt (print -z) invece di essere eseguito,
 # così gira nella shell corrente con alias, funzioni e cd. nai git fetch = apre già filtrato
 unalias na 2>/dev/null   # vecchia versione alias: con source ~/.zshrc trasformerebbe la definizione in navi()
-function na { local c; c=$(navi --print --query "$*") && [[ -n $c ]] && print -z -- "$c" }
+# Invio: comando sul prompt. Alt+Invio: eseguito subito (fzf crea $NA_RUN, vedi ~/.config/navi/config.yaml)
+function na {
+  local c run="${XDG_RUNTIME_DIR:-/tmp}/na-run.$$"
+  rm -f -- "$run"
+  c=$(NA_RUN=$run navi --print --query "$*") && [[ -n $c ]] || { rm -f -- "$run"; return }
+  if [[ -e $run ]]; then
+    rm -f -- "$run"; print -s -- "$c"; eval "$c"
+  else
+    print -z -- "$c"
+  fi
+}
 alias nai=na
 
 #  ╔╦╗╔═╗╦═╗╔╦╗╦╔╗╔╔═╗╦    ╔╦╗╦╔╦╗╦  ╔═╗
