@@ -107,6 +107,13 @@
         set nocompatible
         set mouse=a
         set clipboard=unnamed,unnamedplus
+        " VPS via SSH senza clipboard: copia via OSC 52 verso WezTerm
+        if !empty($SSH_TTY)
+            let g:osc52_force_avail = 1    " il rilevamento automatico può fallire dietro Zellij
+            let g:osc52_disable_paste = 1  " WezTerm non supporta l'incolla OSC 52: evita il blocco
+            packadd osc52
+            set clipmethod+=osc52
+        endif
         let mapleader = ' '
         if WINDOWS()
             call utility#windows#setup()
@@ -139,6 +146,13 @@
     " Copiano il testo anche nella clipboard di sistema
     " Incollano il contenuto dalla clipboard di sistema
     set clipboard=unnamed,unnamedplus
+    " VPS via SSH senza clipboard: copia via OSC 52 verso WezTerm
+    if !empty($SSH_TTY)
+        let g:osc52_force_avail = 1    " il rilevamento automatico può fallire dietro Zellij
+        let g:osc52_disable_paste = 1  " WezTerm non supporta l'incolla OSC 52: evita il blocco
+        packadd osc52
+        set clipmethod+=osc52
+    endif
     " Abilita il rilevamento del tipo di file, il caricamento dei plugin specifici e le regole di indentazione
     filetype plugin indent on
     syntax on
