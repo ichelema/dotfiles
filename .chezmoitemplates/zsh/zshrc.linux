@@ -390,3 +390,22 @@ echo -ne '\e[5 q'
 {{ if not (index . "vps") -}}
 pokego --no-title -s -r 1,3,6
 {{ end }}
+
+# lnav dentro zellij: zellij inoltra le 256 query OSC 4 una a una (zellij#5606) e notcurses va in timeout; tmux risponde da solo
+_lnav_run() {  # $1 = prefisso ("command" o "sudo"), resto = argomenti di lnav
+  local pre=$1; shift
+  if [[ -n $ZELLIJ && -z $TMUX ]]; then
+    tmux -L lnav -f /dev/null start-server \; \
+      set -s escape-time 0 \; set -g status off \; set -g mouse on \; \
+      set -g default-terminal tmux-256color \; set -as terminal-features ',*:RGB' \; \
+      new-session "$pre lnav ${(j: :)${(q)@}}"
+  else
+    $pre lnav "$@"
+  fi
+}
+lnav()  { _lnav_run command "$@" }
+slnav() { _lnav_run sudo "$@" }  # log leggibili solo da root (caddy, fail2ban)
+
+# zj-radar: Zellij non passa ai plugin i colori di WezTerm (default_bg null) e il radar usa un fallback quasi nero.
+# Dichiarare fg/bg del pane (OSC 10/11, valori di colors/nord.lua di WezTerm) gli fa derivare il pannello dal tema reale.
+[[ -n $ZELLIJ ]] && printf '\e]10;#D8DEE9\a\e]11;#142433\a'
