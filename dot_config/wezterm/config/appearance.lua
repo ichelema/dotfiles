@@ -61,7 +61,7 @@ return {
     window_padding = {
         left = 8,
         right = 8,
-        top = 2,
+        top = 8,
         bottom = 0,
     },
     window_close_confirmation = 'NeverPrompt',
