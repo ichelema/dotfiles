@@ -1,11 +1,11 @@
 % disk, space
 
-# Spazio libero sui dischi (senza filesystem virtuali)
-; -h  dimensioni leggibili (K, M, G)
-; -T  mostra il tipo di filesystem
-; -x  esclude un tipo di filesystem (ripetibile)
+# Spazio libero sui dischi (nu, senza filesystem virtuali)
+; sys disks  dischi reali con totale e spazio libero
+; uniq-by device  una riga per disco (salta i bind mount dello stesso disco)
+; uso%  percentuale occupata, calcolata da free e total
 ```sh
-df -hT -x tmpfs -x devtmpfs -x efivarfs -x overlay
+nu -c 'sys disks | uniq-by device | select device type mount total free | insert "uso%" {|d| (1 - $d.free / $d.total) * 100 | math round} | sort-by mount'
 ```
 
 # Spazio libero sul disco che contiene una cartella

@@ -82,21 +82,22 @@ pacman -Qm
 pacman -Qtd
 ```
 
-# Pacchetti che occupano più spazio
-; -H M  dimensioni in MiB
-; %m  spazio occupato una volta installato
+# Pacchetti che occupano più spazio (nu)
+; %m  spazio occupato una volta installato, in byte
 ; %n  nome del pacchetto
-; sort -h  ordina dimensioni leggibili (K, M, G)
+; from tsv  trasforma le righe separate da tab in tabella
+; into filesize  byte → dimensione leggibile (MB, GB)
 ```sh
-expac -H M '%m\t%n' | sort -h | tail -20
+nu -c 'expac "%m\t%n" | from tsv --noheaders | rename dimensione nome | update dimensione {into filesize} | sort-by dimensione | last 20'
 ```
 
-# Ultimi pacchetti installati o aggiornati
-; --timefmt  formato della data
+# Ultimi pacchetti installati o aggiornati (nu, date relative)
+; --timefmt=%s  data come secondi dal 1970
 ; %l  data di installazione o aggiornamento
 ; %n %v  nome e versione
+; into datetime  vuole nanosecondi: per questo * 1_000_000_000
 ```sh
-expac --timefmt='%Y-%m-%d %T' '%l\t%n %v' | sort | tail -30
+nu -c 'expac --timefmt=%s "%l\t%n\t%v" | from tsv --noheaders | rename data nome versione | update data {into int | $in * 1_000_000_000 | into datetime} | sort-by data | last 30'
 ```
 
 # Aggiornamenti disponibili senza aggiornare

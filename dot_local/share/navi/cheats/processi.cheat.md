@@ -7,32 +7,30 @@
 pgrep -af <nome>
 ```
 
-# Processi che usano più CPU
-; -e  tutti i processi
-; -o  colonne da mostrare
-; etime  tempo trascorso dall'avvio
-; cmd  riga di comando completa
-; --sort=-%cpu  ordina per CPU, dal più alto
+# Processi che usano più CPU (nu)
+; ps -l  processi con tutte le colonne (cpu, mem, start_time, command...)
+; cpu  CPU di questo istante, come top (non la media dall'avvio)
+; mem  memoria fisica usata, già leggibile (MB, GB)
+; str substring 0..59  accorcia la riga di comando a 60 caratteri
 ```sh
-ps -eo pid,user,%cpu,%mem,etime,cmd --sort=-%cpu | head -20
+nu -c 'ps -l | sort-by cpu -r | first 20 | select pid name cpu mem start_time command | update command {str substring 0..59}'
 ```
 
-# Processi che usano più memoria
-; -e  tutti i processi
-; -o  colonne da mostrare
-; rss  memoria fisica usata, in KiB
-; --sort=-%mem  ordina per memoria, dal più alto
+# Processi che usano più memoria (nu)
+; ps -l  processi con tutte le colonne (cpu, mem, start_time, command...)
+; mem  memoria fisica usata, già leggibile (MB, GB)
+; str substring 0..59  accorcia la riga di comando a 60 caratteri
 ```sh
-ps -eo pid,user,%cpu,%mem,rss,cmd --sort=-%mem | head -20
+nu -c 'ps -l | sort-by mem -r | first 20 | select pid name cpu mem start_time command | update command {str substring 0..59}'
 ```
 
-# Dettagli di un processo
-; -o  colonne da mostrare
-; -p  solo il PID indicato
+# Dettagli di un processo (nu, scheda verticale)
 ; ppid  PID del processo padre
-; stat  stato: R in esecuzione, S in attesa, T fermo, Z zombie
+; status  Running, Sleeping, Stopped, Zombie...
+; virtual  memoria virtuale riservata
+; cwd  cartella di lavoro (vuota per i processi di altri utenti)
 ```sh
-ps -o pid,ppid,user,%cpu,%mem,etime,stat,cmd -p <pid>
+nu -c 'ps -l | where pid == <pid> | first | select pid ppid name status cpu mem virtual process_threads start_time cwd command'
 ```
 
 # Albero dei processi figli di un processo

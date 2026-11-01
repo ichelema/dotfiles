@@ -40,12 +40,12 @@ eza -T --git-ignore --level=<livello> --icons=auto <cartella>
 eza -lh --sort=modified --icons=auto <cartella>
 ```
 
-# Dimensione delle sottocartelle, ordinate
-; -h  dimensioni leggibili
-; -d1  profondità 1: solo le sottocartelle dirette
-; sort -h  ordina dimensioni leggibili
+# Dimensione delle sottocartelle e dei file, ordinate (nu)
+; -a  include anche le voci nascoste
+; path join "*" | into glob  tutte le voci dirette della cartella
+; apparent  dimensione dei dati, physical  spazio occupato su disco
 ```sh
-du -h -d1 <cartella> 2>/dev/null | sort -h
+nu -c 'du -a ("<cartella>" | path join "*" | into glob) | sort-by physical'
 ```
 
 # Cerca file e cartelle per nome

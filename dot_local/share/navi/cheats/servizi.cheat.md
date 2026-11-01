@@ -54,17 +54,19 @@ sudo systemctl edit <servizio>
 sudo systemctl daemon-reload
 ```
 
-# Servizi falliti
+# Servizi falliti (nu)
 ; --failed  solo le unit in stato di errore
+; -o json | from json  tabella invece di testo
 ```sh
-systemctl --failed
+nu -c 'systemctl --failed -o json | from json | select unit active sub description'
 ```
 
-# Servizi in esecuzione
+# Servizi in esecuzione (nu)
 ; --type=service  solo servizi
 ; --state=running  solo quelli in esecuzione
+; -o json | from json  tabella invece di testo
 ```sh
-systemctl list-units --type=service --state=running
+nu -c 'systemctl list-units --type=service --state=running -o json | from json | select unit description'
 ```
 
 # Timer programmati e prossima esecuzione
