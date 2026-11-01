@@ -25,7 +25,7 @@ return {
     debug_key_events = false,
 
     -- scrollbar
-    enable_scroll_bar = true,
+    enable_scroll_bar = false,
     min_scroll_bar_height = "3cell",
     -- colors = {
     --     scrollbar_thumb = '#454545',
@@ -59,10 +59,10 @@ return {
 
 
     window_padding = {
-        left = 1,
-        right = 1,
-        top = 0,
-        bottom = 1,
+        left = 8,
+        right = 8,
+        top = 2,
+        bottom = 0,
     },
     window_close_confirmation = 'NeverPrompt',
     skip_close_confirmation_for_processes_named = { "bash", "sh", "zsh", "fish", "tmux", "cmd", "zellij" },
