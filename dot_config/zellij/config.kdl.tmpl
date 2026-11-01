@@ -258,6 +258,7 @@ keybinds clear-defaults=true {
         bind "Alt PageUp" { PageScrollUp; }
         bind "Alt PageDown" { PageScrollDown; }
         bind "Alt f" { ToggleFloatingPanes; }
+        bind "Alt s" { LaunchOrFocusPlugin "zeshij" { floating true; move_to_focused_tab true; }; }
     }
     shared_except "locked" "entersearch" {
         bind "enter" { SwitchToMode "locked"; }
