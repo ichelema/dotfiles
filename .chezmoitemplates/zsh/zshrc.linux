@@ -268,6 +268,9 @@ alias q='noglob q'   # così "?" e "*" nella domanda non vengono espansi da zsh
 # pi con la chiave Anthropic (riusa HINDSIGHT_ANTHROPIC_API_KEY da api-keys.zsh)
 alias pi='ANTHROPIC_API_KEY="$HINDSIGHT_ANTHROPIC_API_KEY" command pi'
 
+# zeshij abbreviato: senza argomenti apre il picker, con argomenti li passa (zes connect nome, zes list)
+alias zes='zeshij'
+
 # navi: il comando scelto va sulla riga del prompt (print -z) invece di essere eseguito,
 # così gira nella shell corrente con alias, funzioni e cd. nai git fetch = apre già filtrato
 unalias na 2>/dev/null   # vecchia versione alias: con source ~/.zshrc trasformerebbe la definizione in navi()
