@@ -293,7 +293,7 @@ plugins {
     // zj-radar: gestito da `zj-radar setup zellij` (non c'è build Windows)
     // zj-radar: managed plugin alias begin
     radar location="file:~/.config/zellij/plugins/zj_radar.wasm" {
-        naming "managed"
+        naming "off"
         glyphs "nerd"
         spinner_fps 6
         density "comfortable"
@@ -407,7 +407,7 @@ pane_frames false
 //   - detach (Default)
 //   - quit
 //
-on_force_close "quit"
+// on_force_close "quit"
 
 // Configure the scroll back buffer size
 // This is the number of lines zellij stores for each pane in the scroll back
