@@ -21,6 +21,10 @@
 {{- if not (index . "vps") }}
     "HINDSIGHT_SSH_TUNNEL": "hindsight-vps",
     "LITELLM_SSH_TUNNEL": "litellm-vps",
+{{- if eq .chezmoi.os "linux" }}
+{{- /* il titolo del tab kitty lo scrive ~/.claude/hooks/kitty-status.sh: senza questa variabile lo spinner di Claude Code lo sovrascrive */}}
+    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1",
+{{- end }}
 {{- end }}
 {{- if eq .chezmoi.os "windows" }}
     "CLAUDE_CODE_GIT_BASH_PATH": "d:\\msys64\\usr\\bin\\bash.exe",
@@ -126,6 +130,14 @@
     "Stop": [{ "hooks": [{ "type": "command", "command": "~/.local/bin/claude-notifica fine" }] }],
     "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "~/.local/bin/claude-notifica annulla" }] }],
     "SessionEnd": [{ "hooks": [{ "type": "command", "command": "~/.local/bin/claude-notifica annulla" }] }]
+  },
+{{- else if eq .chezmoi.os "linux" }}
+  "hooks": {
+    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh working" }] }],
+    "PostToolUse": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh working" }] }],
+    "Notification": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh waiting" }] }],
+    "Stop": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh done" }] }],
+    "StopFailure": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh error" }] }]
   },
 {{- end }}
   "disableClaudeAiConnectors": true,
