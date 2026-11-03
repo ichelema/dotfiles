@@ -45,7 +45,7 @@
 {{- else }}
     "EDITOR": "nvim",
     "SUDO_ASKPASS": "/home/ichelema/.local/bin/sudo-askpass.sh",
-    "OBSIDIAN_VAULT": "/Dati/Obsidian/Sinapsi",
+    "OBSIDIAN_VAULT": {{ if index . "vps" }}"/Dati/Obsidian/Sinapsi"{{ else }}"/run/media/ichelema/SPHYNX/Obsidian/Sinapsi"{{ end }},
     "OBSIDIAN_VAULT_NAME": "sinapsi",
     "MCP_EXCALIDRAW_DIR": "/home/ichelema/.local/opt/mcp_excalidraw",
     "MCP_DEBUGGER_DIR": "/Dati/AI/Tools/mcp-debugger",
