@@ -42,6 +42,9 @@ SCREENRC="$XDG_CONFIG_HOME"/screen/screenrc
 PARALLEL_HOME="$XDG_CONFIG_HOME/parallel"
 ZSH_AUTOSUGGEST_STRATEGY=(history)
 
+# locale anche nelle shell non di login (ssh host comando): /etc/locale.conf vale solo
+# per il login, e senza LANG zsh e Zellij nati da un comando ssh mostrano "?????"
+: "${LANG:=it_IT.UTF-8}"; export LANG
 
 export ZDOTDIR="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
 
