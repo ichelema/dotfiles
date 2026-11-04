@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # zj-radar-mirror: copia i file di presenza di zj-radar dalla VPS nella cache
 # locale del plugin, così la rail locale mostra le sessioni della VPS come peer
-# "vps/<nome>". L'mtime remoto viene conservato: una sessione VPS chiusa invecchia
-# e sparisce dalla rail (stale dopo 90 s, rimossa dopo 300 s) come un peer locale.
+# "<attach_host>/<nome>" e un click apre un pane `ssh -t <attach_host> zellij attach <nome>`.
+# L'mtime remoto viene conservato: una sessione VPS chiusa invecchia e sparisce
+# dalla rail (stale dopo 90 s, rimossa dopo 300 s) come un peer locale.
 set -u
 host=infomaniak-radar   # chiave dedicata, command= forzato: zj-radar-presence-dump
-prefix=vps
+attach_host=infomaniak  # alias ssh interattivo che il click della rail usa per l'attach
+prefix=vps              # suffisso del nome file locale: mai in collisione con un pid locale
 local_dir="$HOME/.cache/zellij/file:$HOME/.config/zellij/plugins/zj_radar.wasm/plugin_cache"
 ctl="${XDG_RUNTIME_DIR:-/tmp}/zj-radar-mirror.ssh"
 while :; do
@@ -14,7 +16,7 @@ while :; do
       zj-radar-presence-dump 2>/dev/null |
   while IFS=$'\t' read -r name mtime json; do
     tmp="$local_dir/$name.mirror.tmp"   # non termina in .json: nessuna rail lo legge
-    printf '%s' "$json" | sed "s|\"session_name\":\"|\"session_name\":\"$prefix/|" > "$tmp" &&
+    printf '%s' "$json" | sed "s|^{|{\"host\":\"$attach_host\",|" > "$tmp" &&
       touch -d "@$mtime" "$tmp" &&
       mv -f "$tmp" "$local_dir/${name/presence./presence.$prefix-}"
   done
