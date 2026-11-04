@@ -3,22 +3,35 @@
 # locale del plugin, così la rail locale mostra le sessioni della VPS come peer
 # "<attach_host>/<nome>" e un click apre un pane `ssh -t <attach_host> zellij attach <nome>`.
 # L'mtime remoto viene conservato: una sessione VPS chiusa invecchia e sparisce
-# dalla rail (stale dopo 90 s, rimossa dopo 300 s) come un peer locale.
+# dalla rail (stale dopo 90 s, rimossa dopo 300 s) come un peer locale. Un file con
+# mtime invariato non viene ricopiato: ✕ e la rimozione dei morti restano validi.
 set -u
 host=infomaniak-radar   # chiave dedicata, command= forzato: zj-radar-presence-dump
 attach_host=infomaniak  # alias ssh interattivo che il click della rail usa per l'attach
 prefix=vps              # suffisso del nome file locale: mai in collisione con un pid locale
 local_dir="$HOME/.cache/zellij/file:$HOME/.config/zellij/plugins/zj_radar.wasm/plugin_cache"
 ctl="${XDG_RUNTIME_DIR:-/tmp}/zj-radar-mirror.ssh"
+declare -A seen   # file remoto -> mtime già gestito (copiato, oppure scartato perché morto)
 while :; do
-  ssh -o BatchMode=yes -o ConnectTimeout=10 -o ServerAliveInterval=15 \
+  out=$(ssh -o BatchMode=yes -o ConnectTimeout=10 -o ServerAliveInterval=15 \
       -o ControlMaster=auto -o ControlPath="$ctl" -o ControlPersist=120 "$host" \
-      zj-radar-presence-dump 2>/dev/null |
+      zj-radar-presence-dump 2>/dev/null)
+  if (( $? == 255 )); then sleep 10; continue; fi   # VPS non raggiungibile: non dimenticare niente
+  now=$(date +%s)
+  declare -A listed=()
   while IFS=$'\t' read -r name mtime json; do
+    [[ -n $name ]] || continue
+    listed[$name]=1
+    # mtime invariato: non rimettere un file che la rail ha tolto (✕ o sessione morta)
+    [[ ${seen[$name]-} == "$mtime" ]] && continue
+    seen[$name]=$mtime
+    (( now - mtime < 300 )) || continue   # già morto: la rail lo toglierebbe subito
     tmp="$local_dir/$name.mirror.tmp"   # non termina in .json: nessuna rail lo legge
     printf '%s' "$json" | sed "s|^{|{\"host\":\"$attach_host\",|" > "$tmp" &&
       touch -d "@$mtime" "$tmp" &&
       mv -f "$tmp" "$local_dir/${name/presence./presence.$prefix-}"
-  done
-  sleep 30
+  done <<< "$out"
+  for k in "${!seen[@]}"; do [[ -v listed[$k] ]] || unset 'seen[$k]'; done
+  # ogni 10 s: età locale = intervallo di scrittura remoto (≤ 75 s) + ritardo di copia, sotto i 90 s di "fresh"
+  sleep 10
 done
