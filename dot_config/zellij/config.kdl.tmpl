@@ -60,6 +60,9 @@ keybinds clear-defaults=true {
         // n: split verticale, pannello nuovo a destra; h: split orizzontale, pannello nuovo sotto
         bind "n" { NewPane "Right"; SwitchToMode "locked"; }
         bind "h" { NewPane "Down"; SwitchToMode "locked"; }
+        // sessione annidata (ssh + zellij nel pane, Zellij 0.45): dall'host scende nella
+        // guest, dalla guest risale all'host; l'azione che non si applica è inerte
+        bind "g" { FocusGuestSession; FocusHostSession; SwitchToMode "locked"; }
 {{- end }}
         bind "/" { SwitchToMode "entersearch"; SearchInput 0; }
         bind "c" { SwitchToMode "scroll"; }
@@ -315,6 +318,7 @@ load_plugins {
         timeoutlen 300
         "normal n" "split a destra (zsh)"
         "normal h" "split sotto (zsh)"
+        "normal g" "guest ⇄ host (sessione annidata)"
 {{- if ne .chezmoi.os "windows" }}
         "normal a" "radar"
         "tmux right" "tab che ti aspetta, successivo"
@@ -365,6 +369,8 @@ default_mode "locked"
 // Default: "default"
 //
 default_layout "zsh"
+// al focus su un pane con una sessione Zellij annidata, l'input passa subito alla guest
+nested_session_handling "descend"
 
 // The folder in which Zellij will look for layouts
 // (Requires restart)
