@@ -370,8 +370,8 @@ default_mode "locked"
 // Default: "default"
 //
 default_layout "zsh"
-// al focus su un pane con una sessione Zellij annidata, l'input passa subito alla guest
-nested_session_handling "descend"
+// l'input resta all'host anche sul pane con una sessione annidata (VPS): Alt . g per passarlo alla guest
+nested_session_handling "never"
 
 // The folder in which Zellij will look for layouts
 // (Requires restart)
