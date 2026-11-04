@@ -1,0 +1,25 @@
+// Layout per la VPS quando ci si connette dal PC: nessuna colonna zj-radar visibile,
+// per non avere due sidebar annidate. La rail resta caricata come pane floating
+// nascosto in ogni tab, così continua a pubblicare i file di presenza che lo
+// script mirror copia sul PC (lì la sessione compare come peer "vps/<nome>").
+layout {
+    default_tab_template hide_floating_panes=true {
+        children
+        floating_panes {
+            pane borderless=true {
+                plugin location="radar"
+            }
+        }
+    }
+    new_tab_template hide_floating_panes=true {
+        pane focus=true
+        floating_panes {
+            pane borderless=true {
+                plugin location="radar"
+            }
+        }
+    }
+    tab focus=true {
+        pane
+    }
+}
