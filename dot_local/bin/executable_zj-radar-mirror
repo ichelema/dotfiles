@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# zj-radar-mirror: copia i file di presenza di zj-radar dalla VPS nella cache
+# locale del plugin, così la rail locale mostra le sessioni della VPS come peer
+# "vps/<nome>". L'mtime remoto viene conservato: una sessione VPS chiusa invecchia
+# e sparisce dalla rail (stale dopo 90 s, rimossa dopo 300 s) come un peer locale.
+set -u
+host=infomaniak-radar   # chiave dedicata, command= forzato: zj-radar-presence-dump
+prefix=vps
+local_dir="$HOME/.cache/zellij/file:$HOME/.config/zellij/plugins/zj_radar.wasm/plugin_cache"
+ctl="${XDG_RUNTIME_DIR:-/tmp}/zj-radar-mirror.ssh"
+while :; do
+  ssh -o BatchMode=yes -o ConnectTimeout=10 -o ServerAliveInterval=15 \
+      -o ControlMaster=auto -o ControlPath="$ctl" -o ControlPersist=120 "$host" \
+      zj-radar-presence-dump 2>/dev/null |
+  while IFS=$'\t' read -r name mtime json; do
+    tmp="$local_dir/$name.mirror.tmp"   # non termina in .json: nessuna rail lo legge
+    printf '%s' "$json" | sed "s|\"session_name\":\"|\"session_name\":\"$prefix/|" > "$tmp" &&
+      touch -d "@$mtime" "$tmp" &&
+      mv -f "$tmp" "$local_dir/${name/presence./presence.$prefix-}"
+  done
+  sleep 30
+done
