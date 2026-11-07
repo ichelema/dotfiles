@@ -21,10 +21,11 @@
 {{- if not (index . "vps") }}
     "HINDSIGHT_SSH_TUNNEL": "hindsight-vps",
     "LITELLM_SSH_TUNNEL": "litellm-vps",
-{{- if eq .chezmoi.os "linux" }}
-{{- /* il titolo del tab kitty lo scrive ~/.claude/hooks/kitty-status.sh: senza questa variabile lo spinner di Claude Code lo sovrascrive */}}
-    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1",
 {{- end }}
+{{- if eq .chezmoi.os "linux" }}
+{{- /* titolo (nome del repo) e stato (OSC 7501) del tab kitty li scrive ~/.claude/hooks/kitty-status.sh, anche via SSH dalla VPS:
+       senza questa variabile Claude Code sovrascrive il titolo con lo spinner */}}
+    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1",
 {{- end }}
 {{- if eq .chezmoi.os "windows" }}
     "CLAUDE_CODE_GIT_BASH_PATH": "d:\\msys64\\usr\\bin\\bash.exe",
@@ -125,10 +126,21 @@
   "model": {{ if eq .chezmoi.os "linux" }}"opus"{{ else }}"opus[1m]"{{ end }},
 {{- if index . "vps" }}
   "hooks": {
-    "PreToolUse": [{ "matcher": "AskUserQuestion",
-      "hooks": [{ "type": "command", "command": "~/.local/bin/claude-notifica domanda" }] }],
-    "Stop": [{ "hooks": [{ "type": "command", "command": "~/.local/bin/claude-notifica fine" }] }],
-    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "~/.local/bin/claude-notifica annulla" }] }],
+    "SessionStart": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh" }] }],
+    "UserPromptSubmit": [{ "hooks": [
+      { "type": "command", "command": "~/.local/bin/claude-notifica annulla" },
+      { "type": "command", "command": "~/.claude/hooks/kitty-status.sh working" }] }],
+    "PreToolUse": [{ "matcher": "AskUserQuestion", "hooks": [
+      { "type": "command", "command": "~/.local/bin/claude-notifica domanda" },
+      { "type": "command", "command": "~/.claude/hooks/kitty-status.sh question" }] }],
+    "PostToolUse": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh working" }] }],
+    "Notification": [
+      { "matcher": "permission_prompt", "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh permission" }] },
+      { "matcher": "elicitation_dialog", "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh question" }] }],
+    "Stop": [{ "hooks": [
+      { "type": "command", "command": "~/.local/bin/claude-notifica fine" },
+      { "type": "command", "command": "~/.claude/hooks/kitty-status.sh done" }] }],
+    "StopFailure": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh error" }] }],
     "SessionEnd": [{ "hooks": [{ "type": "command", "command": "~/.local/bin/claude-notifica annulla" }] }]
   },
 {{- else if eq .chezmoi.os "linux" }}
