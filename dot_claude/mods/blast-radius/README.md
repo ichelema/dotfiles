@@ -4,7 +4,7 @@ A Claude Code mod that queues a risky shell command and shows you what it would 
 
 ## What this shows
 
-When Claude calls Bash with one of the commands below, Blast Radius refuses the call at once, works out what the command would touch, and adds it to a pane. Each queued command has two buttons: **Yes** runs it in `bash -c` from the folder Claude was in (the mod runs it, not Claude), **No** drops it. A row that ran leaves the list with a toast; a row that failed stays in red with the tail of its stderr until **Dismiss**. The pane closes when the list is empty. Claude sees the refusal with the queue number and the summary; it does not learn whether you pressed Yes.
+When Claude calls Bash with one of the commands below, Blast Radius refuses the call at once, works out what the command would touch, and adds it to a pane. Each queued command has two buttons: **Yes** runs it in `bash -c` from the folder Claude was in (the mod runs it, not Claude), **No** drops it. A row that ran leaves the list with a toast; a row that failed stays in red with the tail of its stderr until **Dismiss**. The pane closes when the list is empty. Claude sees the refusal with the queue number and the summary. Your answer (Yes and it ran, Yes and it failed, or No) reaches Claude once: with the main loop's next tool result, or with your next prompt if the turn has ended.
 
 | Command | What the pane shows |
 |---|---|

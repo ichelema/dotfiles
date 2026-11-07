@@ -21,6 +21,10 @@ const RUN_LIMIT_MS = 10 * 60 * 1000; // ceiling of $.process.run
 // call is refused at once and lands here. Yes runs it in bash, No drops it.
 const queue = [];
 let nextId = 1;
+// What the user decided (Yes ran / Yes failed / No) and the agent hasn't read
+// yet: handed over with the main loop's next tool result, or the next prompt.
+const outcomes = [];
+const takeOutcomes = () => `Blast Radius, the user's answers to queued commands:\n${outcomes.splice(0).join("\n")}`;
 let where = "pane"; // "band" when the terminal is too narrow for the pane
 // False in a `claude -p` run or under the SDK: nobody can press Yes, so a
 // risky command is refused with no queue.
@@ -48,6 +52,16 @@ export function register(on) {
     return next(e);
   });
 
+  // Hand the pending Yes/No outcomes to the main loop (a subagent's context would lose them).
+  // Registered first, so it wraps the Bash hook below and its deny too.
+  on("tool.call", async ($, e, next) => {
+    const r = await next(e);
+    if (e.agentId !== undefined || outcomes.length === 0) {
+      return r;
+    }
+    return r.deny !== undefined ? { deny: `${r.deny}\n\n${takeOutcomes()}` } : { ...r, context: [...(r.context ?? []), takeOutcomes()] };
+  });
+
   on("tool.call", { tool: "Bash" }, async ($, e, next) => {
     const command = String(e.command ?? "");
     const risk = classify(command);
@@ -68,9 +82,11 @@ export function register(on) {
     queue.push(item);
     await showQueue($, queue.length === 1);
     return {
-      deny: `Blast Radius queued this command as #${item.id}: the user runs it by hand (Yes) or drops it (No). It would: ${report.summary}. Do not retry it and do not assume it ran; go on with the rest of the task.`,
+      deny: `Blast Radius queued this command as #${item.id}: the user runs it by hand (Yes) or drops it (No). It would: ${report.summary}. Do not retry it and do not assume it ran; go on with the rest of the task. The user's answer reaches you later, with a tool result or the next prompt.`,
     };
   });
+
+  on("prompt.submit", ($, e, next) => (outcomes.length === 0 ? next(e) : next({ ...e, context: [...(e.context ?? []), takeOutcomes()] })));
 
   on("ui.render", { component: "Pane" }, ($, e, next) => {
     if (e.requestId !== PANE_ID || queue.length === 0) {
@@ -515,12 +531,17 @@ function decide($, item, choice) {
       // with the tail of stderr and a Dismiss button, so nothing is missed.
       if (outcome === "done") {
         $.ui.toast(`Blast Radius #${item.id} done: ${item.command}`);
+        outcomes.push(`#${item.id} \`${item.command}\`: the user pressed Yes and it ran successfully (exit 0). It is done; do not run it again.`);
       } else {
         item.running = false;
         item.failed = { outcome, lines: stderr.split("\n").filter((l) => l !== "").slice(-5) };
+        outcomes.push(`#${item.id} \`${item.command}\`: the user pressed Yes but it failed (${outcome}). stderr tail: ${item.failed.lines.join(" | ") || "(empty)"}`);
         $.ui.invalidate("ui.render");
         return;
       }
+    } else if (!item.failed) {
+      // Dismiss of a failed row is a No too, but its failure is already reported.
+      outcomes.push(`#${item.id} \`${item.command}\`: the user pressed No; it did not run.`);
     }
     const i = queue.indexOf(item);
     if (i >= 0) {
