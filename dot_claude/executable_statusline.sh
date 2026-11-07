@@ -266,8 +266,8 @@ fi
 # ===== Build single-line output =====
 out=""
 
-# ===== Ponytail mode badge =====
-ponytail_flag="${claude_config_dir}/.ponytail-active"
+# ===== Ponytail mode badge (stato per sessione, scritto dagli hook ponytail di Trinity) =====
+ponytail_flag="${claude_config_dir}/ponytail-state/${session_id}"
 if [ -f "$ponytail_flag" ]; then
 	p_mode=""
 	read -r p_mode <"$ponytail_flag"

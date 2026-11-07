@@ -228,7 +228,7 @@ const draw = async ($: EngineInterface) => {
       $.session.model(),
       $.session.usage(),
       $.settings.read(),
-      readOr($, `${configDir}/.ponytail-active`),
+      readOr($, `${configDir}/ponytail-state/${sessionId}`),
     ])
     const branch = await branchOf($, cwd)
     if (branch && now - statAt >= GIT_STAT_MS) {

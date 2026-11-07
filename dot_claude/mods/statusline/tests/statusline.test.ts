@@ -55,7 +55,7 @@ test('senza flag ponytail né cache: niente badge né segmento cache', async () 
 
 test('a SessionStart scrive la riga con i dati della sessione', async ($, on) => {
   const files: Record<string, string> = {
-    'cfg/.ponytail-active': 'full\n',
+    'cfg/ponytail-state/abcdef1234': 'full\n',
     'AI/Repo/.git/HEAD': 'ref: refs/heads/feat/x\n',
   }
   on('env.get', (_, e) => ({ value: e.name === 'HOME' ? 'E:\\home' : '/e/cfg' }) as never)
