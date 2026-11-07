@@ -1,7 +1,19 @@
 #!/usr/bin/env bash
-# Nome del repository nel titolo del tab kitty (OSC 2), chiamato dagli hook di ~/.claude/settings.json.
-# Fuori da kitty non fa nulla.
-[ -n "$KITTY_WINDOW_ID" ] || exit 0
+# Titolo del tab kitty (nome del repository, OSC 2) e stato di Claude Code (program status, OSC 7501),
+# chiamato dagli hook di ~/.claude/settings.json. Con CLAUDE_CODE_DISABLE_TERMINAL_TITLE=1 Claude Code
+# non scrive né titolo né stato: li scrive questo script, e kitty mostra lo stato con {tab.program_status}.
+# $1 = working | permission | question | done | error; vuoto = solo titolo.
+# Fuori da kitty non fa nulla; via SSH (TERM=xterm-kitty) le sequenze arrivano al kitty locale.
+[ -n "$KITTY_WINDOW_ID" ] || [ "$TERM" = xterm-kitty ] || exit 0
+
+case $1 in
+  working)    status='state=working' ;;
+  permission) status='state=blocked:kind=permission' ;;
+  question)   status='state=blocked:kind=question' ;;
+  done)       status='state=done' ;;
+  error)      status='state=error' ;;
+  *)          status= ;;
+esac
 
 # Nome: repo di origin (https://host/user/repo o git@host:user/repo), poi la cartella
 url=$(git remote get-url origin 2>/dev/null)
@@ -20,5 +32,8 @@ while [ "${pid:-0}" -gt 1 ]; do
 done
 # Nessun TTY tra gli antenati (cron, CI, IDE): esce senza scrivere
 [ -n "$tty" ] || exit 0
-printf '\e]2;%s\a' "$name" 2>/dev/null >"/dev/$tty"
+{
+  printf '\e]2;%s\a' "$name"
+  [ -z "$status" ] || printf '\e]7501;%s:app=claude\a' "$status"
+} 2>/dev/null >"/dev/$tty"
 exit 0
