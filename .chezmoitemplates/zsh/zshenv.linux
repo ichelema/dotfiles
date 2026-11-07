@@ -34,6 +34,10 @@ set -a
 : "${XDG_VIDEOS_DIR:=$HOME/Video}"
 set +a
 LESSHISTFILE=${LESSHISTFILE:-/tmp/less-hist}
+# less: icone Nerd Font (Unicode uso privato) stampabili, non <U+E5FF>
+export LESSUTFCHARDEF='E000-F8FF:p,F0000-FFFFD:p,100000-10FFFD:p'
+# less: colori (-R) e ricerca che ignora sempre maiuscole e minuscole (-I); oh-my-zsh non la sovrascrive
+export LESS='-R -I'
 PARALLEL_HOME="$XDG_CONFIG_HOME/parallel"
 
 # wget
