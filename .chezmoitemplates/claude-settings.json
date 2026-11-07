@@ -22,9 +22,10 @@
     "HINDSIGHT_SSH_TUNNEL": "hindsight-vps",
     "LITELLM_SSH_TUNNEL": "litellm-vps",
 {{- end }}
-{{- if eq .chezmoi.os "linux" }}
-{{- /* titolo (nome del repo) e stato (OSC 7501) del tab kitty li scrive ~/.claude/hooks/kitty-status.sh, anche via SSH dalla VPS:
-       senza questa variabile Claude Code sovrascrive il titolo con lo spinner */}}
+{{- if index . "vps" }}
+{{- /* sulla VPS titolo (nome del repo) e stato (OSC 7501) del tab kitty li scrive ~/.claude/hooks/kitty-status.sh via SSH.
+       In locale Claude Code manda da solo OSC 7501 e il nome del repo lo calcola draw_title() in ~/.config/kitty/tab_bar.py:
+       questa variabile spegne anche OSC 7501, quindi in locale non va messa */}}
     "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1",
 {{- end }}
 {{- if eq .chezmoi.os "windows" }}
@@ -142,19 +143,6 @@
       { "type": "command", "command": "~/.claude/hooks/kitty-status.sh done" }] }],
     "StopFailure": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh error" }] }],
     "SessionEnd": [{ "hooks": [{ "type": "command", "command": "~/.local/bin/claude-notifica annulla" }] }]
-  },
-{{- else if eq .chezmoi.os "linux" }}
-  "hooks": {
-    "SessionStart": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh" }] }],
-    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh working" }] }],
-    "PreToolUse": [{ "matcher": "AskUserQuestion",
-      "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh question" }] }],
-    "PostToolUse": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh working" }] }],
-    "Notification": [
-      { "matcher": "permission_prompt", "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh permission" }] },
-      { "matcher": "elicitation_dialog", "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh question" }] }],
-    "Stop": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh done" }] }],
-    "StopFailure": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh error" }] }]
   },
 {{- end }}
   "disableClaudeAiConnectors": true,
