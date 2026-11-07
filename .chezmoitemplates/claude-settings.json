@@ -133,12 +133,7 @@
   },
 {{- else if eq .chezmoi.os "linux" }}
   "hooks": {
-    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh working" }] }],
-    "PostToolUse": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh working" }] }],
-    "Notification": [{ "matcher": "permission_prompt|elicitation_dialog",
-      "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh waiting" }] }],
-    "Stop": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh done" }] }],
-    "StopFailure": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh error" }] }]
+    "SessionStart": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh" }] }]
   },
 {{- end }}
   "disableClaudeAiConnectors": true,
