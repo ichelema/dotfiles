@@ -1,24 +1,13 @@
 #!/usr/bin/env bash
-# Stato di Claude Code nel titolo del tab kitty (OSC 2), chiamato dagli hook di ~/.claude/settings.json.
-# $1 = working | waiting | done | error. Fuori da kitty (tmux, SSH, altri terminali) non fa nulla.
+# Nome del repository nel titolo del tab kitty (OSC 2), chiamato dagli hook di ~/.claude/settings.json.
+# Fuori da kitty non fa nulla.
 [ -n "$KITTY_WINDOW_ID" ] || exit 0
 
-case $1 in
-  working) icon='▶' ;;
-  waiting) icon='?' ;;
-  done)    icon='✓' ;;
-  error)   icon='✗' ;;
-  *)       icon='-' ;;
-esac
-
-# Nome: $CLAUDE_TAB_NAME, poi repo di origin (https://host/user/repo o git@host:user/repo), poi la cartella
-name=$CLAUDE_TAB_NAME
-if [ -z "$name" ]; then
-  url=$(git remote get-url origin 2>/dev/null)
-  url=${url%/}
-  url=${url%.git}
-  name=${url##*[/:]}
-fi
+# Nome: repo di origin (https://host/user/repo o git@host:user/repo), poi la cartella
+url=$(git remote get-url origin 2>/dev/null)
+url=${url%/}
+url=${url%.git}
+name=${url##*[/:]}
 [ -n "$name" ] || name=$(basename "$PWD")
 
 # Claude Code avvia gli hook senza terminale di controllo (/dev/tty non si apre):
@@ -31,5 +20,5 @@ while [ "${pid:-0}" -gt 1 ]; do
 done
 # Nessun TTY tra gli antenati (cron, CI, IDE): esce senza scrivere
 [ -n "$tty" ] || exit 0
-printf '\e]2;%s %s\a' "$icon" "$name" 2>/dev/null >"/dev/$tty"
+printf '\e]2;%s\a' "$name" 2>/dev/null >"/dev/$tty"
 exit 0
