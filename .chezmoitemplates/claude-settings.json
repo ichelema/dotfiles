@@ -213,7 +213,8 @@
     "filetree@claude-code-filetree": { "options": {
       "start": "off",
       "column": "size",
-      "follow": "off"
+      "follow": "on",
+      "work": "off"
 {{- if eq .chezmoi.os "windows" }},
       "open": {{ `C:\Appl\Vim\vim.exe -u NONE -i NONE -N -es --cmd "exe 'silent !start C:\Appl\Vim\gvim.exe -u D:/msys64/home/Sphynx/.config/vim/minimal ' .. escape(nr2char(34) .. argv(0) .. nr2char(34), '%#!')" --cmd "qa!" {path}` | toJson }}
 {{- end }}
