@@ -224,6 +224,11 @@ if [[ -x "$(which eza)" ]]; then
           lt2='eza -aT --level=2 --icons=auto' \
           lt3='eza -aT --level=3 --icons=auto'
 fi
+# ll: tabella nu con i permessi (mode); senza nu resta l'alias eza
+if (( $+commands[nu] )); then
+    unalias ll 2>/dev/null
+    function ll { nu -c 'def main [...p: string] { if ($p | is-empty) { ls -la } else { ls -la ...$p } | sort-by type name -i | select name type mode size modified }' "$@"; }
+fi
 
 # array, non stringa: zsh non divide "$aurhelper" in parole, e "sudo pacman" deve restare due argomenti
 if pacman -Qi yay &>/dev/null; then
