@@ -372,6 +372,14 @@ default_mode "locked"
 default_layout "zsh"
 // l'input resta all'host anche sul pane con una sessione annidata (VPS): Alt . g per passarlo alla guest
 nested_session_handling "never"
+// le notifiche arrivano già dalla desktop app (zellij terminal --background): non inoltrare OSC 9/99 a kitty, eviti i doppioni
+host_notification_protocol "off"
+
+// Stati dei pane (inbox, marker, notifiche): le chiavi assenti restano ai default
+attention {
+    done_threshold_secs 7   // default 10
+    idle_activity_secs 7    // default 10
+}
 
 // The folder in which Zellij will look for layouts
 // (Requires restart)
@@ -397,7 +405,7 @@ nested_session_handling "never"
 //   - true (default, enabled)
 //   - false
 //
-pane_frames false
+pane_frames true
 
 // When attaching to an existing session with other users,
 // should the session be mirrored (true)
