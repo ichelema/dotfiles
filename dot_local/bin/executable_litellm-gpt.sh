@@ -7,10 +7,10 @@ export ANTHROPIC_BASE_URL="http://127.0.0.1:4000"
 export ANTHROPIC_AUTH_TOKEN="$LITELLM_MASTER_KEY"
 
 export ANTHROPIC_MODEL="claude-gpt-6-astra-high"
-export ANTHROPIC_DEFAULT_SONNET_MODEL="claude-gpt-5-6-sol-high"
+export ANTHROPIC_DEFAULT_SONNET_MODEL="claude-gpt-6-1-sol-high"
 export ANTHROPIC_DEFAULT_OPUS_MODEL="claude-gpt-6-astra-high"
 export ANTHROPIC_DEFAULT_HAIKU_MODEL="claude-gpt-6-luna-high"
-export ANTHROPIC_DEFAULT_FABLE_MODEL="claude-gpt-5-6-sol-xhigh"
+export ANTHROPIC_DEFAULT_FABLE_MODEL="claude-gpt-6-1-sol-xhigh"
 export DISABLE_TELEMETRY="1"
 export DISABLE_NON_ESSENTIAL_MODEL_CALLS="1"
 
