@@ -414,7 +414,7 @@ model_list:
       cache_creation_input_token_cost: 0
       cache_read_input_token_cost: 0
     litellm_params:
-      model: anthropic/claude-fable-5-1
+      model: anthropic/claude-fable-5-2
       reasoning_effort: xhigh
 
 general_settings:
