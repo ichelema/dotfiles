@@ -22,4 +22,8 @@ include ~/.config/hypr/themes/current/theme/Applications/kitty.conf
 #hide_window_decorations yes
 #confirm_os_window_close 0
 include userprefs.conf
+{{ if index . "vps" -}}
+# Solo VPS: incolla dal clipboard con tasto destro
+mouse_map right press ungrabbed paste_from_clipboard
+{{ end -}}
 # Add your custom configurations here
