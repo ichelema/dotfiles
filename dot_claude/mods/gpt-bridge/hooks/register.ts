@@ -3,7 +3,7 @@ import type { Register } from 'claude-code'
 // Alias di ~/.litellm/litellm_config.yaml. È anche la "pillola avvelenata": se l'hook
 // fallisse, il motore manderebbe la richiesta ad api.anthropic.com con questo nome
 // e riceverebbe un errore visibile, mai un ripiego silenzioso su Claude.
-const MODEL = 'claude-gpt-5-6-sol-xhigh'
+const MODEL = 'claude-gpt-6-1-sol-xhigh'
 const LITELLM = 'http://127.0.0.1:4000'
 
 const PROMPT = `Sei un subagente al servizio di un orchestratore, dentro Claude Code.
@@ -62,7 +62,7 @@ export const register: Register = on => {
     if (root) curl = `${root}\\System32\\curl.exe`
     await $.agent.register({
       name: 'worker',
-      description: 'Subagente generico su GPT-5.6 Sol (xhigh) via LiteLLM: secondo parere indipendente, review avversaria, analisi e implementazione con un modello non-Claude.',
+      description: 'Subagente generico su GPT-6.1 Sol (xhigh) via LiteLLM: secondo parere indipendente, review avversaria, analisi e implementazione con un modello non-Claude.',
       prompt: PROMPT,
       model: MODEL,
       tools: TOOLS.map(t => t.name),

@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-const step = { turnId: 't1', index: 0, model: 'claude-gpt-5-6-sol-xhigh', messageCount: 1, agentId: 'a1' }
+const step = { turnId: 't1', index: 0, model: 'claude-gpt-6-1-sol-xhigh', messageCount: 1, agentId: 'a1' }
 // Legge lo stream fino in fondo: i chunk e il valore di ritorno del generatore.
 const drain = async (stream: AsyncGenerator<any, any>) => {
   const chunks: any[] = []
@@ -8,7 +8,7 @@ const drain = async (stream: AsyncGenerator<any, any>) => {
 }
 const agent = (type: string) => ({ value: [{ id: 'a1', type, description: '', status: 'running' }] }) as never
 const SSE = [
-  'event: message_start', 'data: {"type":"message_start","message":{"model":"claude-gpt-5-6-sol-xhigh","usage":{"input_tokens":0}}}', '',
+  'event: message_start', 'data: {"type":"message_start","message":{"model":"claude-gpt-6-1-sol-xhigh","usage":{"input_tokens":0}}}', '',
   'data: {"type":"content_block_start","index":0,"content_block":{"type":"text","text":""}}', '',
   'data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Leggo."}}', '',
   'data: {"type":"content_block_stop","index":0}', '',
@@ -34,7 +34,7 @@ test('risponde in streaming al turn.step del proprio agente via LiteLLM', async 
   })
   on('turn.step', async function* () { throw new Error('non deve arrivare al motore') })
   const { chunks, r } = await drain($.turn.step(step as never))
-  expect(sent.model).toBe('claude-gpt-5-6-sol-xhigh')
+  expect(sent.model).toBe('claude-gpt-6-1-sol-xhigh')
   expect(sent.stream).toBe(true)
   expect(sent.output_config).toEqual({ effort: 'xhigh' }) // effort dal suffisso dell'alias
   expect(sent.thinking).toEqual({ type: 'adaptive', summary: 'detailed' })
@@ -47,7 +47,7 @@ test('risponde in streaming al turn.step del proprio agente via LiteLLM', async 
   expect(r.answer).toBe('Leggo.')
   expect(r.toolUses).toEqual([{ name: 'Read', input: { file_path: 'README.md' } }])
   expect(r.stopReason).toBe('tool_use')
-  expect(r.usage).toEqual({ input_tokens: 10, output_tokens: 5, cache_read_input_tokens: 0, cache_creation_input_tokens: 0, model: 'claude-gpt-5-6-sol-xhigh' })
+  expect(r.usage).toEqual({ input_tokens: 10, output_tokens: 5, cache_read_input_tokens: 0, cache_creation_input_tokens: 0, model: 'claude-gpt-6-1-sol-xhigh' })
 })
 
 test('un errore HTTP senza eventi SSE diventa testo visibile e end_turn', async ($, on) => {
@@ -81,7 +81,7 @@ test('tool call parallele senza argomenti: ripete il passo senza streaming (Lite
   on('session.cwd', () => ({ value: 'E:/wd' }) as never)
   on('process.spawn', async function* () {
     yield { stream: 'stdout', text: [
-      'data: {"type":"message_start","message":{"model":"claude-gpt-5-6-sol-xhigh","usage":{"input_tokens":0}}}', '',
+      'data: {"type":"message_start","message":{"model":"claude-gpt-6-1-sol-xhigh","usage":{"input_tokens":0}}}', '',
       'data: {"type":"content_block_delta","index":0,"delta":{"type":"text_delta","text":"Cerco."}}', '',
       'data: {"type":"content_block_start","index":1,"content_block":{"type":"tool_use","id":"call_a","name":"Glob","input":{}}}', '',
       'data: {"type":"content_block_stop","index":1}', '',
@@ -94,7 +94,7 @@ test('tool call parallele senza argomenti: ripete il passo senza streaming (Lite
   })
   on('process.run', (_, e) => {
     sent2 = JSON.parse(e.init!.stdin!)
-    const reply = { model: 'claude-gpt-5-6-sol-xhigh', stop_reason: 'tool_use', usage: { input_tokens: 11, output_tokens: 7 },
+    const reply = { model: 'claude-gpt-6-1-sol-xhigh', stop_reason: 'tool_use', usage: { input_tokens: 11, output_tokens: 7 },
       content: [{ type: 'tool_use', id: 'call_c', name: 'Glob', input: { pattern: '**/*.py' } }, { type: 'tool_use', id: 'call_d', name: 'Grep', input: { pattern: 'retain' } }] }
     return { value: { exitCode: 0, stdout: JSON.stringify(reply), stderr: '' } } as never
   })
@@ -114,8 +114,8 @@ test('registra gpt-bridge:<nome> per ogni agente Trinity con gpt-model nel front
   on('env.get', (_, e) => ({ value: e.name === 'TRINITY_PLUGIN_DIR' ? 'E:/trinity' : undefined }) as never)
   on('process.run', (_, e) => {
     if (e.argv[0] === 'bash' && String(e.argv[2]).includes('agents/*.md')) return { value: { exitCode: 0, stderr: '', stdout: [
-      '', '===agent:reviewer', '---', 'name: reviewer', 'description: >-', '  Review avversaria', '  in sola lettura.', 'model: fable', 'gpt-model: claude-gpt-5-6-sol-xhigh', 'tools: Read, Grep, Glob, Bash', 'color: red', '---', '', 'Sei un reviewer avversario.', '',
-      '', '===agent:deep-reasoner', '---', 'name: deep-reasoner', 'description: Analisi.', 'model: fable', 'gpt-model: claude-gpt-5-6-sol-max', 'effort: max', '---', 'Ragiona a fondo.', '',
+      '', '===agent:reviewer', '---', 'name: reviewer', 'description: >-', '  Review avversaria', '  in sola lettura.', 'model: fable', 'gpt-model: claude-gpt-6-1-sol-xhigh', 'tools: Read, Grep, Glob, Bash', 'color: red', '---', '', 'Sei un reviewer avversario.', '',
+      '', '===agent:deep-reasoner', '---', 'name: deep-reasoner', 'description: Analisi.', 'model: fable', 'gpt-model: claude-gpt-6-1-sol-max', 'effort: max', '---', 'Ragiona a fondo.', '',
       '', '===agent:scoper', '---', 'name: scoper', 'model: haiku', '---', 'Solo Claude.',
     ].join('\n') } } as never
     return { value: { exitCode: 0, stdout: 'sk-test', stderr: '' } } as never
@@ -125,11 +125,11 @@ test('registra gpt-bridge:<nome> per ogni agente Trinity con gpt-model nel front
   await $.session.start({ cwd: 'E:/wd' } as never)
   expect(registered.map(a => a.name)).toEqual(['worker', 'reviewer', 'deep-reasoner']) // scoper senza gpt-model: ignorato
   const r = registered.find(a => a.name === 'reviewer')
-  expect(r.model).toBe('claude-gpt-5-6-sol-xhigh')
-  expect(r.description).toContain('[GPT claude-gpt-5-6-sol-xhigh] Review avversaria in sola lettura.')
+  expect(r.model).toBe('claude-gpt-6-1-sol-xhigh')
+  expect(r.description).toContain('[GPT claude-gpt-6-1-sol-xhigh] Review avversaria in sola lettura.')
   expect(r.tools).toEqual(['Read', 'Grep', 'Glob', 'Bash', 'SubagentHandback'])
   expect(r.prompt).toBe('Sei un reviewer avversario.')
   const d = registered.find(a => a.name === 'deep-reasoner')
-  expect(d.model).toBe('claude-gpt-5-6-sol-max') // qualsiasi livello di effort nell'alias
+  expect(d.model).toBe('claude-gpt-6-1-sol-max') // qualsiasi livello di effort nell'alias
   expect(d.tools).toEqual(['Read', 'Grep', 'Glob', 'Bash', 'Edit', 'Write', 'SubagentHandback']) // senza tools: tutti quelli con schema
 })
