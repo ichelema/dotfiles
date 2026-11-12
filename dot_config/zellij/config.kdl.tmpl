@@ -350,7 +350,7 @@ web_client {
 // Choose the theme that is specified in the themes section.
 // Default: default
 //
-theme "nord-custom" // nord con il frame attivo blu #6D97CE (themes/nord-custom.kdl)
+theme "nightfox-custom" // nightfox con il frame attivo #81CBF1 (themes/nightfox-custom.kdl); terminal_colors uguali alla palette di kitty
 
 // Choose the base input mode of zellij.
 // Default: normal
@@ -387,6 +387,11 @@ terminal {
     font_size 10
     ligatures true
     font_features "cv02" "cv05" "cv09" "cv14" "ss04" "cv16" "cv31" "cv25" "cv26" "cv32" "cv28" "ss10" "zero" "onum"
+    // sfondo e testo di kitty: senza, lo sfondo viene da text_unselected di nightfox (#29394F) e la sidebar radar è più chiara
+    theme {
+        background "#192330"
+        foreground "#CDCECF"
+    }
 }
 
 // The folder in which Zellij will look for layouts
@@ -413,8 +418,8 @@ terminal {
 //   - true (default, enabled)
 //   - false
 //
-pane_frames true
-pane_frame_style "full"
+pane_frames false
+pane_frame_style "none"
 
 // When attaching to an existing session with other users,
 // should the session be mirrored (true)

@@ -1,0 +1,149 @@
+// Copia del tema nightfox incorporato in zellij (zellij-utils/assets/themes/nightfox.kdl, commit d9df94c)
+// con il frame del pane attivo #81CBF1 invece del verde #81B29A
+themes {
+    nightfox-custom {
+        text_unselected {
+            base 187 188 189
+            background 41 57 79
+            emphasis_0 244 162 97
+            emphasis_1 99 205 207
+            emphasis_2 129 178 154
+            emphasis_3 179 143 238
+        }
+        text_selected {
+            base 187 188 189
+            background 64 77 95
+            emphasis_0 253 170 105
+            emphasis_1 99 205 207
+            emphasis_2 149 199 174
+            emphasis_3 203 174 255
+        }
+        ribbon_selected {
+            base 41 57 79
+            background 129 178 154
+            emphasis_0 124 0 50
+            emphasis_1 83 55 33
+            emphasis_2 69 53 94
+            emphasis_3 21 61 111
+        }
+        ribbon_unselected {
+            base 41 57 79
+            background 205 206 207
+            emphasis_0 135 6 56
+            emphasis_1 87 88 88
+            emphasis_2 63 87 120
+            emphasis_3 106 69 157
+        }
+        ribbon_hover {
+            base 41 57 79
+            background 174 175 176
+            emphasis_0 135 6 56
+            emphasis_1 66 67 67
+            emphasis_2 49 68 94
+            emphasis_3 81 52 119
+        }
+        table_title {
+            base 129 178 154
+            background 41 57 79
+            emphasis_0 244 162 97
+            emphasis_1 99 205 207
+            emphasis_2 129 178 154
+            emphasis_3 179 143 238
+        }
+        table_cell_selected {
+            base 174 175 176
+            background 25 35 48
+            emphasis_0 244 162 97
+            emphasis_1 99 205 207
+            emphasis_2 129 178 154
+            emphasis_3 157 121 214
+        }
+        table_cell_unselected {
+            base 174 175 176
+            background 41 57 79
+            emphasis_0 244 162 97
+            emphasis_1 99 205 207
+            emphasis_2 129 178 154
+            emphasis_3 179 143 238
+        }
+        list_selected {
+            base 174 175 176
+            background 25 35 48
+            emphasis_0 244 162 97
+            emphasis_1 99 205 207
+            emphasis_2 129 178 154
+            emphasis_3 157 121 214
+        }
+        list_unselected {
+            base 174 175 176
+            background 41 57 79
+            emphasis_0 244 162 97
+            emphasis_1 99 205 207
+            emphasis_2 129 178 154
+            emphasis_3 179 143 238
+        }
+        frame_selected {
+            base 129 203 241 // #81CBF1
+            background 0
+            emphasis_0 244 162 97
+            emphasis_1 99 205 207
+            emphasis_2 157 121 214
+            emphasis_3 157 121 214
+        }
+        frame_highlight {
+            base 244 162 97
+            background 0
+            emphasis_0 157 121 214
+            emphasis_1 244 162 97
+            emphasis_2 244 162 97
+            emphasis_3 244 162 97
+        }
+        exit_code_success {
+            base 129 178 154
+            background 0
+            emphasis_0 99 205 207
+            emphasis_1 41 57 79
+            emphasis_2 157 121 214
+            emphasis_3 113 156 214
+        }
+        exit_code_error {
+            base 211 88 118
+            background 0
+            emphasis_0 219 192 116
+            emphasis_1 244 162 97
+            emphasis_2 157 121 214
+            emphasis_3 99 205 207
+        }
+        multiplayer_user_colors {
+            player_1 157 121 214
+            player_2 113 156 214
+            player_3 186 161 226
+            player_4 219 192 116
+            player_5 99 205 207
+            player_6 129 178 154
+            player_7 211 88 118
+            player_8 220 141 128
+            player_9 189 162 88
+            player_10 210 140 179
+        }
+        // terminal_colors: https://github.com/EdenEast/nightfox.nvim/blob/main/extra/nightfox/alacritty.toml
+        terminal_colors {
+            black 57 59 68
+            red 201 79 109
+            green 129 178 154
+            yellow 219 192 116
+            blue 113 156 214
+            magenta 157 121 214
+            cyan 99 205 207
+            white 223 223 224
+            bright_black 87 88 96
+            bright_red 209 105 131
+            bright_green 142 186 164
+            bright_yellow 224 201 137
+            bright_blue 134 171 220
+            bright_magenta 186 161 226
+            bright_cyan 122 213 214
+            bright_white 228 228 229
+        }
+    }
+}
