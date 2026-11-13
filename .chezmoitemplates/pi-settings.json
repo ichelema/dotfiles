@@ -39,12 +39,6 @@
       }
     }
   },
-  "modelThinkingLevels": {
-    "groq/qwen/qwen3.8-27b": "high",
-    "openai-codex/gpt-5.6-sol": "medium",
-    "openai-codex/gpt-6-luna": "high",
-    "openrouter/z-ai/glm-5.3-flash": "high"
-  },
   "outputPad": 1,
   "packages": [
     "git:github.com/pasky/chrome-cdp-skill@v1.1.0",
