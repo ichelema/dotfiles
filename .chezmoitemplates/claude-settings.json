@@ -22,12 +22,6 @@
     "HINDSIGHT_SSH_TUNNEL": "hindsight-vps",
     "LITELLM_SSH_TUNNEL": "litellm-vps",
 {{- end }}
-{{- if index . "vps" }}
-{{- /* sulla VPS titolo (nome del repo) e stato (OSC 7501) del tab kitty li scrive ~/.claude/hooks/kitty-status.sh via SSH.
-       In locale Claude Code manda da solo OSC 7501 e il nome del repo lo calcola draw_title() in ~/.config/kitty/tab_bar.py:
-       questa variabile spegne anche OSC 7501, quindi in locale non va messa */}}
-    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1",
-{{- end }}
 {{- if eq .chezmoi.os "windows" }}
     "CLAUDE_CODE_GIT_BASH_PATH": "d:\\msys64\\usr\\bin\\bash.exe",
     "MSYSTEM": "UCRT64",
