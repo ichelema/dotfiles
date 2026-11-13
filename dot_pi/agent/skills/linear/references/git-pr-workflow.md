@@ -2,6 +2,26 @@
 
 Vale per ogni lavoro su issue Linear, indipendentemente dal backend.
 
+## Checklist da copiare e spuntare
+
+Copia questa lista nella risposta e spunta ogni passo. I dettagli sono nelle sezioni sotto.
+
+1. [ ] Working tree pulito (`git status --short`); se non lo è, fermati e chiedi.
+2. [ ] Branch di default rilevato con `gh repo view`.
+3. [ ] Relazioni `blockedBy` lette; se la issue è bloccata, mostra i blocchi e attendi.
+4. [ ] Branch creato con il `gitBranchName` di Linear.
+5. [ ] Issue portata a In Progress (una volta sola, solo da `backlog`/`unstarted`).
+6. [ ] PR aperta con riepilogo, dettagli, test eseguiti e riferimento alla issue.
+7. [ ] Controllo PR: titolo e descrizione nella lingua del progetto, magic word giusta
+   (closing o non-closing). Se un punto fallisce, correggi la PR e torna al passo 7.
+8. [ ] Stop: merge solo su richiesta esplicita dell'utente.
+9. [ ] Dopo il merge: branch di default, `git pull`, branch locale e remoto eliminati,
+   working tree pulito.
+10. [ ] Stato della issue controllato su Linear, non aggiornato a mano. Se doveva chiudersi
+    e non si è chiusa, mostralo all'utente con la magic word usata.
+
+Prima di consegnare, rileggi i passi 7 e 10: finisci solo quando passano entrambi.
+
 ## Branch
 
 - Più issue correlate: una issue principale, un solo branch, una sola PR.
@@ -12,19 +32,13 @@ Vale per ogni lavoro su issue Linear, indipendentemente dal backend.
   `reset --hard` / `stash` senza risposta.
 - Rileva il branch di default, non assumere `master`/`main`:
   `gh repo view --json defaultBranchRef -q .defaultBranchRef.name`.
-- Usa esattamente il `branchName` di Linear quando disponibile: è il campo
+- Usa esattamente il `gitBranchName` di Linear quando disponibile: è il campo
   da cui Linear riconosce il collegamento branch→PR→issue. Se manca,
   costruiscilo nello stesso formato `<utente>/<id-issue-minuscolo>-<titolo-kebab>`
   mantenendo l'ID issue.
 - Dopo il branch, se la issue è `backlog`/`unstarted`, portala a In Progress
-  (una volta sola). Risolvi lo stato richiedendo esattamente
-  `name == "In Progress"` e `type == "started"`: non usare il solo `type`,
-  perché anche stati come In Review possono essere `started`. Richiedi un solo
-  risultato; se è assente o ambiguo, mostra gli stati disponibili e fermati.
-  Nella query `states` non usare `orderBy: sortOrder` (non appartiene a
-  `PaginationOrderBy`); se serve, ordina localmente il campo `position`. Da lì
-  non aggiornare più lo stato a mano: le transizioni PR aperta → In Review →
-  Done arrivano via webhook.
+  (una volta sola). Da lì non aggiornare più lo stato a mano: le transizioni
+  PR aperta → In Review → Done arrivano via webhook.
 
 ## Dipendenze (blocked by)
 
@@ -46,8 +60,8 @@ Vale per ogni lavoro su issue Linear, indipendentemente dal backend.
     la magic word sbagliata chiude lavoro ancora aperto.
 - La PR contiene: riepilogo conciso, dettagli implementativi, test eseguiti,
   riferimenti alle issue Linear.
-- Titolo e descrizione della PR in inglese (il titolo finisce come attachment
-  della issue).
+- Titolo e descrizione della PR nella lingua del progetto Linear (il titolo
+  finisce come attachment della issue; vedi "Lingua" in `SKILL.md`).
 - **Non fare il merge**: fermati e attendi l'approvazione esplicita dell'utente.
 
 ## Merge (solo su richiesta esplicita)

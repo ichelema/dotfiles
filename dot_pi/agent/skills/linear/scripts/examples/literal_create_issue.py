@@ -37,11 +37,7 @@ CREATE_ISSUE = """
 mutation Create($input: IssueCreateInput!) {
   issueCreate(input: $input) {
     success
-    issue {
-      id identifier title priority url
-      assignee { name email }
-      state { name }
-    }
+    issue { id identifier title priority url state { name } }
   }
 }
 """
@@ -68,11 +64,8 @@ def main() -> int:
         return 2
 
     teams = post_graphql(RESOLVE_TEAM, {"key": args.team_key}, api_key)["data"]["teams"]["nodes"]
-    if len(teams) != 1:
-        print(
-            f"expected exactly one team for key {args.team_key}, found {len(teams)}",
-            file=sys.stderr,
-        )
+    if not teams:
+        print(f"team not found: {args.team_key}", file=sys.stderr)
         return 1
     team_id = teams[0]["id"]
 
@@ -85,18 +78,8 @@ def main() -> int:
         }
     }
     body = post_graphql(CREATE_ISSUE, payload, api_key)
-    result = body["data"]["issueCreate"]
-    if not result["success"] or not result["issue"]:
-        print("issue creation was rejected", file=sys.stderr)
-        return 1
-
-    issue = result["issue"]
+    issue = body["data"]["issueCreate"]["issue"]
     print(f"created {issue['identifier']} (priority {issue['priority']})  {issue['url']}")
-    assignee = issue["assignee"]
-    if assignee:
-        print(f"  assignee: {assignee['name']} <{assignee['email']}>")
-    else:
-        print("  assignee: none")
     print(f"  state: {issue['state']['name']}")
     return 0
 

@@ -2,9 +2,7 @@
 
 > **Index** — [1. Webhooks](#1-webhooks-crud) · [2. Cycles & workflow states](#2-cycles--workflow-states) · [3. Relations, reactions, subscriptions](#3-relations-reactions-subscriptions) · [4. Templates, custom views, favorites](#4-templates-custom-views-favorites) · [5. Audit log & admin](#5-audit-log--admin)
 
-This file covers five mutation surfaces that are not exposed by the Linear MCP.
-All Linear operations, including MCP-parity reads and writes, still go through
-this skill because the Linear MCP is unavailable.
+This file covers the five mutation surfaces reachable via the Linear API but **not** via the Linear MCP. These are the operations that justify writing a skill at all — for everything else, the MCP is fine.
 
 For the read paths, MCP-parity write paths, and entity model, see `references/common-queries.md` and `references/schema-summary.md`.
 
@@ -162,7 +160,7 @@ Close (`cycleUpdate(completedAt: …)`) at session end. Don't archive — that's
 
 ### Sub-day boundaries — gotchas
 
-These bite the moment cycles get shorter than the auto-cadence and you start `cycleUpdate`-ing them. Discovered the hard way on AGI; codified here so you don't.
+These bite the moment cycles get shorter than the auto-cadence and you start `cycleUpdate`-ing them. Discovered the hard way on ICH; codified here so you don't.
 
 **1. `cycleUpdate` requires `new_startsAt > previous_startsAt + 24h` *strictly*.** Equal is rejected. Linear's error message reads "Please choose a start date that is after the start of the previous cycle" — the actual rule is the strict 24h offset, not the start-vs-start it implies. Curiously, Linear's *own* auto-created cycles touch at exactly equal boundaries, but you can't reproduce that via `cycleUpdate`.
 
@@ -193,8 +191,6 @@ mutation Close($id: String!, $input: CycleUpdateInput!) {
 Variables: `{"id": "<old-cycle-uuid>", "input": {"completedAt": "2026-05-09T16:00:00.000Z"}}`
 
 Order matters: move issues *before* closing, otherwise they're orphans on a completed cycle that may behave oddly in burndowns. Filter the move set with the issue list query (`issues(filter: { state: { type: { in: ["started"] } } })`) to scope to in-progress only, or include `unstarted` to also pull todos forward.
-
-For a daily-cycle automation that does this on a schedule, see **`references/cycles-daily-automation.md`** and `scripts/cycles_maintain.py`.
 
 ### Workflow states — create
 
@@ -264,7 +260,7 @@ The three engagement primitives missing from the MCP. None of them are gated beh
 
 ### Issue relations
 
-Mark one issue as related to another. Use cases: "this is a duplicate of AGI-42", "AGI-87 blocks AGI-91", "see also AGI-58".
+Mark one issue as related to another. Use cases: "this is a duplicate of ICH-42", "ICH-87 blocks ICH-91", "see also ICH-58".
 
 ```graphql
 mutation LinkIssues($input: IssueRelationCreateInput!) {
@@ -278,8 +274,8 @@ mutation LinkIssues($input: IssueRelationCreateInput!) {
 ```json
 {"input": {
   "type": "blocks",
-  "issueId": "AGI-87",
-  "relatedIssueId": "AGI-91"
+  "issueId": "ICH-87",
+  "relatedIssueId": "ICH-91"
 }}
 ```
 
@@ -292,7 +288,7 @@ mutation LinkIssues($input: IssueRelationCreateInput!) {
 | `related` | Loose link — informational. |
 | `similar` | Surfaced via Linear's similarity detection. |
 
-Both `issueId` and `relatedIssueId` accept a UUID or a human-readable identifier (`AGI-87`). The mutation resolves either form.
+Both `issueId` and `relatedIssueId` accept a UUID or a human-readable identifier (`ICH-87`). The mutation resolves either form.
 
 `issueRelationUpdate(id, input)` accepts the same fields with everything optional. Note: in the *update* input, `type` is loosely typed as `String` rather than the enum — pass quoted strings (`"blocks"`).
 
@@ -450,7 +446,7 @@ mutation Pin($input: FavoriteCreateInput!) {
 
 ```json
 {"input": {
-  "issueId": "AGI-87",
+  "issueId": "ICH-87",
   "folderName": "Right now"
 }}
 ```
@@ -540,7 +536,7 @@ Required: `email`. Optional: `role` (UserRoleType, defaults to `user`), `teamIds
 
 ```json
 {"input": {
-  "email": "new-engineer@agiledimensions.com.au",
+  "email": "user@example.com",
   "role": "admin",
   "teamIds": ["<team-uuid>"]
 }}
