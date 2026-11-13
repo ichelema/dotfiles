@@ -3,8 +3,8 @@
     "advisor": {
       "provider": "deepseek",
       "modelId": "deepseek-flash",
-      "thinkingLevel": "high",
-      "autostart": true
+      "thinkingLevel": "xhigh",
+      "autostart": false
     }
   }
 }
