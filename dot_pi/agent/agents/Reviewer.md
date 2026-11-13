@@ -1,7 +1,7 @@
 ---
 name: Reviewer
 description: Independent adversarial code reviewer per validare implementations rispetto ai requirements
-model: openai-codex/gpt-5.6-sol
+model: openai-codex/gpt-6.1-sol
 thinking: high
 tools: read, bash, grep, find, ls
 extensions: false

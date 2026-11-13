@@ -1,7 +1,7 @@
 ---
 name: Implementer
 description: Senior coding agent che esegue implementation plans in modo preciso e sicuro
-model: openai-codex/gpt-6-luna
+model: openai-codex/gpt-6.1-terra
 thinking: high
 tools: read, write, edit, bash, grep, find, ls
 prompt_mode: append

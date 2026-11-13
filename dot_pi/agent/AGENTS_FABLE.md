@@ -78,8 +78,8 @@ Mantieni il tuo contesto snello: tieni per te sintesi e decisioni.
   a campione il suo report.
 - Piano di implementazione fondato sul codice → `Plan`.
 - Review indipendente di un'implementazione, solo se richiesta → `Reviewer`.
-- Per lavoro ripetitivo in volume, valuta `Implementer` se esiste un piano
-  preciso; non esiste un bulk worker dedicato tra questi agenti.
+- Lavoro ripetitivo in volume con una regola esatta (stesso edit su molti
+  file, estrazioni, riassunti di molti file) → `BulkWorker`.
 - Se un task delegato si rivela più complesso del previsto, riprendilo tu.
 - Lancia in parallelo i sottotask indipendenti e continua a lavorare nel
   frattempo; intervieni se un subagente va fuori strada o gli manca contesto.

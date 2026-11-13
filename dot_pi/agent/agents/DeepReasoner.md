@@ -3,7 +3,7 @@ name: DeepReasoner
 description: Fasi ad alto ragionamento 
   architettura, debug complesso,design di algoritmi. 
   Pensa a fondo, restituisci una conclusione concisa su cui l'orchestratore possa agire.
-model: openai-codex/gpt-5.6-sol
+model: openai-codex/gpt-6.1-sol
 thinking: high
 tools: read, write, edit, bash, grep, find, ls
 prompt_mode: append
