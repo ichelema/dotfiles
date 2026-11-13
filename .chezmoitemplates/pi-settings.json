@@ -31,7 +31,7 @@
         "@vanillagreen/pi-tool-renderer": {
           "alignAssistantMessages": false,
           "enabled": true,
-          "registerBatchTool": true,
+          "registerBatchTool": false,
           "renderMutationTools": true,
           "splitDiffs": true,
           "styledCodeBlocks": false
@@ -69,7 +69,8 @@
 {{- end }}
     "npm:@vanillagreen/pi-tool-renderer",
     "npm:pi-context-inspector",
-    "npm:pi-diet-lsp"
+    "npm:pi-diet-lsp",
+    "npm:pi-btw"
   ],
   "showCacheMissNotices": true,
   "steeringMode": "one-at-a-time",
