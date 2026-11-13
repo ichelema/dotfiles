@@ -202,7 +202,7 @@ describe("nord-footer integration", () => {
     expect(calls).toBe(1);
   });
 
-  test("session_start installs the footer; git diff vs HEAD appears", async () => {
+  test("session_start installs the footer with project@branch", async () => {
     const handlers = loadExtension();
     const mock = makeCtx();
     await handlers.get("session_start")!({ reason: "startup" }, mock.ctx as never);
@@ -212,8 +212,9 @@ describe("nord-footer integration", () => {
 
     const line = await waitFor(
       () => footer.component.render(160)[0],
-      (l) => l.includes(`${repoName(mock.state.cwd)}@main (+1 -0)`),
+      (l) => l.includes(`${repoName(mock.state.cwd)}@main`),
     );
+    expect(line).not.toContain("(+");
     expect(line).toContain("35k/1m (3%)");
     expect(line).toContain("7d —"); // quota unavailable (no auth)
     expect(visibleWidth(line)).toBeLessThanOrEqual(160);
@@ -251,17 +252,6 @@ describe("nord-footer integration", () => {
     footer.setExtensionStatus("q-advisor", "");
     expect(footer.component.render(80)[0]).not.toContain("Advisor:");
     expect(visibleWidth(footer.component.render(10)[0])).toBeLessThanOrEqual(10);
-  });
-
-  test("staged + unstaged tracked files are counted against HEAD", async () => {
-    const handlers = loadExtension();
-    const mock = makeCtx();
-    await handlers.get("session_start")!({ reason: "startup" }, mock.ctx as never);
-    const footer = mock.instantiateFooter();
-    footer.component.render(160);
-
-    const line = await waitFor(() => footer.component.render(160)[0], (l) => l.includes("(+1 -0)"));
-    expect(line).toContain("(+1 -0)");
   });
 
   test("non-repository cwd omits the git segment", async () => {
@@ -370,23 +360,6 @@ describe("nord-footer integration", () => {
 
     await handlers.get("session_shutdown")!({ reason: "quit" }, mock.ctx as never);
     expect(mock.isRestored()).toBe(true);
-  });
-
-  test("tool_execution_end on write/edit/bash marks git stale (refetch within TTL)", async () => {
-    const handlers = loadExtension();
-    const mock = makeCtx();
-    await handlers.get("session_start")!({ reason: "startup" }, mock.ctx as never);
-    const footer = mock.instantiateFooter();
-    footer.component.render(160);
-    await flush();
-
-    // Simulate a file change, then a write tool completing.
-    writeFileSync(join(mock.state.cwd, "a.txt"), "hello\nworld\nmore\n");
-    await handlers.get("tool_execution_end")!({ toolName: "write", toolCallId: "2" }, mock.ctx as never);
-    footer.component.render(160);
-
-    const line = await waitFor(() => footer.component.render(160)[0], (l) => l.includes("(+2 -0)"));
-    expect(line).toContain("(+2 -0)");
   });
 
   test("non-TUI mode never installs the footer", async () => {

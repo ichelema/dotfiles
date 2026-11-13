@@ -18,7 +18,7 @@ deepseek-v4 | high | Trinity@main (+12 -3) | 35k/1m (3%) | cache 35k↓/0↑ (10
 |---|---|---|
 | Modello | `ctx.model.id` (fallback `no-model`) | `ctx.model` |
 | Effort | `off / minimal / low / medium / high / xhigh / max` | `ctx.thinkingLevel` |
-| Repository | `root@branch (+A -D)` — `+/-` = diff working tree vs `HEAD` (staged + unstaged tracked) | `git rev-parse --show-toplevel`, `git diff --numstat HEAD --`, `footerData.getGitBranch()` |
+| Repository | `root@branch` — nome repo risolto una volta per sessione | `git rev-parse --show-toplevel` (una sola chiamata), `footerData.getGitBranch()` |
 | Context | `35k/1m (3%)` — `?/1m (?)` dopo compaction | `ctx.getContextUsage()` |
 | Cache | `cache R↓/W↑ (hit%)` — totali sessione, hit rate aggregato | `ctx.sessionManager.getEntries()` |
 | Quota (solo `openai-codex`) | `7d N% @mese giorno` — header `x-codex-{primary,secondary}-*`; bootstrap best-effort su `/wham/usage` o `/api/codex/usage` | header risposta + endpoint usage |
@@ -27,7 +27,7 @@ deepseek-v4 | high | Trinity@main (+12 -3) | 35k/1m (3%) | cache 35k↓/0↑ (10
 ## Comportamento
 
 - **Stale-while-revalidate**: `render()` è sincrona e usa sempre l'ultimo dato valido; i refresh Git/quota partono in background senza bloccare il rendering.
-- **TTL**: diff 1.5 s, errore Git 5 s, quota 60 s, errore quota 30 s, timeout Git/quota 3 s. Nessun polling fisso.
+- **TTL**: errore Git 5 s, quota 60 s, errore quota 30 s, timeout Git/quota 3 s. Nessun polling fisso.
 - **Single-flight**: una sola Promise per refresh Git e una per la quota; i trigger concorrenti non duplicano lavoro.
 - **Cache usage**: chiave `<numero-entry>:<leaf-id>`; nuove entry e navigazione dell'albero invalidano i totali dopo la persistenza (`turn_end`, `session_compact`, `session_tree`).
 - **Responsive**: 9 livelli di degradazione (nascondi cache → semplifica Git → nascondi Git → compatta quota → nascondi effort → nascondi quota/costo → nascondi context → tronca modello). Mai wrap, mai overflow: fit e troncamento con `visibleWidth()`/`truncateToWidth()` ANSI-safe.
@@ -42,7 +42,7 @@ deepseek-v4 | high | Trinity@main (+12 -3) | 35k/1m (3%) | cache 35k↓/0↑ (10
 ├── footer-state.ts    — stato runtime, snapshot, cache TTL, single-flight, aggregazione usage
 ├── footer-format.ts   — formattazione pura, segmenti, layout responsive, styling
 ├── openai-quota.ts    — parsing header/payload quota, JWT, fetch bootstrap best-effort
-├── git-stats.ts       — rev-parse/diff tramite pi.exec, parsing numstat
+├── git-stats.ts       — rev-parse tramite pi.exec
 └── tests/             — unit + integration (bun test)
 ```
 

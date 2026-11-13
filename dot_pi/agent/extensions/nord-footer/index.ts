@@ -2,7 +2,7 @@
  * nord-footer — global PI extension: reactive Nord footer.
  *
  * Replaces the built-in footer in TUI mode with:
- *   model | effort | project@branch (+A -D) | ctx/max (%) | cache R↓/W↑ (%) | quota | cost
+ *   model | effort | project@branch | ctx/max (%) | cache R↓/W↑ (%) | quota | cost
  *
  * All async work (Git, usage endpoint) happens in the background with TTL,
  * negative-cache and single-flight guards; render() stays synchronous.
@@ -13,8 +13,6 @@ import { join } from "node:path";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import { FooterState, type FooterServices } from "./footer-state.ts";
-
-const FILE_CHANGING_TOOLS = new Set(["write", "edit", "bash"]);
 
 function getAdvisorModel(cwd: string): string | undefined {
   const agentDir = process.env.PI_CODING_AGENT_DIR ?? join(homedir(), ".pi", "agent");
@@ -133,14 +131,6 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("session_tree", () => {
     state?.onSessionDataChanged();
-  });
-
-  // -- Git staleness --------------------------------------------------------
-
-  pi.on("tool_execution_end", (event) => {
-    if (FILE_CHANGING_TOOLS.has(event.toolName)) {
-      state?.markGitStale();
-    }
   });
 
   // -- Codex quota from response headers ------------------------------------

@@ -6,11 +6,6 @@
  */
 import { sanitizeLine } from "./footer-format.ts";
 
-export interface NumstatTotals {
-  additions: number;
-  deletions: number;
-}
-
 export interface ExecResultLike {
   stdout: string;
   stderr: string;
@@ -22,27 +17,6 @@ export type ExecFn = (
   args: string[],
   options?: { signal?: AbortSignal; timeout?: number; cwd?: string },
 ) => Promise<ExecResultLike>;
-
-/**
- * Sum the first two numeric columns of `git diff --numstat HEAD --` output.
- * Binary files (`-\t-`) and malformed lines are ignored.
- */
-export function parseNumstat(output: string): NumstatTotals {
-  let additions = 0;
-  let deletions = 0;
-  for (const line of output.split(/\r?\n/)) {
-    if (!line.trim()) continue;
-    const [added, deleted, ...rest] = line.split("\t");
-    if (rest.length < 1) continue; // no filename column -> malformed
-    if (!added.trim() || !deleted.trim()) continue; // missing numeric column
-    const a = Number(added);
-    const d = Number(deleted);
-    if (!Number.isFinite(a) || !Number.isFinite(d)) continue; // binary "-"
-    additions += a;
-    deletions += d;
-  }
-  return { additions, deletions };
-}
 
 /** Basename of a repository root, robust to Windows/MSYS2 separators. */
 export function repoNameFromRoot(root: string): string {
@@ -65,13 +39,6 @@ export function isNotARepoError(stderr: string): boolean {
   return /not a git repository/i.test(stderr);
 }
 
-/** Error strings git emits when HEAD does not exist yet (no commits). */
-export function isBadHeadError(stderr: string): boolean {
-  return /(unknown revision|bad revision|ambiguous argument|HEAD\b.*does not exist|not a git repository)/i.test(
-    stderr,
-  );
-}
-
 export type ResolveRepoResult =
   | { kind: "repo"; root: string }
   | { kind: "not-repo" }
@@ -89,22 +56,4 @@ export async function resolveRepoRoot(
   }
   const root = normalizeRepoRoot(res.stdout.trim());
   return root ? { kind: "repo", root } : { kind: "error" };
-}
-
-export type DiffResult =
-  | { kind: "ok"; totals: NumstatTotals }
-  | { kind: "no-head" }
-  | { kind: "error" };
-
-/** Working-tree diff vs HEAD (staged + unstaged tracked files). Runs in `cwd`. */
-export async function getGitDiff(
-  exec: ExecFn,
-  cwd: string,
-  options?: { signal?: AbortSignal; timeout?: number },
-): Promise<DiffResult> {
-  const res = await exec("git", ["diff", "--numstat", "HEAD", "--"], { cwd, ...options });
-  if (res.code !== 0) {
-    return isBadHeadError(res.stderr) ? { kind: "no-head" } : { kind: "error" };
-  }
-  return { kind: "ok", totals: parseNumstat(res.stdout) };
 }

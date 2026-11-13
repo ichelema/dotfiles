@@ -7,7 +7,6 @@ import type { ContextUsage } from "@earendil-works/pi-coding-agent";
 import {
   aggregateUsage,
   FooterState,
-  GIT_DIFF_TTL_MS,
   GIT_ERROR_TTL_MS,
   type FooterServices,
   type UsageEntryLike,
@@ -132,9 +131,6 @@ function makeHarness(overrides?: Partial<FooterServices>): Harness {
       if (command === "git" && first === "rev-parse") {
         return { stdout: "C:/work/Trinity\n", stderr: "", code: 0 };
       }
-      if (command === "git" && first === "diff") {
-        return { stdout: "5\t2\tsrc/a.ts\n3\t1\tsrc/b.ts\n", stderr: "", code: 0 };
-      }
       return { stdout: "", stderr: "", code: 0 };
     },
     modelProvider: () => "openai-codex",
@@ -164,67 +160,49 @@ afterEach(() => {
 });
 
 describe("FooterState — stale-while-revalidate and single-flight", () => {
-  test("renders synchronously and kicks background Git refresh exactly once", async () => {
+  test("renders synchronously and resolves the repo with a single rev-parse", async () => {
     const h = makeHarness();
     const line = h.state.render(100, plainTheme);
     expect(line).toContain("gpt-5.6-sol");
-    expect(h.execCalls.length).toBe(1); // rev-parse only (diff not yet fetched)
+    expect(h.execCalls.length).toBe(1);
 
     await flush();
-    // Bootstrap + render triggered one refresh; the diff follows.
-    expect(h.execCalls.some((c) => c[1] === "diff")).toBe(true);
+    expect(h.state.render(120, plainTheme)).toContain("Trinity@");
+    expect(h.execCalls).toEqual([["git", "rev-parse", "--show-toplevel"]]);
   });
 
-  test("concurrent renders trigger only one rev-parse and one diff", async () => {
+  test("Git is never re-run after the repo is resolved", async () => {
     const h = makeHarness();
     for (let i = 0; i < 10; i++) h.state.render(120, plainTheme);
     await flush();
-    expect(h.execCalls.filter((c) => c[1] === "rev-parse").length).toBe(1);
-    expect(h.execCalls.filter((c) => c[1] === "diff").length).toBe(1);
-  });
-
-  test("diff refreshes after TTL elapses", async () => {
-    const h = makeHarness();
-    h.state.render(120, plainTheme);
-    await flush();
-    expect(h.execCalls.filter((c) => c[1] === "diff").length).toBe(1);
-
-    h.clock += GIT_DIFF_TTL_MS + 1;
-    h.state.render(120, plainTheme);
-    await flush();
-    expect(h.execCalls.filter((c) => c[1] === "diff").length).toBe(2);
-  });
-
-  test("renders within TTL do not re-run Git", async () => {
-    const h = makeHarness();
-    h.state.render(120, plainTheme);
-    await flush();
+    h.clock += 60_000;
+    h.state.updateBranch("feature/x");
     for (let i = 0; i < 5; i++) h.state.render(120, plainTheme);
-    expect(h.execCalls.filter((c) => c[1] === "diff").length).toBe(1);
+    await flush();
+    expect(h.execCalls.length).toBe(1);
   });
 
-  test("a failed diff is not retried during the negative TTL", async () => {
-    let diffCalls = 0;
+  test("a failed rev-parse is not retried during the negative TTL", async () => {
+    let calls = 0;
     const h = makeHarness({
-      exec: async (_command, args) => {
-        if (args[0] === "rev-parse") return { stdout: "C:/work/Trinity\n", stderr: "", code: 0 };
-        diffCalls++;
+      exec: async () => {
+        calls++;
         return { stdout: "", stderr: "transient failure", code: 1 };
       },
     });
 
     h.state.render(120, plainTheme);
     await flush();
-    expect(diffCalls).toBe(1);
+    expect(calls).toBe(1);
 
     h.state.render(120, plainTheme);
     await flush();
-    expect(diffCalls).toBe(1);
+    expect(calls).toBe(1);
 
     h.clock += GIT_ERROR_TTL_MS + 1;
     h.state.render(120, plainTheme);
     await flush();
-    expect(diffCalls).toBe(2);
+    expect(calls).toBe(2);
   });
 
   test("render cache avoids recomposition within a revision", () => {
@@ -247,7 +225,6 @@ describe("FooterState — stale-while-revalidate and single-flight", () => {
     h.state.dispose();
     expect(h.signals.every((s) => !s || s.aborted)).toBe(true);
     // Subsequent calls are inert.
-    h.state.markGitStale();
     h.state.updateModel("openai", "deepseek-v4");
     const renders = h.renders;
     await Promise.resolve();

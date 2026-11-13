@@ -7,12 +7,7 @@
  */
 import type { ContextUsage } from "@earendil-works/pi-coding-agent";
 import { cacheHitRate, renderFooterLine, type FooterTheme, type FooterMode } from "./footer-format.ts";
-import {
-  getGitDiff,
-  repoNameFromRoot,
-  resolveRepoRoot,
-  type ExecFn,
-} from "./git-stats.ts";
+import { repoNameFromRoot, resolveRepoRoot, type ExecFn } from "./git-stats.ts";
 import {
   extractAccessToken,
   extractChatgptAccountId,
@@ -25,7 +20,6 @@ import {
 // TTLs (section 6.2)
 // ---------------------------------------------------------------------------
 
-export const GIT_DIFF_TTL_MS = 1500;
 export const GIT_ERROR_TTL_MS = 5000;
 export const GIT_TIMEOUT_MS = 3000;
 export const QUOTA_TTL_MS = 60_000;
@@ -109,9 +103,6 @@ export function aggregateUsage(entries: readonly UsageEntryLike[]): UsageTotals 
 export interface FooterRepo {
   name: string;
   branch: string | null;
-  additions: number;
-  deletions: number;
-  hasHead: boolean;
 }
 
 export interface FooterContext {
@@ -188,12 +179,7 @@ export class FooterState {
   // Git
   private repo: { name: string } | null = null;
   private repoChecked = false;
-  private notARepo = false;
   private branch: string | null = null;
-  private additions = 0;
-  private deletions = 0;
-  private hasHead = true;
-  private gitFetchedAt = 0;
   private gitErrorAt = 0;
   private gitInFlight: Promise<void> | null = null;
 
@@ -256,8 +242,6 @@ export class FooterState {
     if (this.disposed) return;
     if (branch === this.branch) return;
     this.branch = branch;
-    // The diff vs HEAD is relative to the current branch.
-    this.gitFetchedAt = 0;
     this.bumpAndRender();
   }
 
@@ -266,12 +250,6 @@ export class FooterState {
     if (this.disposed) return;
     this.refreshUsage();
     this.bumpAndRender();
-  }
-
-  /** Called after write/edit/bash: invalidate the cached diff. */
-  markGitStale(): void {
-    if (this.disposed) return;
-    this.gitFetchedAt = 0;
   }
 
   /** New quota from response headers (primary source, no extra requests). */
@@ -327,9 +305,6 @@ export class FooterState {
         ? {
             name: this.repo.name,
             branch: this.branch,
-            additions: this.additions,
-            deletions: this.deletions,
-            hasHead: this.hasHead,
           }
         : null,
       context: {
@@ -392,10 +367,8 @@ export class FooterState {
     if (this.disposed) return;
     const now = this.now();
 
-    if (!this.gitInFlight && !this.notARepo && now >= this.gitErrorAt) {
-      if (!this.repoChecked || now - this.gitFetchedAt > GIT_DIFF_TTL_MS) {
-        void this.refreshGit();
-      }
+    if (!this.gitInFlight && !this.repoChecked && now >= this.gitErrorAt) {
+      void this.refreshGit();
     }
 
     if (!this.quotaInFlight && this.isCodex && now >= this.quotaErrorAt) {
@@ -415,47 +388,21 @@ export class FooterState {
   }
 
   private async doRefreshGit(): Promise<void> {
-    if (this.disposed || this.notARepo) return;
+    if (this.disposed || this.repoChecked || this.now() < this.gitErrorAt) return;
     try {
-      if (!this.repoChecked) {
-        if (this.now() < this.gitErrorAt) return;
-        const resolved = await resolveRepoRoot(this.services.exec, this.services.cwd, {
-          signal: this.abort.signal,
-          timeout: GIT_TIMEOUT_MS,
-        });
-        if (this.disposed) return;
-        if (resolved.kind === "repo") {
-          // The toplevel is used only for the display name; the diff runs in
-          // the session cwd because git's MSYS-style paths are not usable as
-          // a process cwd on Windows.
-          this.repo = { name: repoNameFromRoot(resolved.root) };
-          this.repoChecked = true;
-        } else if (resolved.kind === "not-repo") {
-          this.notARepo = true;
-          this.repoChecked = true;
-          return;
-        } else {
-          this.gitErrorAt = this.now() + GIT_ERROR_TTL_MS;
-          return;
-        }
-      }
-      if (!this.repo) return;
-
-      const diff = await getGitDiff(this.services.exec, this.services.cwd, {
+      // Resolved once per session: only the repo name is needed, the branch
+      // comes from pi's footer data (no further git calls).
+      const resolved = await resolveRepoRoot(this.services.exec, this.services.cwd, {
         signal: this.abort.signal,
         timeout: GIT_TIMEOUT_MS,
       });
       if (this.disposed) return;
-      if (diff.kind === "ok") {
-        this.additions = diff.totals.additions;
-        this.deletions = diff.totals.deletions;
-        this.hasHead = true;
-        this.gitFetchedAt = this.now();
+      if (resolved.kind === "repo") {
+        this.repo = { name: repoNameFromRoot(resolved.root) };
+        this.repoChecked = true;
         this.bumpAndRender();
-      } else if (diff.kind === "no-head") {
-        this.hasHead = false;
-        this.gitFetchedAt = this.now();
-        this.bumpAndRender();
+      } else if (resolved.kind === "not-repo") {
+        this.repoChecked = true;
       } else {
         this.gitErrorAt = this.now() + GIT_ERROR_TTL_MS;
       }

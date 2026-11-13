@@ -124,24 +124,14 @@ export function effortSegment(snapshot: FooterSnapshot): Segment {
   return [{ text: effort, color: effortColor(effort) }];
 }
 
-/** project@branch (+A -D); null when cwd is not a Git repository. */
-export function gitSegment(snapshot: FooterSnapshot, compact = false): Segment | null {
+/** project@branch; null when cwd is not a Git repository. */
+export function gitSegment(snapshot: FooterSnapshot): Segment | null {
   const repo = snapshot.repo;
   if (!repo) return null;
-  const pieces: Segment = [
+  return [
     { text: sanitizeLine(repo.name) || "repo", color: "text" },
     { text: `@${sanitizeLine(repo.branch ?? "detached")}`, color: "syntaxVariable" },
   ];
-  if (!compact && repo.hasHead) {
-    pieces.push(
-      { text: " (+", color: "dim" },
-      { text: `${repo.additions}`, color: "success" },
-      { text: " -", color: "dim" },
-      { text: `${repo.deletions}`, color: "error" },
-      { text: ")", color: "dim" },
-    );
-  }
-  return pieces;
 }
 
 /** 35k/1m (3%) — tokens unknown after compaction -> ?/1m (?). */
@@ -206,8 +196,7 @@ export function buildVariants(snapshot: FooterSnapshot, mode: FooterMode): Segme
 
   const model = modelSegment(snapshot);
   const effort = effortSegment(snapshot);
-  const gitFull = gitSegment(snapshot);
-  const gitCompact = gitSegment(snapshot, true);
+  const git = gitSegment(snapshot);
   const context = contextSegment(snapshot);
   const cache = cacheSegment(snapshot);
 
@@ -216,20 +205,18 @@ export function buildVariants(snapshot: FooterSnapshot, mode: FooterMode): Segme
 
   return present([
     // 1. full
-    [model, effort, gitFull, context, cache, last],
+    [model, effort, git, context, cache, last],
     // 2. hide cache
-    [model, effort, gitFull, context, last],
-    // 3. simplify git (drop +A -D)
-    [model, effort, gitCompact, context, last],
-    // 4. hide git
+    [model, effort, git, context, last],
+    // 3. hide git
     [model, effort, context, last],
-    // 5. compact quota (cost unchanged)
+    // 4. compact quota (cost unchanged)
     [model, effort, context, lastCompact],
-    // 6. hide effort
+    // 5. hide effort
     [model, context, lastCompact],
-    // 7. hide quota/cost
+    // 6. hide quota/cost
     [model, context],
-    // 8. hide context
+    // 7. hide context
     [model],
   ]);
 }

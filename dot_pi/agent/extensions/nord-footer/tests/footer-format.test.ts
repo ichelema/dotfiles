@@ -39,7 +39,7 @@ function snapshot(overrides?: Partial<FooterSnapshot>): FooterSnapshot {
     revision: 1,
     modelId: "gpt-5.6-sol",
     effort: "medium",
-    repo: { name: "Trinity", branch: "main", additions: 12, deletions: 3, hasHead: true },
+    repo: { name: "Trinity", branch: "main" },
     context: { tokens: 35000, maxTokens: 1_000_000, percent: 3 },
     usage: { input: 65000, cacheRead: 35000, cacheWrite: 0, cacheHitPercent: 35, sessionCost: 0.123 },
     quota: { usedPercent: 1, windowMinutes: 10080, resetAt: new Date(2026, 8, 4, 12).getTime() / 1000 },
@@ -181,52 +181,46 @@ describe("color selection", () => {
 describe("buildVariants (responsive degradation)", () => {
   test("quota mode full line", () => {
     expect(variantText(snapshot(), "quota", 0)).toBe(
-      "gpt-5.6-sol | medium | Trinity@main (+12 -3) | 35k/1m (3%) | cache 35k↓/0↑ (35%) | 7d 1% @set 4",
+      "gpt-5.6-sol | medium | Trinity@main | 35k/1m (3%) | cache 35k↓/0↑ (35%) | 7d 1% @set 4",
     );
   });
 
   test("cost mode full line", () => {
     expect(variantText(snapshot(), "cost", 0)).toBe(
-      "gpt-5.6-sol | medium | Trinity@main (+12 -3) | 35k/1m (3%) | cache 35k↓/0↑ (35%) | cost $0.123",
+      "gpt-5.6-sol | medium | Trinity@main | 35k/1m (3%) | cache 35k↓/0↑ (35%) | cost $0.123",
     );
   });
 
   test("level 2 hides cache", () => {
     expect(variantText(snapshot(), "quota", 1)).toBe(
-      "gpt-5.6-sol | medium | Trinity@main (+12 -3) | 35k/1m (3%) | 7d 1% @set 4",
-    );
-  });
-
-  test("level 3 simplifies git", () => {
-    expect(variantText(snapshot(), "quota", 2)).toBe(
       "gpt-5.6-sol | medium | Trinity@main | 35k/1m (3%) | 7d 1% @set 4",
     );
   });
 
-  test("level 4 hides git", () => {
-    expect(variantText(snapshot(), "quota", 3)).toBe(
+  test("level 3 hides git", () => {
+    expect(variantText(snapshot(), "quota", 2)).toBe(
       "gpt-5.6-sol | medium | 35k/1m (3%) | 7d 1% @set 4",
     );
   });
 
-  test("level 5 compacts quota", () => {
-    expect(variantText(snapshot(), "quota", 4)).toBe("gpt-5.6-sol | medium | 35k/1m (3%) | 7d 1%");
+  test("level 4 compacts quota", () => {
+    expect(variantText(snapshot(), "quota", 3)).toBe("gpt-5.6-sol | medium | 35k/1m (3%) | 7d 1%");
   });
 
-  test("level 6 hides effort", () => {
-    expect(variantText(snapshot(), "quota", 5)).toBe("gpt-5.6-sol | 35k/1m (3%) | 7d 1%");
+  test("level 5 hides effort", () => {
+    expect(variantText(snapshot(), "quota", 4)).toBe("gpt-5.6-sol | 35k/1m (3%) | 7d 1%");
   });
 
-  test("level 7 hides quota/cost", () => {
-    expect(variantText(snapshot(), "quota", 6)).toBe("gpt-5.6-sol | 35k/1m (3%)");
+  test("level 6 hides quota/cost", () => {
+    expect(variantText(snapshot(), "quota", 5)).toBe("gpt-5.6-sol | 35k/1m (3%)");
   });
 
-  test("level 8 keeps only model", () => {
-    expect(variantText(snapshot(), "quota", 7)).toBe("gpt-5.6-sol");
+  test("level 7 keeps only model", () => {
+    expect(variantText(snapshot(), "quota", 6)).toBe("gpt-5.6-sol");
   });
 
-  test("cost is not compacted at level 5", () => {
-    expect(variantText(snapshot(), "cost", 4)).toBe("gpt-5.6-sol | medium | 35k/1m (3%) | cost $0.123");
+  test("cost is not compacted at level 4", () => {
+    expect(variantText(snapshot(), "cost", 3)).toBe("gpt-5.6-sol | medium | 35k/1m (3%) | cost $0.123");
   });
 
   test("no separators when segments are missing", () => {
@@ -234,19 +228,12 @@ describe("buildVariants (responsive degradation)", () => {
     expect(variantText(snap, "quota", 0)).toBe(
       "gpt-5.6-sol | medium | 35k/1m (3%) | cache 35k↓/0↑ (35%) | 7d 1% @set 4",
     );
-    expect(variantText(snap, "quota", 7)).toBe("gpt-5.6-sol");
+    expect(variantText(snap, "quota", 6)).toBe("gpt-5.6-sol");
   });
 
   test("detached HEAD", () => {
-    const snap = snapshot({ repo: { name: "Trinity", branch: null, additions: 1, deletions: 1, hasHead: true } });
-    expect(variantText(snap, "quota", 0)).toContain("Trinity@detached (+1 -1)");
-  });
-
-  test("no HEAD drops the counters", () => {
-    const snap = snapshot({ repo: { name: "Trinity", branch: "main", additions: 0, deletions: 0, hasHead: false } });
-    expect(variantText(snap, "quota", 0)).toBe(
-      "gpt-5.6-sol | medium | Trinity@main | 35k/1m (3%) | cache 35k↓/0↑ (35%) | 7d 1% @set 4",
-    );
+    const snap = snapshot({ repo: { name: "Trinity", branch: null } });
+    expect(variantText(snap, "quota", 0)).toContain("Trinity@detached |");
   });
 
   test("unknown context after compaction", () => {
@@ -287,9 +274,9 @@ describe("renderFooterLine (width fit)", () => {
   test("degradation matches the plan examples", () => {
     const full = renderFooterLine(snapshot(), plainTheme, 160, "quota");
     expect(full).toBe(
-      "gpt-5.6-sol | medium | Trinity@main (+12 -3) | 35k/1m (3%) | cache 35k↓/0↑ (35%) | 7d 1% @set 4",
+      "gpt-5.6-sol | medium | Trinity@main | 35k/1m (3%) | cache 35k↓/0↑ (35%) | 7d 1% @set 4",
     );
-    // A medium terminal drops cache then simplifies git.
+    // A medium terminal drops cache.
     const medium = renderFooterLine(snapshot(), plainTheme, 70, "quota");
     expect(medium).toBe("gpt-5.6-sol | medium | Trinity@main | 35k/1m (3%) | 7d 1% @set 4");
   });
