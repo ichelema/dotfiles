@@ -23,6 +23,8 @@ declare module 'claude-code' {
       setupFocus: string
       setupLand: string
       foundPaths: string[]
+      awaiting: { key: string; at: number }[]
+      blink: boolean
       drawn: StateFamily<number>
       // local: toolStyle folded. Se il risultato di una chiamata di tool è aperto (un valore per chiamata).
       resultOpen: StateFamily<boolean>

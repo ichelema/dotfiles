@@ -1,4 +1,4 @@
-import { graphemes, width } from './render'
+import { graphemes, width } from './layout'
 
 const DAY = 86400000
 const STEPS = [1, 5, 15, 30, 60, 120, 360, 720, 1440, 2880, 10080, 20160, 43200, 129600, 525600].map(m => m * 60000)
@@ -26,7 +26,7 @@ export type Pie = { bounds: number[]; radius: number; legend: string[]; title?: 
 
 export type ChartArt = { text: string; slices?: number[][]; series?: number[][]; pie?: Pie }
 
-const QUADRANTS = ' ▘▝▀▖▌▞▛▗▚▐▜▄▙▟█'
+export const QUADRANTS = ' ▘▝▀▖▌▞▛▗▚▐▜▄▙▟█'
 
 type Slice = { label: string; text: string; value: number }
 

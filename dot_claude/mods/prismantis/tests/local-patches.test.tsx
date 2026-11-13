@@ -4,10 +4,10 @@ import type { Engine } from 'claude-code/testing'
 import { expect, mock, test } from 'claude-code/testing'
 
 import { FIGURE_HINT } from '../hooks/figure'
-import { HINT, ISSUE_HINT, setupParts, setupText } from '../hooks/help'
+import { HINT, ISSUE_HINT, setupParts, setupSteps, setupText } from '../hooks/help'
 import { fileHref, fileTarget } from '../hooks/filelink'
 import { PRESET_NAMES } from '../hooks/presets'
-import { width } from '../hooks/render'
+import { width } from '../hooks/layout'
 import { resolveStyle } from '../hooks/theme'
 
 const call = (tool: string, input: unknown, id: string, isErrored = false) => ({ tool_use_id: id, tool, input, isRunning: false, isErrored, isInterrupted: false })
@@ -110,17 +110,73 @@ test('framed: the prompt draws in a square box with the mascot', { options: { pr
   await ui.unmount()
 })
 
+// local: con hide le righe dei tool hanno altezza zero, quindi ogni messaggio ha una riga vuota sopra
+for (const [toolStyle, gap] of [['hide', 1], ['chat', undefined]] as const) {
+  test(`hide: a reply has a blank row above it (toolStyle ${toolStyle})`, { options: { toolStyle } }, async $ => {
+    const ui = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'AssistantMessage', props: { text: 'hi', isFirstOfReply: true }, viewport: { columns: 80, rows: 40 } })
+    expect((await ui.find({ key: 'msg' }))?.props.marginTop).toBe(gap)
+    await ui.unmount()
+  })
+}
+
+// local: promptMaxColumns limita la larghezza del riquadro di promptStyle framed
+const mountPrompt = ($: Engine, columns: number) =>
+  $.ui.mount({ plugin: 'prismantis', component: 'UserMessage', props: { text: 'ciao', origin: { kind: 'composer' } as never, isExpanded: true }, viewport: { columns, rows: 10 }, surface: 'terminal' })
+
+test('promptMaxColumns: the framed box gets the cap in a wide terminal only', { options: { promptStyle: 'framed', promptMaxColumns: '60' } }, async $ => {
+  const wide = await mountPrompt($, 160)
+  expect((await wide.find({ key: 'framed' }))?.props.width).toBe(60)
+  await wide.unmount()
+  const narrow = await mountPrompt($, 50)
+  expect((await narrow.find({ key: 'framed' }))?.props.width).toBeLessThan(50)
+  await narrow.unmount()
+})
+
+test('promptMaxColumns: no cap when the option is empty', { options: { promptStyle: 'framed' } }, async $ => {
+  const ui = await mountPrompt($, 160)
+  expect((await ui.find({ key: 'framed' }))?.props.width).toBeGreaterThan(100)
+  await ui.unmount()
+})
+
+// local: maxColumns limita la larghezza del solo testo; codice e tabelle tengono tutta la larghezza
+const WIDE_REPLY = 'A paragraph.\n\n- an item\n\n```ts\nconst a = 1\n```\n\n| A | B |\n|---|---|\n| 1 | 2 |'
+const mountReply = ($: Engine, columns: number) =>
+  $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'AssistantMessage', props: { text: WIDE_REPLY, isFirstOfReply: true }, viewport: { columns, rows: 40 } })
+
+test('maxColumns: paragraphs and lists get the cap, code and tables do not', { options: { maxColumns: '60' } }, async $ => {
+  const ui = await mountReply($, 160)
+  expect((await ui.find({ key: 'w0' }))?.props.width).toBe(60)
+  expect((await ui.find({ key: 'w1' }))?.props.width).toBe(60)
+  expect(await ui.find({ key: 'w2' })).toBeUndefined()
+  expect(await ui.find({ key: 'w3' })).toBeUndefined()
+  await ui.unmount()
+  const narrow = await mountReply($, 50)
+  expect(await narrow.find({ key: 'w0' })).toBeUndefined()
+  await narrow.unmount()
+})
+
+test('maxColumns: no cap when the option is empty', async $ => {
+  const ui = await mountReply($, 160)
+  expect(await ui.find({ key: 'w0' })).toBeUndefined()
+  expect(resolveStyle({ maxColumns: 'abc' }).maxColumns).toBeUndefined()
+  expect(resolveStyle({ maxColumns: '0' }).maxColumns).toBeUndefined()
+  expect(resolveStyle({ maxColumns: '120' }).maxColumns).toBe(120)
+  await ui.unmount()
+})
+
 // local: versione del test upstream "/prismantis setup draws each sample in its own style" con framed e folded
 test('setup: framed and folded are steps too, each sample drawn in its own style', async $ => {
-  const mount = async (at: number) =>
-    $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'CommandOutput', props: { command: 'prismantis', args: 'setup', text: `Tables set to box.\n\n${setupText(setupParts(PRESET_NAMES, at))}`, isErrored: false }, viewport: { columns: 100, rows: 40 } })
-  const prompts = await mount(5)
-  expect(setupParts(PRESET_NAMES, 5).options.map(o => o.value)).toEqual(['bubble', 'wide', 'bar', 'chevron', 'off', 'framed'])
+  const mount = async (step: number) =>
+    $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'CommandOutput', props: { command: 'prismantis', args: 'setup', text: `Tables set to box.\n\n${setupText(setupParts(PRESET_NAMES, step))}`, isErrored: false }, viewport: { columns: 100, rows: 40 } })
+  // i passi si cercano per nome: upstream ne aggiunge spesso e gli indici scalano
+  const at = (name: string) => setupSteps(PRESET_NAMES).findIndex(s => s.name === name)
+  const prompts = await mount(at('prompts'))
+  expect(setupParts(PRESET_NAMES, at('prompts')).options.map(o => o.value)).toEqual(['bubble', 'wide', 'bar', 'chevron', 'off', 'framed'])
   expect(await prompts.findAll({ type: 'Text', text: /fix the failing test/ })).toHaveLength(6)
   expect(await prompts.find({ type: 'Text', text: /^⠀⡖⣶⣶⢲⠀$/ })).toBeTruthy()
   await prompts.unmount()
-  const tools = await mount(8)
-  expect(setupParts(PRESET_NAMES, 8).options.map(o => o.value)).toEqual(['chat', 'tree-dim', 'tree-bold', 'classic', 'folded', 'hide'])
+  const tools = await mount(at('tools'))
+  expect(setupParts(PRESET_NAMES, at('tools')).options.map(o => o.value)).toEqual(['chat', 'tree-dim', 'tree-bold', 'classic', 'folded', 'hide'])
   expect(await tools.find({ type: 'Text', text: /⎿/ })).toBeTruthy()
   expect(await tools.findAll({ type: 'Text', text: /^Read$/ })).toHaveLength(5)
   await tools.unmount()
@@ -140,6 +196,27 @@ test('diagramHints: the hint goes with the first prompt only', async ($, on) => 
   expect(seen[0]).toContain(FIGURE_HINT)
   expect(seen[1] ?? []).not.toContain(HINT)
   expect(seen[1] ?? []).not.toContain(FIGURE_HINT)
+})
+
+// local: la nota sul pannello stretto (upstream 0.38.2) segue la regola delle altre note: una volta per larghezza
+test('diagramHints: the narrow pane hint goes once per pane width', async ($, on) => {
+  const seen: (readonly string[] | undefined)[] = []
+  mock.env(on, {})
+  on('ui.render', ($, e) => {
+    const { Text } = $.ui.resolve(e)
+    return <Text>engine</Text>
+  })
+  on('prompt.submit', (_, e) => {
+    seen.push(e.context)
+    return { text: e.text, context: e.context }
+  })
+  for (const columns of [70, 70, 80]) {
+    const reply = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'AssistantMessage', props: { text: 'hi', isFirstOfReply: true }, viewport: { columns, rows: 40 } })
+    await reply.unmount()
+    await $.prompt.submit({ text: 'draw it', wait: false, origin: { kind: 'composer' } })
+  }
+  expect(seen.map(c => (c ?? []).some(h => h.includes('columns wide')))).toEqual([true, false, true])
+  expect(seen[2]?.some(h => h.includes('80 columns'))).toBe(true)
 })
 
 // local: issueHint è tolto per scelta e non va reimplementato. Se un merge futuro lo rimette, questi test falliscono

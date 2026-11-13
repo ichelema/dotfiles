@@ -2,11 +2,14 @@ import type { ElementTable, RenderElement } from 'claude-code'
 
 import type { ChartArt, Pie, Rgb } from './charts'
 import { ganttText, pieRgba, pieText } from './charts'
+import type { Ink } from './clipboard'
 import { drawFigure, isFigureLang } from './figure'
 import { ratexColor } from './latex'
 import type { Block } from './markdown'
+import { decodeEntities } from './markdown'
 import type { Drawn } from './render'
-import { cells, graphemes, heldLtr, mirrored, remember, width } from './render'
+import { cells, graphemes, width } from './layout'
+import { artFace, heldLtr, mirrored, remember } from './render'
 import { asIs, hasRtl, holdEngine, holdRow, holdVisual, led } from './rtl'
 import type { Style, Theme } from './theme'
 import { renderMermaidAscii, setChartSize } from './vendor/mermaid-text.js'
@@ -15,7 +18,7 @@ const MAX_LINES = 80
 const PAD = '\uFDD0'
 const textCache = new Map<string, string | null>()
 
-export const chartSize = (columns: number, source = '') => {
+const chartSize = (columns: number, source = '') => {
   const labels = (/^\s*x-axis\b[^[\n]*\[([^\]\n]*)\]/m.exec(source)?.[1] ?? '').split(',').map(s => s.trim().replace(/^"|"$/g, ''))
   const fit = labels.length * (Math.max(...labels.map(l => l.length)) + 2)
   const width = Math.max(24, Math.min(60, Math.max(Math.floor(columns / 6), fit), columns - 12))
@@ -98,13 +101,27 @@ const mermaidArt = (source: string, ascii: boolean, columns: number, pieColors: 
     source = source.replace(INLINE_TAG, '')
     if (source.length > 8000 || source.split('\n').length > MAX_LINES) return null
     const own = OWN[kindOf(source).toLowerCase()]
-    if (own) return own(source, ascii, columns, pieColors)
+    if (own) return own(labelEntities(source, false), ascii, columns, pieColors)
     const art = draw(source, ascii, columns)
     const text = art === null || artWidth(art) <= columns - 2 || !SIDEWAYS.test(source) ? art : (draw(source.replace(SIDEWAYS, '$1TD'), ascii, columns) ?? art)
     return text === null ? null : { text, series: chartSeries(source, ascii, columns) }
   })
 
-const prepared = (padded: string) => unquoteCategories(padded.replace(/^(\s*%%[^\n]*\n)+/, '')).replace(/(-->|-\.->|==>|---|-\.-|===)[ \t]+\|/g, '$1|')
+const MERMAID_ENTITY = /#(\d{1,7}|[A-Za-z][A-Za-z\d]{1,31});/g
+const SHIELD = '[]{}()|<>"'
+const SHIELDED = /[\uf100-\uf109]/g
+const STYLE_LINE = /^\s*(?:style|classDef|linkStyle)\b/
+const shielded = (ch: string) => [...ch].map(c => (SHIELD.includes(c) ? String.fromCharCode(0xf100 + SHIELD.indexOf(c)) : c)).join('')
+const entityChar = (m: string, e: string, shield: boolean): string => {
+  const ch = decodeEntities(/^\d/.test(e) ? `&#${e};` : `&${e};`)
+  if (ch === `&${e};` || ch.includes('\n')) return m
+  return shield ? shielded(ch) : ch
+}
+const labelEntities = (source: string, shield: boolean): string =>
+  !source.includes('#') ? source : source.split('\n').map(line => (STYLE_LINE.test(line) ? line : line.replace(MERMAID_ENTITY, (m, e: string) => entityChar(m, e, shield)))).join('\n')
+const unshield = (text: string) => text.replace(SHIELDED, c => SHIELD[c.charCodeAt(0) - 0xf100]!)
+
+const prepared = (padded: string) => labelEntities(unquoteCategories(padded.replace(/^(\s*%%[^\n]*\n)+/, '')).replace(/(-->|-\.->|==>|---|-\.-|===)[ \t]+\|/g, '$1|'), true)
 
 const NEUTRAL = '#808080'
 const PROBE = { fg: NEUTRAL, border: NEUTRAL, line: NEUTRAL, arrow: NEUTRAL, corner: NEUTRAL, junction: NEUTRAL, accent: '#ff0000', bg: '#000000' }
@@ -125,8 +142,8 @@ const seriesOf = (colored: string): number[][] => {
     return row
   })
   const legend = hues.find(row => row.some(Boolean)) ?? []
-  const order = [...new Set(legend.filter((h): h is string => h !== undefined))]
-  return hues.map(row => row.map(h => (h === undefined ? -1 : order.indexOf(h))))
+  const order = [...new Set(legend.filter((code): code is string => code !== undefined))]
+  return hues.map(row => row.map(code => (code === undefined ? -1 : order.indexOf(code))))
 }
 
 const seriesCache = new Map<string, number[][] | null>()
@@ -154,7 +171,7 @@ const draw = (source: string, ascii: boolean, columns: number): string | null =>
     try {
       if (isChart) setChartSize(size.width, size.height)
       const art = renderMermaidAscii(prepared(padded), { useAscii: ascii, colorMode: 'none', paddingX: 3, paddingY: 1 }).replace(/[ \t]+$/gm, '').trimEnd().replace(/▶/g, '►').replace(/◀/g, '◄')
-      return (isChart ? labelBars(art, padded) : art.split('\n').filter(l => !/^[\s│|]*$/.test(l)).join('\n')).replaceAll(PAD, '')
+      return unshield((isChart ? labelBars(art, padded) : art.split('\n').filter(l => !/^[\s│|]*$/.test(l)).join('\n')).replaceAll(PAD, ''))
     } catch {
       return null
     }
@@ -286,7 +303,7 @@ export const boxArt = ({ Box, Text }: ElementTable, style: Style, art: string, k
           parts.push(<Text key={`t${parts.length}`} color={hue} {...mark}>{chars.slice(at, end).join('')}</Text>)
           at = end
         }
-        return <Text key={`${key}.${i}`} {...heldLtr(style)}>{parts.length ? parts : ' '}</Text>
+        return <Text key={`${key}.${i}`} {...heldLtr(style)} {...artFace(style)}>{parts.length ? parts : ' '}</Text>
       })}
     </Box>
   )
@@ -351,6 +368,8 @@ const piePicture = (el: ElementTable, style: Style, pie: Pie, key: string): Rend
   )
 }
 
+const chartHues = ({ grid, colors }: Painted): Ink[][] => colors.map((row, r) => row.map((color, c) => color ?? (grid[r]![c] === '·' ? { dim: true } : undefined)))
+
 const chartElement = (el: ElementTable, style: Style, art: ChartArt, block: Extract<Block, { kind: 'code' }>, key: string): RenderElement =>
   (art.pie && style.images && !block.isOpen && !mirrored(style) && !hasRtl(art.text) ? piePicture(el, style, art.pie, key) : null) ??
   boxArt(el, style, art.text, key, inlineMarks(block.lines.join('\n')), art.slices, art.series)
@@ -368,12 +387,12 @@ export const drawDiagrams = (el: ElementTable, style: Style, blocks: Block[], co
         const wide = art === null ? Infinity : artWidth(art.text)
         narrowest = Math.min(narrowest, wide)
         if (art === null || wide > columns - 2) continue
-        drawn.set(i, { element: chartElement(el, style, art, block, `b${i}`), art: art.text })
+        drawn.set(i, { element: chartElement(el, style, art, block, `b${i}`), art: art.text, hues: () => chartHues(painting(style, art.text, art.slices, art.series)) })
         break
       }
       if (!drawn.has(i) && !block.isOpen) {
         const kind = unsupportedKind(source)
-        drawn.set(i, { note: kind ? `${kind} diagrams draw as source for now` : narrowest === Infinity ? 'diagram failed to render' : `diagram is ${narrowest} cols, terminal is ${columns}` })
+        drawn.set(i, { note: kind ? `${kind} diagrams draw as source for now` : narrowest === Infinity ? 'diagram failed to render' : `diagram is ${narrowest} cols, ${columns - 2} fit` })
       }
     }
   }
