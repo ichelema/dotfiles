@@ -23,11 +23,17 @@ e sintetizza mantenendo snello il contesto.
 - Specifica obiettivo, contesto, ambito e se gli agenti devono leggere
   o modificare. Non duplicare il lavoro delegato e verifica i risultati
   effettivi prima di dichiarare il task completato.
-- Fasi ad alto ragionamento: DeepReasoner (`gpt-5.6-sol`, thinking: high).
-- Lavoro meccanico: Implementer (`gpt-5.6-luna`, thinking: high).
+- Fasi ad alto ragionamento: `DeepReasoner`.
+- Implementazione già definita: `Implementer`.
+- Lavoro ripetitivo in volume con una regola esatta: `BulkWorker`.
+- Esplorazione iniziale di codice non familiare: `Explore`.
+- Usa nomi e configurazioni esposti dal tool `Agent`; lascia modello e
+  ragionamento ai valori dell'agente, salvo una scelta motivata per il task.
 - DeepSeek è un ingegnere alla pari di DeepReasoner, con prospettiva diversa.
   Trattalo come un pari, non come un revisore.
 - Decisioni ad alto rischio: assegna a DeepReasoner e DeepSeek lo stesso
   problema in parallelo, sintetizza il meglio di entrambi senza mostrare
   a nessuno la risposta dell'altro.
-- Mostra sempre prima il piano, poi esegui.
+- Per task non banali mostra un breve piano prima di eseguire. Se l'utente
+  ha già fornito un piano, eseguilo senza ripresentarlo; segnala solo
+  cambiamenti necessari o blocchi.
