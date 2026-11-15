@@ -72,19 +72,8 @@ CLAUDE.md
 .claude/skills/sudo-popup
 .claude/skills/sudo-popup/**
 .local/bin/sudo-askpass.sh
-# zsh: oh-my-zsh, ponte ZDOTDIR, API key e funzioni solo Linux
-.config/zsh/.zshenv
-.config/zsh/api-keys.zsh
+# zsh: funzioni solo Linux (pacman, zeshij)
 .config/zsh/functions/command_not_found_handler
-.config/zsh/functions/_df
-.config/zsh/functions/_fuzzy_change_directory
-.config/zsh/functions/_fuzzy_edit_search_file
-.config/zsh/functions/_fuzzy_edit_search_file_content
-.config/zsh/functions/handle_init_error
-.config/zsh/functions/no_such_file_or_directory_handler
-.config/zsh/functions/rg
-.config/zsh/functions/y
-.config/zsh/functions/zf
 .config/zsh/functions/_zeshij
 # zeshij: binario e man page solo Linux (x86_64)
 .local/bin/zeshij
@@ -103,6 +92,26 @@ CLAUDE.md
 .config/navi/**
 .local/share/navi
 .local/share/navi/**
+{{- end }}
+{{- if and (ne .chezmoi.os "linux") (ne .chezmoi.os "darwin") }}
+# zsh: ponte ZDOTDIR, API key e funzioni comuni a Linux e macOS (non Windows)
+.config/zsh/.zshenv
+.config/zsh/api-keys.zsh
+.config/zsh/functions/_df
+.config/zsh/functions/_fuzzy_change_directory
+.config/zsh/functions/_fuzzy_edit_search_file
+.config/zsh/functions/_fuzzy_edit_search_file_content
+.config/zsh/functions/handle_init_error
+.config/zsh/functions/no_such_file_or_directory_handler
+.config/zsh/functions/rg
+.config/zsh/functions/y
+.config/zsh/functions/zf
+{{- end }}
+{{- if ne .chezmoi.os "darwin" }}
+# zsh: .zprofile con brew shellenv e fzf-tab (external) dentro oh-my-zsh: solo macOS
+.config/zsh/.zprofile
+.oh-my-zsh/custom/plugins/fzf-tab
+.oh-my-zsh/custom/plugins/fzf-tab/**
 {{- end }}
 {{- if not (stat (joinPath .chezmoi.homeDir ".config/chezmoi/key.txt")) }}
 # segreti cifrati age: saltati finche' la chiave non e' copiata su questa macchina

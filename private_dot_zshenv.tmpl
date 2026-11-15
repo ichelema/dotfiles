@@ -1,1 +1,1 @@
-{{ if eq .chezmoi.os "windows" }}{{ template "zsh/zshenv.windows" . }}{{ else }}{{ template "zsh/zshenv.linux" . }}{{ end }}
+{{ if eq .chezmoi.os "windows" }}{{ template "zsh/zshenv.windows" . }}{{ else if eq .chezmoi.os "darwin" }}{{ template "zsh/zshenv.darwin" . }}{{ else }}{{ template "zsh/zshenv.linux" . }}{{ end }}

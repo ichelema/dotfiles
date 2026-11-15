@@ -20,3 +20,9 @@
     type = "git-repo"
     url = "https://github.com/zsh-users/zsh-autosuggestions"
     refreshPeriod = "168h"
+
+# Plugin oh-my-zsh solo macOS: su Linux e Windows lo esclude .chezmoiignore
+[".oh-my-zsh/custom/plugins/fzf-tab"]
+    type = "git-repo"
+    url = "https://github.com/Aloxaf/fzf-tab.git"
+    refreshPeriod = "168h"

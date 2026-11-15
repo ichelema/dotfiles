@@ -1,0 +1,4 @@
+# Solo macOS (su Linux e Windows lo esclude .chezmoiignore).
+# Con ZDOTDIR=~/.config/zsh, zsh legge questo file e non ~/.zprofile.
+# Va dopo /etc/zprofile (path_helper di macOS): così i programmi di Homebrew vincono su quelli di sistema.
+eval "$(/opt/homebrew/bin/brew shellenv)"

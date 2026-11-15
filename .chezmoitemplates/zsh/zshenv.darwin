@@ -1,0 +1,43 @@
+#!/usr/bin/env zsh
+#!          ░▒▓
+#!        ░▒▒░▓▓
+#!      ░▒▒▒░░░▓▓           ___________
+#!    ░░▒▒▒░░░░░▓▓        //___________/
+#!   ░░▒▒▒░░░░░▓▓     _   _ _    _ _____
+#!   ░░▒▒░░░░░▓▓▓▓▓▓ | | | | |  | |  __/
+#!    ░▒▒░░░░▓▓   ▓▓ | |_| | |_/ /| |___
+#!     ░▒▒░░▓▓   ▓▓   \__  |____/ |____/    ▀█ █▀ █░█
+#!       ░▒▓▓   ▓▓  //____/                █▄ ▄█ █▀█
+
+# macOS: come zshenv.linux, senza le cartelle utente XDG (su macOS sono ~/Desktop, ~/Downloads, ...)
+
+# cleaning up home folder
+XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+XDG_CONFIG_DIR="${XDG_CONFIG_DIR:-$HOME/.config}"
+XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+XDG_DATA_DIRS="${XDG_DATA_DIRS:-$XDG_DATA_HOME:/usr/local/share:/usr/share}"
+XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+LESSHISTFILE=${LESSHISTFILE:-/tmp/less-hist}
+# less: icone Nerd Font (Unicode uso privato) stampabili, non <U+E5FF>
+export LESSUTFCHARDEF='E000-F8FF:p,F0000-FFFFD:p,100000-10FFFD:p'
+# less: colori (-R) e ricerca che ignora sempre maiuscole e minuscole (-I); oh-my-zsh non la sovrascrive
+export LESS='-R -I'
+PARALLEL_HOME="$XDG_CONFIG_HOME/parallel"
+
+# wget
+WGETRC="${XDG_CONFIG_HOME}/wgetrc"
+SCREENRC="$XDG_CONFIG_HOME"/screen/screenrc
+ZSH_AUTOSUGGEST_STRATEGY=(history)
+
+# locale anche nelle shell non di login (ssh host comando)
+: "${LANG:=it_IT.UTF-8}"; export LANG
+
+# ZDOTDIR: zsh legge .zprofile, .zshrc e .zlogin da ~/.config/zsh, non da ~
+# (~/.zprofile e ~/.zshrc del Mac non vengono più letti: brew shellenv sta in ~/.config/zsh/.zprofile)
+export ZDOTDIR="${XDG_CONFIG_HOME:-$HOME/.config}/zsh"
+
+export XDG_CONFIG_HOME XDG_CONFIG_DIR XDG_DATA_HOME XDG_STATE_HOME XDG_CACHE_HOME WGETRC SCREENRC
+
+# API key AI/LLM: file a parte, gestito cifrato da chezmoi
+[ -r "$ZDOTDIR/api-keys.zsh" ] && source "$ZDOTDIR/api-keys.zsh"

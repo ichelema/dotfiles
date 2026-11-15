@@ -1,0 +1,375 @@
+#  ╔═╗╔═╗╦ ╦╦═╗╔═╗  ╔═╗╔═╗╔╗╔╔═╗╦╔═╗	- sphynx
+#  ╔═╝╚═╗╠═╣╠╦╝║    ║  ║ ║║║║╠╣ ║║ ╦	- https://github.com/sphynx/dotfiles
+#  ╚═╝╚═╝╩ ╩╩╚═╚═╝  ╚═╝╚═╝╝╚╝╚  ╩╚═╝	- My zsh conf (macOS)
+
+# Stessa struttura di zshrc.linux. Differenze macOS:
+# - niente CUDA, pacman/yay, journalctl, expac, kitty, zeshij, pokego, SSH_AUTH_SOCK di systemd
+# - alias pacchetti con brew; cat/bat/df/eza solo se il programma è installato
+# - oh-my-zsh con ZSH_CUSTOM predefinito (~/.oh-my-zsh/custom): fzf-tab arriva da .chezmoiexternal.toml
+# - frum (Ruby), pyenv (Python) e integrazione iTerm2, come nel vecchio ~/.zshrc del Mac
+
+#  ╦  ╦╔═╗╦═╗╔═╗
+#  ╚╗╔╝╠═╣╠╦╝╚═╗
+#   ╚╝ ╩ ╩╩╚═╚═╝
+
+# Funzione per aggiungere un percorso a PATH se non è già presente
+append_path() {
+    # Controlla se la directory esiste
+    [ -d "$1" ] || return 1
+
+    case ":$PATH:" in
+        *:"$1":*) ;;
+        *) PATH="$1:$PATH" ;;
+    esac
+}
+
+# Dati sensibili li metto in "$HOME/.local/env"
+# per esempio API_KEY
+[[ -f "$HOME/.local/env" ]] && source "$HOME/.local/env"
+
+export XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
+export XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+export XDG_STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+export XDG_CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+# vim di brew (con Lua): senza EDITOR, git e irb aprono /usr/bin/vi di Apple, che non ha Lua
+export EDITOR='vim'
+export VISUAL="${EDITOR}"
+alias vi='vim'
+export SUDO_PROMPT="Concedi accesso come root per %u. Password: "
+export BAT_THEME="base16-256"
+export FZF_BASE=/opt/homebrew/opt/fzf
+# stesso file di Windows e Linux, gestito da chezmoi
+export RIPGREP_CONFIG_PATH="$HOME/.config/ripgrep/ripgreprc"
+
+# Add User bin foldet to PATH
+append_path "$HOME/.local/bin"
+
+export PATH
+
+# Enable LSP for claude code
+export ENABLE_LSP_TOOL=1
+
+alias claude='claude --system-prompt-file "$HOME/.claude/system-prompt.md" --disallowedTools="DesignSync,NotebookEdit,PowerShell,Artifact,ArtifactComments,ArtifactData,ArtifactCheck,SendFeedback"'
+
+# Claude Code dentro herdr: herdr ridisegna le immagini kitty con a=p, ma Claude Code accetta solo
+# kitty e Ghostty (herdr risponde "libghostty")
+if [[ $TERM_PROGRAM == herdr ]]; then
+  export CLAUDE_CODE_FORCE_TERMINAL_IMAGES=1
+fi
+
+#  ╔═╗╦ ╦╔╦╗╔═╗╔═╗╔═╗╔╦╗╔═╗╦  ╔═╗╔╦╗╔═╗
+#  ╠═╣║ ║ ║ ║ ║║  ║ ║║║║╠═╝║  ║╣  ║ ║╣
+#  ╩ ╩╚═╝ ╩ ╚═╝╚═╝╚═╝╩ ╩╩  ╩═╝╚═╝ ╩ ╚═╝
+
+zstyle ':completion:*:git-checkout:*' sort false
+zstyle ':completion:*' list-colors ${(s.:.)LS_COLORS}
+zstyle ':completion:*' verbose true
+zstyle ':completion:*' list-max-items 20
+zstyle ':completion:*' ignored-patterns '*.o' '*.class' '.DS_Store'
+zstyle ':completion:*:warnings' format "%B%F{red}No matches for:%f %F{magenta}%d%b"
+zstyle ':completion:*:descriptions' format '[%d]'
+zstyle ':completion:*' matcher-list \
+        'm:{a-zA-Z}={A-Za-z}' \
+        '+r:|[._-]=* r:|=*'
+
+# Save zsh_coredump in $HOME/.local/state/zsh
+export ZSH_COMPDUMP="$XDG_STATE_HOME/zsh/zcompdump"
+[[ -d "$(dirname "$ZSH_COMPDUMP")" ]] || mkdir -p "$(dirname "$ZSH_COMPDUMP")"
+# compinit lo esegue oh-my-zsh (load_zsh_plugins): un secondo compinit qui gli fa rigenerare la cache
+
+
+#  ╦ ╦╦╔═╗╔╦╗╔═╗╦ ╦
+#  ╠═╣║╚═╗ ║ ║ ║╚╦╝
+#  ╩ ╩╩╚═╝ ╩ ╚═╝ ╩
+export HISTFILE="$XDG_STATE_HOME/zsh/history"
+[[ -d "$(dirname "$HISTFILE")" ]] || mkdir -p "$(dirname "$HISTFILE")"
+
+HISTSIZE=5000
+SAVEHIST=5000
+setopt SHARE_HISTORY          # Share history between all sessions (scrive subito: niente INC_APPEND_HISTORY)
+setopt EXTENDED_HISTORY       # Write the history file in the ':start:elapsed;command' format
+setopt HIST_IGNORE_SPACE      # Do not record commands starting with a space
+setopt HIST_IGNORE_ALL_DUPS   # Delete an old recorded event if a new event is a duplicate
+setopt HIST_SAVE_NO_DUPS      # Do not write duplicate events to the history file
+setopt HIST_FIND_NO_DUPS      # Do not show duplicates when searching history
+setopt HIST_EXPIRE_DUPS_FIRST # Expire a duplicate event first when trimming history
+export HISTORY_IGNORE="(ls|cd|pwd|exit|sudo reboot|history|cd -|cd ..|fg|bg)"
+
+#  ╔═╗╔═╗╦ ╦  ╔═╗╔═╗╔═╗╦    ╔═╗╔═╗╔╦╗╦╔═╗╔╗╔╔═╗
+#  ╔═╝╚═╗╠═╣  ║  ║ ║║ ║║    ║ ║╠═╝ ║ ║║ ║║║║╚═╗
+#  ╚═╝╚═╝╩ ╩  ╚═╝╚═╝╚═╝╩═╝  ╚═╝╩   ╩ ╩╚═╝╝╚╝╚═╝
+setopt AUTOCD              # change directory just by typing its name
+setopt PROMPT_SUBST        # enable command substitution in prompt
+setopt LIST_PACKED         # The completion menu takes less space.
+setopt AUTO_LIST           # Automatically list choices on ambiguous completion.
+setopt COMPLETE_IN_WORD    # Complete from both ends of a word.
+
+#  ╔═╗╦  ╦ ╦╔═╗╦╔╗╔
+#  ╠═╝║  ║ ║║ ╦║║║║
+#  ╩  ╩═╝╚═╝╚═╝╩╝╚╝
+
+# Load oh-my-zsh and plugin
+function load_zsh_plugins {
+    if [[ ! -r "$HOME/.oh-my-zsh/oh-my-zsh.sh" ]]; then
+        echo "Warning: Oh-My-Zsh installation not found. Skipping OMZ plugin loading." >&2
+        return
+    fi
+    # ZSH_CUSTOM resta quello predefinito: $ZSH/custom (zsh-autosuggestions, zsh-syntax-highlighting, fzf-tab)
+    export ZSH="$HOME/.oh-my-zsh"
+
+    plugins=(
+        vi-mode
+        fzf
+        extract
+        colored-man-pages
+        zsh-autosuggestions
+        zsh-syntax-highlighting
+        fzf-tab
+        aliases       #     als mostra tutti gli alias per gruppo als -h per vedere opzioni
+    )
+
+    source "$ZSH/oh-my-zsh.sh"
+
+    if command -v enable-fzf-tab &>/dev/null; then
+        enable-fzf-tab
+
+        # Configurazione specifica di fzf-tab usando zstyle
+        zstyle ':fzf-tab:*' show-group brief
+        zstyle ':fzf-tab:*' switch-group '<' '>'
+        # OMZ (lib/completion.zsh) imposta "menu select": fzf-tab chiede "menu no"
+        zstyle ':completion:*:*:*:*:*' menu no
+    fi
+}
+
+# Prima di OMZ: così il suo compinit registra anche i completamenti in functions/ e quelli di brew
+typeset -U fpath
+fpath=(~/.config/zsh/functions /opt/homebrew/share/zsh-completions /opt/homebrew/share/zsh/site-functions $fpath)
+
+# Esegui la funzione per caricare OMZ e i plugin
+load_zsh_plugins
+
+# mise - version manager (Node, ...)
+# Dopo OMZ: se compdef non esiste ancora, l'hook di mise lancia un suo compinit in più
+eval "$(mise activate zsh)"
+
+# Ruby con frum, Python con pyenv (sul Mac non passano da mise)
+(( $+commands[frum] )) && eval "$(frum init)"
+if [[ -d "$HOME/.pyenv" ]]; then
+    export PATH="$HOME/.pyenv/bin:$PATH"
+    eval "$(pyenv init --path)"
+    eval "$(pyenv init -)"
+fi
+
+# Smarter cd command for your terminal
+eval "$(zoxide init zsh --cmd cd)"
+
+#  ╔═╗╦ ╦╔╗╔╔═╗╔╦╗╦╔═╗╔╗╔
+#  ╠╣ ║ ║║║║║   ║ ║║ ║║║║
+#  ╚  ╚═╝╝╚╝╚═╝ ╩ ╩╚═╝╝╚╝
+
+autoload -Uz handle_init_error
+autoload -Uz no_such_file_or_directory_handler
+autoload -Uz _fuzzy_change_directory
+autoload -Uz _fuzzy_edit_search_file
+autoload -Uz _fuzzy_edit_search_file_content
+autoload -Uz zf
+autoload -Uz _df
+autoload -Uz y
+autoload -Uz rg
+autoload -Uz q
+
+#  ╔═╗╦  ╦╔═╗╔═╗
+#  ╠═╣║  ║╠═╣╚═╗
+#  ╩ ╩╩═╝╩╩ ╩╚═╝
+alias c='clear' # clear terminal
+alias() { if (( $# || ${funcstack[(I)als]} )); then builtin alias "$@"; else als; fi }  # senza argomenti: lista a gruppi (als); con argomenti o da dentro als: alias builtin
+if (( $+commands[eza] )); then
+    alias ls='eza -1a --icons=auto'  \
+          l='eza -1 --icons=auto' \
+          ll='eza -lha --icons=auto --sort=name --group-directories-first' \
+          ld='eza -1D --icons=auto' \
+          lf='eza -1f --icons=auto' \
+          lt='eza -T --icons=auto' \
+          lt1='eza -aT --level=1 --icons=auto' \
+          lt2='eza -aT --level=2 --icons=auto' \
+          lt3='eza -aT --level=3 --icons=auto'
+fi
+# ll: tabella nu con i permessi (mode); senza nu resta l'alias eza
+if (( $+commands[nu] )); then
+    unalias ll 2>/dev/null
+    function ll { nu -c 'def main [...p: string] { if ($p | is-empty) { ls -la } else { ls -la ...$p } | sort-by type name -i | select name type mode size modified }' "$@"; }
+fi
+
+# Pacchetti con brew (stessi nomi degli alias pacman di Linux)
+alias un='brew uninstall' # uninstall package
+alias update='brew update && brew upgrade' # update system/package
+alias pl='brew list' # list installed package
+alias pa='brew search' # list available package
+alias pc='brew cleanup' # remove unused cache
+alias po='brew autoremove' # remove unused packages
+alias ss="sudo"
+if (( $+commands[bat] )); then
+    alias cat="bat --paging=never --style=plain --theme=base16-256" # bat senza pager e senza numeri di riga
+    alias bat="bat --theme=base16-256"                              # bat completo: pager automatico + numeri di riga
+fi
+alias sv="sudo -E vim" # Vim with sudo
+alias sn="sudo -E nvim" # Neovim with sudo
+
+alias ..='cd ..'
+alias ...='cd ../..'
+alias .3='cd ../../..'
+alias .4='cd ../../../..'
+alias .5='cd ../../../../..'
+
+alias mkdir='mkdir -p'
+# FZF
+alias ffec='_fuzzy_edit_search_file_content'
+alias ffcd='_fuzzy_change_directory'
+alias ffe='_fuzzy_edit_search_file'
+
+# Show space disk
+(( $+commands[duf] )) && alias df='_df'
+
+# Domanda veloce a Claude Haiku
+alias q='noglob q'   # così "?" e "*" nella domanda non vengono espansi da zsh
+
+# pi con la chiave Anthropic (riusa HINDSIGHT_ANTHROPIC_API_KEY da api-keys.zsh)
+alias pi='ANTHROPIC_API_KEY="$HINDSIGHT_ANTHROPIC_API_KEY" command pi'
+
+# navi: il comando scelto va sulla riga del prompt (print -z) invece di essere eseguito,
+# così gira nella shell corrente con alias, funzioni e cd. nai git fetch = apre già filtrato
+unalias na 2>/dev/null   # vecchia versione alias: con source ~/.zshrc trasformerebbe la definizione in navi()
+# Invio: comando sul prompt. Alt+Invio: eseguito subito (fzf crea $NA_RUN, vedi ~/.config/navi/config.yaml)
+function na {
+  local c run="${XDG_RUNTIME_DIR:-/tmp}/na-run.$$"
+  rm -f -- "$run"
+  c=$(NA_RUN=$run navi --print --query "$*") && [[ -n $c ]] || { rm -f -- "$run"; return }
+  if [[ -e $run ]]; then
+    rm -f -- "$run"; print -s -- "$c"; eval "$c"
+  else
+    print -z -- "$c"
+  fi
+}
+alias nai=na
+
+#  ╔╦╗╔═╗╦═╗╔╦╗╦╔╗╔╔═╗╦    ╔╦╗╦╔╦╗╦  ╔═╗
+#   ║ ║╣ ╠╦╝║║║║║║║╠═╣║     ║ ║ ║ ║  ║╣
+#   ╩ ╚═╝╩╚═╩ ╩╩╝╚╝╩ ╩╩═╝   ╩ ╩ ╩ ╩═╝╚═╝
+autoload -Uz add-zsh-hook
+
+function xterm_title_precmd () {
+	print -Pn -- '\e]2;%~\a'
+}
+
+function xterm_title_preexec () {
+	print -Pn -- '\e]2;%~ %# ' && print -n -- "${(q)1}\a"
+}
+
+if [[ "$TERM" == (kitty*|alacritty*|tmux*|xterm*) ]]; then
+	add-zsh-hook -Uz precmd xterm_title_precmd
+	add-zsh-hook -Uz preexec xterm_title_preexec
+fi
+
+#  ╔╗ ╦╔╗╔╔╦╗╦╔╗╔╔═╗
+#  ╠╩╗║║║║ ║║║║║║║ ╦
+#  ╚═╝╩╝╚╝═╩╝╩╝╚╝╚═╝
+bindkey -v
+
+# Widget custom che va sempre a fine linea
+insert-last-word-eol() {
+  zle end-of-line
+  if [[ -n "$LBUFFER" && "$LBUFFER" != *" " ]]; then
+    LBUFFER+=" "
+  fi
+  zle insert-last-word
+}
+zle -N insert-last-word-eol
+
+# Widget custom che premo ESC e non torna indietro ddi uno spazzio
+vi-cmd-mode-stay() {
+  local original_cursor=$CURSOR
+  zle vi-cmd-mode
+  CURSOR=$original_cursor
+}
+zle -N vi-cmd-mode-stay
+
+# Setto ESC per andare in normal mode in vim mode
+bindkey -M viins '^[' vi-cmd-mode-stay
+
+# Con il punto do come input, lo stesso input del comando prededente
+# ES: > cd /ciao
+#     > ls [ESC] . = ls /ciao
+bindkey -M vicmd '.' insert-last-word-eol
+
+# Finziana TAB per complete anche in vim cmd mode
+bindkey -M vicmd '^I' expand-or-complete
+
+# Con il plugin zsh-autosuggestions
+# ->            accetto il suggeriento (default)
+# Alt ->        accetazione parziale (default)
+# Ctrl ->       accetto e eseguo (su macOS Ctrl+freccia può essere preso da Mission Control)
+# Ctrl -Q       pulisco il suggerimento
+bindkey '^[[1;5C' autosuggest-execute
+bindkey '^Q' autosuggest-clear
+
+#  ╔═╗╦ ╦╦═╗╔═╗╔═╗╦═╗
+#  ║  ║ ║╠╦╝╚═╗║ ║╠╦╝
+#  ╚═╝╚═╝╩╚═╚═╝╚═╝╩╚═
+# Tempo di risposta più rapido per ESC
+export KEYTIMEOUT=40
+
+# Funzione per cambiare la forma del cursore in base alla modalità
+function zle-keymap-select {
+  case $KEYMAP in
+    vicmd)      # quando si è in modalità comando (normale)
+      echo -ne '\e[1 q'  # cursore a blocco
+      ;;
+    viins|main) # quando si è in modalità inserimento
+      echo -ne '\e[5 q'  # cursore a barra verticale
+      ;;
+  esac
+}
+zle -N zle-keymap-select
+
+# Assicurati che il cursore sia giusto all'inizio della riga
+function zle-line-init {
+  echo -ne '\e[5 q'  # inizia sempre in modalità inserimento
+}
+zle -N zle-line-init
+
+# Reimposta il cursore quando si esegue un comando
+function zle-line-finish {
+  echo -ne '\e[5 q'  # torna al cursore modalità inserimento
+}
+zle -N zle-line-finish
+
+# Prompt: Starship. Va DOPO i widget zle: così wrappa il tuo zle-keymap-select e il prompt si ridisegna in modalità vi.
+if command -v starship >/dev/null 2>&1; then
+  export STARSHIP_CONFIG="$HOME/.config/starship/starship.toml"
+  eval "$(starship init zsh)"
+fi
+
+# Inizializza il cursore corretto all'avvio
+echo -ne '\e[5 q'
+
+# Integrazione iTerm2 (solo se installata)
+test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+
+# lnav dentro zellij: zellij inoltra le 256 query OSC 4 una a una (zellij#5606) e notcurses va in timeout; tmux risponde da solo
+_lnav_run() {  # $1 = prefisso ("command" o "sudo"), resto = argomenti di lnav
+  local pre=$1; shift
+  if [[ -n $ZELLIJ && -z $TMUX ]]; then
+    tmux -L lnav -f /dev/null start-server \; \
+      set -s escape-time 0 \; set -g status off \; set -g mouse on \; \
+      set -g default-terminal tmux-256color \; set -as terminal-features ',*:RGB' \; \
+      new-session "$pre lnav ${(j: :)${(q)@}}"
+  else
+    $pre lnav "$@"
+  fi
+}
+lnav()  { _lnav_run command "$@" }
+slnav() { _lnav_run sudo "$@" }  # log leggibili solo da root
+
+# zj-radar: Zellij non passa ai plugin i colori del terminale (default_bg null) e il radar usa un fallback quasi nero.
+# Dichiarare fg/bg del pane (OSC 10/11, colori Nord) gli fa derivare il pannello dal tema reale.
+[[ -n $ZELLIJ ]] && printf '\e]10;#D8DEE9\a\e]11;#142433\a'
