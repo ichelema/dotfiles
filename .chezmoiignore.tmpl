@@ -114,6 +114,9 @@ CLAUDE.md
 .oh-my-zsh/custom/plugins/fzf-tab/**
 {{- end }}
 {{- if eq .chezmoi.os "darwin" }}
+# WezTerm: non usato sul Mac
+.config/wezterm
+.config/wezterm/**
 # Claude Code sul Mac: la riga di stato la calcola la mod statusline, non statusline.sh
 .claude/statusline.sh
 # kitty-status.sh serve solo agli hook della VPS; replay è disattivata (replay@inline: false)
