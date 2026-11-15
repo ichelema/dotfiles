@@ -113,6 +113,16 @@ CLAUDE.md
 .oh-my-zsh/custom/plugins/fzf-tab
 .oh-my-zsh/custom/plugins/fzf-tab/**
 {{- end }}
+{{- if eq .chezmoi.os "darwin" }}
+# Claude Code sul Mac: la riga di stato la calcola la mod statusline, non statusline.sh
+.claude/statusline.sh
+# LiteLLM gira solo sulla VPS: al Mac (tunnel litellm-vps) serve solo master-key.txt per gpt-bridge e i launcher
+.litellm/callbacks.py
+.litellm/litellm_config.yaml
+.litellm/responses_bridge.py
+.litellm/test_callbacks.py
+.litellm/test_responses_bridge.py
+{{- end }}
 {{- if not (stat (joinPath .chezmoi.homeDir ".config/chezmoi/key.txt")) }}
 # segreti cifrati age: saltati finche' la chiave non e' copiata su questa macchina
 .litellm/master-key.txt

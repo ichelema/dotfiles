@@ -6,7 +6,7 @@
 # - niente CUDA, pacman/yay, journalctl, expac, kitty, zeshij, pokego, SSH_AUTH_SOCK di systemd
 # - alias pacchetti con brew; cat/bat/df/eza solo se il programma è installato
 # - oh-my-zsh con ZSH_CUSTOM predefinito (~/.oh-my-zsh/custom): fzf-tab arriva da .chezmoiexternal.toml
-# - frum (Ruby), pyenv (Python) e integrazione iTerm2, come nel vecchio ~/.zshrc del Mac
+# - integrazione iTerm2, come nel vecchio ~/.zshrc del Mac (Ruby e Python con mise, come su Linux)
 
 #  ╦  ╦╔═╗╦═╗╔═╗
 #  ╚╗╔╝╠═╣╠╦╝╚═╗
@@ -148,17 +148,9 @@ fpath=(~/.config/zsh/functions /opt/homebrew/share/zsh-completions /opt/homebrew
 # Esegui la funzione per caricare OMZ e i plugin
 load_zsh_plugins
 
-# mise - version manager (Node, ...)
+# mise - version manager (Ruby, Node, Python, ...) — come su Linux
 # Dopo OMZ: se compdef non esiste ancora, l'hook di mise lancia un suo compinit in più
 eval "$(mise activate zsh)"
-
-# Ruby con frum, Python con pyenv (sul Mac non passano da mise)
-(( $+commands[frum] )) && eval "$(frum init)"
-if [[ -d "$HOME/.pyenv" ]]; then
-    export PATH="$HOME/.pyenv/bin:$PATH"
-    eval "$(pyenv init --path)"
-    eval "$(pyenv init -)"
-fi
 
 # Smarter cd command for your terminal
 eval "$(zoxide init zsh --cmd cd)"

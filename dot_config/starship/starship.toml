@@ -13,6 +13,7 @@ style = "fg:#1793D1"   # azzurro Arch Linux
 [os.symbols]
 Arch = "󰣇 "
 CachyOS = "󰣇 "
+Macos = ""   # macOS: nessun simbolo (il predefinito di starship è 🍎)
 
 # p10k: DIR_FOREGROUND=31, ANCHOR=39 (radice del repository), parent abbreviati
 [directory]
