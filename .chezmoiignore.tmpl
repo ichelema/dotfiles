@@ -116,6 +116,11 @@ CLAUDE.md
 {{- if eq .chezmoi.os "darwin" }}
 # Claude Code sul Mac: la riga di stato la calcola la mod statusline, non statusline.sh
 .claude/statusline.sh
+# kitty-status.sh serve solo agli hook della VPS; replay è disattivata (replay@inline: false)
+.claude/hooks
+.claude/hooks/**
+.claude/mods/replay
+.claude/mods/replay/**
 # LiteLLM gira solo sulla VPS: al Mac (tunnel litellm-vps) serve solo master-key.txt per gpt-bridge e i launcher
 .litellm/callbacks.py
 .litellm/litellm_config.yaml

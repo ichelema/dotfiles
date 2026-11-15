@@ -15,7 +15,9 @@
     "MCP_TIMEOUT": "60000",
     "ENABLE_CLAUDEAI_MCP_SERVERS": "false",
     "CLAUDE_CODE_PLUGIN_DIRS": "~/.claude/mods",
+{{- if ne .chezmoi.os "darwin" }}
     "CLAUDE_CODE_TMPDIR": "{{ .chezmoi.homeDir }}/.claude/tmp",
+{{- end }}
 {{- /* 0 = classificatore locale dell'auto mode: il server-side non giudica i Bash dei subagenti gpt-bridge, a cui risponde la mod senza richiesta all'API */}}
     "CLAUDE_CODE_AUTO_MODE_SERVER": "0",
 {{- if not (index . "vps") }}
@@ -38,6 +40,11 @@
     "EDITOR": "d:\\msys64\\home\\Sphynx\\.local\\bin\\vim-claude.cmd",
     "CLAUDE_ENV_FILE": "d:/msys64/home/sphynx/.local/bin/claude-msys2-env.sh",
     "TRINITY_PLUGIN_DIR": "D:/AI/Claude/Trinity"
+{{- else if eq .chezmoi.os "darwin" }}
+    "EDITOR": "nvim",
+    "OBSIDIAN_VAULT": "/Users/sphynx/Desktop/Obsidian/Sinapsi",
+    "OBSIDIAN_VAULT_NAME": "sinapsi",
+    "TRINITY_PLUGIN_DIR": "{{ .chezmoi.homeDir }}/AI/Claude/Trinity"
 {{- else }}
     "EDITOR": "nvim",
     "SUDO_ASKPASS": "/home/ichelema/.local/bin/sudo-askpass.sh",
@@ -203,7 +210,7 @@
   "inputNeededNotifEnabled": false,
   "agentPushNotifEnabled": true,
   "pluginConfigs": {
-    "prismantis@inline": { "options": { "theme": "nord", "tableStyle": "box", "toolStyle": "hide", "toolRows": true, "toolOutput": "quiet", "promptStyle": "framed", "headingStyle": "banner", "diffStyle": "bar", "codeStyle": "framed", "listMarker": "dash", "maxColumns": "180", "promptMaxColumns": "180" } },
+    "prismantis@inline": { "options": { "theme": "nord", "tableStyle": "box", "toolStyle": "hide", "toolRows": true, "toolOutput": "quiet", "promptStyle": "framed", "headingStyle": "banner", "diffStyle": "bar", "codeStyle": "framed", "listMarker": "dash", "maxColumns": "180", "promptMaxColumns": "180"{{ if eq .chezmoi.os "darwin" }}, "latex": true{{ end }} } },
     "filetree@claude-code-filetree": { "options": {
       "start": "off",
       "column": "size",
