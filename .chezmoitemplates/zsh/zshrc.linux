@@ -417,3 +417,25 @@ slnav() { _lnav_run sudo "$@" }  # log leggibili solo da root (caddy, fail2ban)
 # zj-radar: Zellij non passa ai plugin i colori di WezTerm (default_bg null) e il radar usa un fallback quasi nero.
 # Dichiarare fg/bg del pane (OSC 10/11, valori di colors/nord.lua di WezTerm) gli fa derivare il pannello dal tema reale.
 [[ -n $ZELLIJ ]] && printf '\e]10;#D8DEE9\a\e]11;#142433\a'
+
+# >>> zj-radar shell marks >>>
+# Managed by `zj-radar setup shell`: OSC 133 prompt marks, so Zellij sees each
+# command's exit code. Remove with `zj-radar setup shell zsh --uninstall`.
+if [[ -n "${ZELLIJ_PANE_ID:-}" ]]; then
+  : ${__zj_radar_ran=}
+  __zj_radar_preexec() {
+    __zj_radar_ran=1
+    printf '\e]133;C;cmdline=%s\a' "${(qqqq)1}"
+  }
+  __zj_radar_precmd() {
+    local s=$?
+    [[ -n $__zj_radar_ran ]] && printf '\e]133;D;%s\a' "$s"
+    __zj_radar_ran=
+    printf '\e]133;A\a'
+    return $s
+  }
+  autoload -Uz add-zsh-hook
+  add-zsh-hook preexec __zj_radar_preexec
+  add-zsh-hook precmd __zj_radar_precmd
+fi
+# <<< zj-radar shell marks <<<
