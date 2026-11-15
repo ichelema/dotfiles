@@ -73,7 +73,9 @@ zstyle ':completion:*' matcher-list \
         '+r:|[._-]=* r:|=*'
 
 # Save zsh_coredump in $HOME/.local/state/zsh
-export ZSH_COMPDUMP="$XDG_STATE_HOME/zsh/zcompdump"
+# Un file per versione: sul Mac ci sono /bin/zsh (Apple) e /opt/homebrew/bin/zsh (brew), e un .zwc
+# compilato da una versione fa fallire zrecompile nell'altra ("zwc file has wrong version")
+export ZSH_COMPDUMP="$XDG_STATE_HOME/zsh/zcompdump-$ZSH_VERSION"
 [[ -d "$(dirname "$ZSH_COMPDUMP")" ]] || mkdir -p "$(dirname "$ZSH_COMPDUMP")"
 # compinit lo esegue oh-my-zsh (load_zsh_plugins): un secondo compinit qui gli fa rigenerare la cache
 
