@@ -471,7 +471,7 @@ const cellFlow = (style: Style, nodes: Inline[], held: boolean, mark: boolean) =
 const noteHover = (style: Style, note: number | undefined) =>
   note === undefined || style.noteKey === undefined ? {} : { hover: { scope: `fn:${style.noteKey}:${note}`, inverse: true } }
 
-const renderInline = (el: ElementTable, style: Style, nodes: Inline[], keyBase: string): RenderElement[] => {
+const renderInline = (el: ElementTable, style: Style, nodes: Inline[], keyBase: string, numberFace: { color?: string } = { color: style.theme.number }): RenderElement[] => {
   const { Text } = el
   const t = style.theme
   return nodes.map((n, i) => {
@@ -494,7 +494,7 @@ const renderInline = (el: ElementTable, style: Style, nodes: Inline[], keyBase: 
       case 'image':
         return <Text key={key} color={t.link}>{n.text}</Text>
       case 'number':
-        return <Text key={key} color={t.number}>{n.text}</Text>
+        return <Text key={key} {...numberFace}>{n.text}</Text>
       case 'path':
         return <Text key={key} color={t.path}>{n.href === undefined ? n.text : <el.Link href={n.href} label={n.text} />}</Text>
       case 'dim':
@@ -800,6 +800,9 @@ const tableSize = (block: Extract<Block, { kind: 'table' }>, shown: (cell: Inlin
 type Face = Exclude<Ink, string | undefined>
 
 const own = (face: Face): Face => Object.fromEntries(Object.entries(face).filter(([, v]) => v !== undefined))
+
+const numberPaint = (face: Face, header: boolean, t: Theme): { color?: string } =>
+  header || face.color === undefined || face.color === t.tableText ? { color: t.number } : {}
 
 const INLINE_FACE: Partial<Record<Inline['kind'], (t: Theme) => Face>> = {
   strong: t => ({ color: t.strong, bold: true }),
@@ -1107,13 +1110,15 @@ const renderTable = (el: ElementTable, style: Style, block: Extract<Block, { kin
         const content = cell ? cell.lines[0]! : cells[c]!
         const side = mirror ? (block.align[c] === 'center' ? 'center' : 'flex-start') : cell?.base === 'R' && block.align[c] !== 'center' ? 'flex-end' : justify(c)
         const runs = isHeader ? headerRuns(content) : content
+        const face = isHeader ? { bold: true, color: t.tableHeader } : look(c, cells[c]!, own({ color: t.tableText }))
+        const numberFace = numberPaint(face, isHeader, t)
         const cellBox = (
           <Box key={`${k}.${c}`} {...tableColumn(style, w, shares[c]!, words[c]!)} {...laidCell(style, box)} justifyContent={side}>
-            {pressInline(el, style, runs, w, `${k}.${c}.p`, tip, isHeader ? { bold: true, color: t.tableHeader } : look(c, cells[c]!, own({ color: t.tableText })), { justifyContent: side })
+            {pressInline(el, style, runs, w, `${k}.${c}.p`, tip, face, { justifyContent: side })
               ?? (isHeader
                 ? <Text bold color={t.tableHeader}>{runs.some(n => n.kind === 'footnote') ? renderInline(el, style, runs, `${k}.${c}`) : inlineText(runs)}</Text>
                 : mirror && inlineText(content).trim() === '' ? <Text>{' '.repeat(w)}</Text>
-                : <Text {...look(c, cells[c]!, { color: t.tableText })}>{renderInline(el, style, content, `${k}.${c}`)}</Text>)}
+                : <Text {...face}>{renderInline(el, style, content, `${k}.${c}`, numberFace)}</Text>)}
           </Box>
         )
         return [i > 0 && (box ? border(`${k}.${c}s`, wall(' │ ')) : spacer(`${k}.${c}g`)), cellBox]

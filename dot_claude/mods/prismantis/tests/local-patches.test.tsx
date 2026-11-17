@@ -425,3 +425,20 @@ test('folded: una riga di tool ha il link file:// di upstream al suo file', { op
   expect(await ui.find({ type: 'Text', text: /^Read$/ })).toBeTruthy()
   await ui.unmount()
 })
+
+// local: parte di #516 (0.47.0) presa senza compareTable. Un numero prende il colore che il look della tabella
+// dà alla cella; in una cella senza look resta nel colore dei numeri
+test('table numbers: a cell colored by benchTable keeps its color on the number, a plain cell keeps the number color', { options: { benchTable: 'color' } }, async $ => {
+  const t = resolveStyle({ benchTable: 'color' }).theme
+  const text = '| Benchmark | Before | Change |\n|:----------|-------:|:-------|\n| parse | 12.4 ms | -10% |\n| layout | 19.6 ms | +14% |'
+  const ui = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'AssistantMessage', props: { text, isFirstOfReply: true }, viewport: { columns: 100, rows: 20 } })
+  const plain = await ui.findAll({ type: 'Text', text: /^12\.4$/ })
+  expect(plain.length).toBeGreaterThan(0)
+  expect(plain.every(n => n.props.color === t.number)).toBe(true)
+  // +14% è una regressione, rossa: il verde dei miglioramenti in catppuccin-mocha è uguale al colore dei numeri
+  const change = await ui.findAll({ type: 'Text', text: /^\+14%$/ })
+  expect(change.length).toBeGreaterThan(0)
+  expect(change.every(n => n.props.color !== t.number)).toBe(true)
+  expect(change.some(n => n.props.color !== undefined)).toBe(true)
+  await ui.unmount()
+})
