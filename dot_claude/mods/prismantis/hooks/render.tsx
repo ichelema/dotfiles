@@ -5,7 +5,7 @@ import { figureText, isFigureLang } from './figure'
 import { tableHtml, tableText } from './html'
 import type { Block, Inline, TableAlign, TableCell, TableBlock } from './markdown'
 import { mathOf } from './latex'
-import { CONTROL, displayText, inlineText, isWebLink, nestedBlocks, parseInline, texParses, texText } from './markdown'
+import { CONTROL, displayText, inlineText, isPathSpelling, isWebLink, nestedBlocks, parseInline, texParses, texText } from './markdown'
 import type { Flow } from './rtl'
 import { LTR_BLANK, ROW_MARK, ROW_MARK_TEXT, WALL, codeVisual, commentTail, commentVisual, containsRtl, flow, hasRtl, heldCell, listMarker, opensLatin, terminalLine } from './rtl'
 import type { Style, Theme } from './theme'
@@ -63,6 +63,8 @@ export const takesClickableMarks = releaseFrom(CLICKABLE_MARKS_FROM)
 export const takesMonoText = releaseFrom(MONO_TEXT_FROM)
 
 export const fileRoot = (distro?: string): string => (distro ? `file://wsl.localhost/${encodeURIComponent(distro)}` : 'file://')
+
+export const fileLinkRoot = (files: string | null, isFullscreen?: boolean): string | null => (files !== null && isFullscreen === true ? 'file://' : files)
 
 export type TerminalEnv = Partial<Record<'FORCE_HYPERLINK' | 'TERM_PROGRAM' | 'TERM_PROGRAM_VERSION' | 'TERM' | 'WT_SESSION' | 'LC_TERMINAL' | 'VTE_VERSION' | 'TERMINAL_EMULATOR', string>>
 
@@ -270,6 +272,11 @@ const drawnPath = (n: Extract<Inline, { kind: 'path' }>, reach: Reach): Inline =
   return href === undefined || !opens(reach, href) ? n : { ...n, href }
 }
 
+const drawnCode = (n: Extract<Inline, { kind: 'code' }>, reach: Reach): Inline => {
+  const drawn = isPathSpelling(n.text) ? drawnPath({ kind: 'path', text: n.text }, reach) : undefined
+  return drawn?.kind === 'path' && drawn.href !== undefined ? { ...n, href: drawn.href } : n
+}
+
 const PART = String.raw`[\p{L}\p{N}_@+-]+`
 const NAME = String.raw`\.?${PART}(?:\.${PART})*`
 const LOOSE_PATH = new RegExp(String.raw`(?<![\p{L}\p{N}_/\\.:~@+-])(?:[A-Za-z]:[\\/](?:${NAME}[\\/])*(?:${NAME})?|${NAME}(?:\/${NAME})*\/(?:${NAME})?|${PART}(?:\.${PART})+)(?![\p{L}\p{N}_/\\@+-]|\.[\p{L}\p{N}])`, 'gu')
@@ -325,6 +332,7 @@ const linked = (node: Inline, reach: Reach): Inline => {
   if ((n.kind === 'code' || n.kind === 'path') && reach.editorPaths?.has(n.text)) return { ...n, href: reach.editorPaths.get(n.text) }
   if (n.kind === 'link') return drawnLink(n, reach)
   if (n.kind === 'path') return drawnPath(n, reach)
+  if (n.kind === 'code') return drawnCode(n, reach)
   return 'children' in n ? { ...n, children: hyperlinks(n.children, reach) } : n
 }
 
@@ -356,9 +364,12 @@ const inlinesOf = (block: Block): Inline[][] => {
 
 const spelled = new WeakMap<Block, string[]>()
 
+const pathKey = (reach: Reach, path: string): string[] => (reach.pathLinks && linksAsPath(path) ? bareKey(reach, pathHref(reach, path)) : [])
+
 const bareKeysIn = (nodes: Inline[], reach: Reach): string[] =>
   nodes.flatMap(n => {
-    if (n.kind === 'path') return reach.pathLinks && linksAsPath(n.text) ? bareKey(reach, pathHref(reach, n.text)) : []
+    if (n.kind === 'path') return pathKey(reach, n.text)
+    if (n.kind === 'code') return isPathSpelling(n.text) ? pathKey(reach, n.text) : []
     if (n.kind === 'link') return /^file:/i.test(n.href) ? bareKey(reach, n.href) : []
     return 'children' in n ? bareKeysIn(n.children, reach) : []
   })
