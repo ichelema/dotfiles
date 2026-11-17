@@ -113,6 +113,20 @@ export const PRESETS = {
     rule: '#343c5c', tableRule: '#343c5c', bullet: '#8b95b8', diagram: '#66708f', diagramText: '#c9d4f2',
     diffAdded: '#3dff9a', diffRemoved: '#ff4d6d',
   },
+  'kanagawa-wave': {
+    accent: '#957fb8', heading: '#ffa066', tableHeader: '#e6c384', strong: '#dcd7ba', emphasis: '#d27e99',
+    inlineCode: '#7fb4ca', codeText: '#dcd7ba', codeCommand: '#7e9cd8', codeFlag: '#e46876', codeString: '#98bb6c',
+    codeComment: '#727169', link: '#7e9cd8', path: '#7aa89f', number: '#98bb6c', quote: '#938aa9',
+    rule: '#2a2a37', tableRule: '#54546d', bullet: '#957fb8', diagram: '#7e9cd8', diagramText: '#dcd7ba',
+    diffAdded: '#76946a', diffRemoved: '#c34043',
+  },
+  'morning-haze': {
+    accent: '#c4b7dc', heading: '#c4b7dc', tableHeader: '#f8e6d2', strong: '#e9cc97', emphasis: '#dcc0d2',
+    inlineCode: '#9ec3c0', codeText: '#ccd9ec', codeCommand: '#a8c98c', codeFlag: '#dcc0d2', codeString: '#c2d8b9',
+    codeComment: '#8191ad', link: '#8fb8d6', path: '#a1b5d8', number: '#b7d6a6', quote: '#8191ad',
+    rule: '#394152', tableRule: '#8191ad', bullet: '#c4b7dc', diagram: '#a1b5d8', diagramText: '#ccd9ec',
+    diffAdded: '#b7d6a6', diffRemoved: '#e3968f',
+  },
   mono: {} as Theme,
 } satisfies Record<string, Theme>
 
@@ -136,4 +150,6 @@ export const PRESET_BACKGROUNDS: Partial<Record<PresetName, string>> = {
   'solarized-dark': '#002b36',
   'solarized-light': '#fdf6e3',
   neon: '#0b0e1a',
+  'kanagawa-wave': '#1f1f28',
+  'morning-haze': '#252a34',
 }
