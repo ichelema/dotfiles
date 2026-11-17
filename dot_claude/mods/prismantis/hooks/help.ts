@@ -118,6 +118,51 @@ When a table describes a database schema — a column of fields beside a column 
 | org_id | bigint | FK → orgs.id | |
 | created_at | timestamp | | now() |
 
+### Comparison
+
+When a table compares options — a column of scores beside a column of ranks — \`compareTable\` draws the rank cells as a medal: 1 in the accent color, 2 and 3 in the link color, the same pairing the schema table's PK and FK use. \`pick\` draws the score cell of the top score in the improvement green, the hue \`benchTable\` gives an improvement, and bolds it so it stands out even in a theme where that green is also the number color, and \`full\` does both. The default \`off\` keeps tables as written:
+
+| Option | Score | Rank |
+|:-------|------:|-----:|
+| mantis | 9.2 | 1 |
+| origami | 7.8 | 2 |
+| noodle | 6.1 | 3 |
+| tofu | 4.4 | 4 |
+
+### API
+
+When a table documents an API — a method column whose cells read like HTTP verbs — \`apiTable\` draws the method cells by what the verb does: reads like GET in the link color, writes like POST in the string color, DELETE in the removed color, other verbs in gray. \`auth\` draws the scheme cells of an auth column — Bearer, OAuth, API key, JWT — in the accent color, and \`full\` does both. The default \`off\` keeps tables as written:
+
+| Method | Endpoint | Auth | Description |
+|:-------|:---------|:-----|:------------|
+| GET | /v1/scrolls | Bearer | List the scrolls |
+| POST | /v1/scrolls | Bearer | Add a scroll |
+| DELETE | /v1/scrolls/:id | API key | Remove a scroll |
+| GET | /v1/health | none | Liveness check |
+
+### Key-value
+
+When a table lists configuration — a column of options beside columns of values, sources and defaults — \`kvTable\` draws the source cells by where it says the value comes from: env in the link color, config in the string color, default in gray. \`overrides\` draws the value cell in the accent color when the row's value differs from its default, and \`full\` does both. The default \`off\` keeps tables as written:
+
+| Option | Value | Source | Default |
+|:-------|:------|:-------|:--------|
+| retries | 5 | env | 3 |
+| format | json | config | json |
+| timeout | 30s | default | 30s |
+| token | abc123 | env | unset |
+
+### Groups
+
+When a table groups its rows — the first column whose cells repeat in runs, like a column of services or teams — \`groupTable\` draws each group once: \`merge\` labels the group in the accent color and blanks the repeats under it, \`count\` also adds the group's size to its label, and \`full\` also draws a heavy rule where one group ends and the next begins. A column of numbers never groups, and a table already grouped by status keeps its status grouping. The default \`off\` keeps tables as written:
+
+| Service | Region | Requests | p99 |
+|:--------|:-------|---------:|----:|
+| api | us-east | 1.2M | 84 ms |
+| api | us-west | 900k | 91 ms |
+| worker | us-east | 2.4M | 120 ms |
+| worker | us-west | 1.8M | 132 ms |
+| cron | us-east | 96k | 40 ms |
+
 ### Alerts
 
 > [!IMPORTANT]
@@ -519,7 +564,7 @@ flowchart LR
 
 export const languageShowcase = (lang: string): string => (/^ko/i.test(lang) ? KOREAN_SHOWCASE : '')
 
-export type SetupStep = { name: string; key: 'theme' | 'tableStyle' | 'tableLayout' | 'statusMatrix' | 'testMatrix' | 'benchTable' | 'schemaTable' | 'taskStyle' | 'listMarker' | 'headingStyle' | 'copyButtonStyle' | 'promptStyle' | 'replyStyle' | 'bubbleLabels' | 'clock' | 'toolStyle' | 'toolOutput' | 'diffStyle' | 'codeStyle' | 'pieStyle' | 'desktopColors'; title: string; note: string; options: readonly string[]; sample: string }
+export type SetupStep = { name: string; key: 'theme' | 'tableStyle' | 'tableLayout' | 'statusMatrix' | 'testMatrix' | 'benchTable' | 'schemaTable' | 'compareTable' | 'apiTable' | 'kvTable' | 'groupTable' | 'taskStyle' | 'listMarker' | 'headingStyle' | 'copyButtonStyle' | 'promptStyle' | 'replyStyle' | 'bubbleLabels' | 'clock' | 'toolStyle' | 'toolOutput' | 'diffStyle' | 'codeStyle' | 'pieStyle' | 'desktopColors'; title: string; note: string; options: readonly string[]; sample: string }
 
 export const setupSteps = (themes: readonly string[]): SetupStep[] => [
   { name: 'theme', key: 'theme', title: 'Theme', note: 'Each theme draws the same line. `random` picks a new dark one each time the mod loads.', options: themes, sample: '**Bold**, `inline code`, 250ms and ~/src/app.ts.' },
@@ -542,6 +587,10 @@ export const setupSteps = (themes: readonly string[]): SetupStep[] => [
   { name: 'test-report', key: 'testMatrix', title: 'Test report', note: 'What a table of test results reports: a status column of things like ✓ or failed next to durations like 120 ms. `off` keeps tables as written. `report` draws a line under the table with the share of the run that passed, a count of every other kind of result and the time all of it took.', options: ['report', 'off'], sample: '| Check | Time | Result |\n|:------|-----:|:-------|\n| parse | 120 ms | ✓ |\n| draw | 4 s | ✓ |\n| scan | 130 ms | failed |\n| typeset | 2.6 s | pending |' },
   { name: 'bench-table', key: 'benchTable', title: 'Benchmarks', note: 'How a table that compares benchmarks draws: a column of changes like -10% or +3%. `off` keeps tables as written. `color` draws each change in theme colors, green for an improvement and red for a regression, and `trend` also draws a sparkline of the runs under the table.', options: ['trend', 'color', 'off'], sample: '| Benchmark | Before | After | Change |\n|:----------|-------:|------:|:-------|\n| parse | 12.4 ms | 11.1 ms | -10% |\n| layout | 19.6 ms | 22.4 ms | +14% |\n| paint | 2.1 ms | 0.8 ms | -62% |' },
   { name: 'schema-table', key: 'schemaTable', title: 'Schema', note: 'How a table that describes a database schema draws: a column of fields beside a column of types. `off` keeps tables as written. `types` draws each type cell in theme colors by its family: text types like varchar in the string color, numeric types like int in the number color, booleans in the emphasis color, time types like timestamp in the link color. `keys` draws the constraint cells: PK in the accent color, FK in the link color, unique and index cells in gray. `full` does both.', options: ['full', 'types', 'keys', 'off'], sample: '| Column | Type | Key | Default |\n|:-------|:-----|:----|:--------|\n| id | uuid | PK | |\n| email | varchar(255) | UNIQUE | |\n| org_id | bigint | FK → orgs.id | |\n| created_at | timestamp | | now() |' },
+  { name: 'compare-table', key: 'compareTable', title: 'Comparison', note: 'How a table that compares options draws: a column of scores beside a column of ranks. `off` keeps tables as written. `rank` draws the rank cells in theme colors: 1 in the accent color, 2 and 3 in the link color. `pick` draws the score cell of the top score in the improvement green and bold, so it stands out in a theme where that green is also the number color. `full` does both.', options: ['full', 'rank', 'pick', 'off'], sample: '| Option | Score | Rank |\n|:-------|------:|-----:|\n| mantis | 9.2 | 1 |\n| origami | 7.8 | 2 |\n| noodle | 6.1 | 3 |\n| tofu | 4.4 | 4 |' },
+  { name: 'api-table', key: 'apiTable', title: 'API reference', note: 'How an API reference table draws: a method column whose cells read like HTTP verbs. `off` keeps tables as written. `verbs` draws each method cell by what the verb does: reads like GET in the link color, writes like POST in the string color, DELETE in the removed color, other verbs in gray. `auth` draws the scheme cells of an auth column: Bearer, OAuth, API key and JWT in the accent color. `full` does both.', options: ['full', 'verbs', 'auth', 'off'], sample: '| Method | Endpoint | Auth | Description |\n|:-------|:---------|:-----|:------------|\n| GET | /v1/scrolls | Bearer | List the scrolls |\n| POST | /v1/scrolls | Bearer | Add a scroll |\n| DELETE | /v1/scrolls/:id | API key | Remove a scroll |\n| GET | /v1/health | none | Liveness check |' },
+  { name: 'kv-table', key: 'kvTable', title: 'Key-value', note: 'How a table that lists configuration draws: a column of options beside columns of values, sources or defaults. `off` keeps tables as written. `sources` draws each source cell in theme colors by where it says the value comes from: env in the link color, config in the string color, default in gray. `overrides` draws the value cell in the accent color when the row\'s value differs from its default. `full` does both.', options: ['full', 'sources', 'overrides', 'off'], sample: '| Option | Value | Source | Default |\n|:-------|:------|:-------|:--------|\n| retries | 5 | env | 3 |\n| format | json | config | json |\n| timeout | 30s | default | 30s |\n| token | abc123 | env | unset |' },
+  { name: 'group-table', key: 'groupTable', title: 'Groups', note: 'How a table that groups its rows draws: the first column whose cells repeat in runs, like a column of services or teams. `off` keeps tables as written. `merge` labels the group once in the accent color and blanks the repeats under it, `count` also adds the group size to the label, and `full` also draws a heavy rule where one group ends and the next begins.', options: ['full', 'count', 'merge', 'off'], sample: '| Service | Region | Requests | p99 |\n|:--------|:-------|---------:|----:|\n| api | us-east | 1.2M | 84 ms |\n| api | us-west | 900k | 91 ms |\n| worker | us-east | 2.4M | 120 ms |\n| worker | us-west | 1.8M | 132 ms |\n| cron | us-east | 96k | 40 ms |' },
   { name: 'desktop', key: 'desktopColors', title: 'Desktop app colors', note: 'Whether the Claude Code desktop app (Code tab) takes the theme too: its background, text, borders and accent. `match` paints it in the theme you picked, in light mode for a light theme, and needs Claude Code 2.1.324 or later. `off` leaves the app as it is, and going back to it restores the app\'s own look. The terminal and VS Code keep their colors either way.', options: ['match', 'off'], sample: '**Bold**, `inline code` and a [link](https://example.com).' },
 ]
 

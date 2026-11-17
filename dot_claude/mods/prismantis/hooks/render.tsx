@@ -10,8 +10,14 @@ import type { Flow } from './rtl'
 import { LTR_BLANK, ROW_MARK, ROW_MARK_TEXT, WALL, codeVisual, commentTail, commentVisual, containsRtl, engineProse, flow, hasRtl, heldCell, listMarker, opensLatin, terminalLine } from './rtl'
 import type { Style, Theme } from './theme'
 import { statusEdge, statusFooter, statusHeavy, statusLook, statusOf, statusRows } from './status'
+import type { Bucket } from './status'
 import { benchLook, benchOf, benchSpark } from './bench-table'
 import { schemaLook, schemaOf } from './schema-table'
+import { compareLook, compareOf } from './compare-table'
+import { apiLook, apiOf } from './api-table'
+import { kvLook, kvOf } from './kv-table'
+import { groupEdge, groupHeavy, groupLook, groupOf, groupRows } from './group-table'
+import type { Group } from './group-table'
 import { testReport } from './test-report'
 import type { PrismToken } from './vendor/prism.js'
 import { languages, tokenize } from './vendor/prism.js'
@@ -1057,14 +1063,19 @@ const tableEdges = (style: Style, block: Extract<Block, { kind: 'table' }>, rtl:
   }
 }
 
+const heavyBetween = (style: Style, buckets: (Bucket | undefined)[], group: Group | undefined, i: number): boolean =>
+  statusHeavy(style.statusMatrix, buckets, i) || groupHeavy(style.groupTable, group, i)
+
 const renderTable = (el: ElementTable, style: Style, block: Extract<Block, { kind: 'table' }>, columns: number, key: string, rtl: boolean, tip?: Tip) => {
   const { Box, Text } = el
   const t = style.theme
-  const texts = textsOf(style, block)
-  const plan = tablePlan(block, style, columns, texts)
+  const group = groupOf(block, style.groupTable, style.statusMatrix === 'group')
+  const drawn = { ...block, rows: groupRows(block, group, style.groupTable) }
+  const texts = textsOf(style, drawn)
+  const plan = tablePlan(drawn, style, columns, texts)
   const shown = cellText(style)
   const status = statusOf(block, style.statusMatrix, plan.stack && !texts)
-  const layout = statusRows(block, status, style.statusMatrix)
+  const layout = statusRows(drawn, status, style.statusMatrix)
   const { natural, words, widths, box, gap } = plan
   if (plan.stack) return stackedTable(el, style, block, columns, key, tip)
   const test = testReport(el, t, block, style.testMatrix, `${key}.t`)
@@ -1072,7 +1083,11 @@ const renderTable = (el: ElementTable, style: Style, block: Extract<Block, { kin
   const bench = benchOf(block, style.benchTable)
   const spark = benchSpark(el, t, block, bench, style.benchTable, `${key}.s`)
   const schema = schemaOf(block, style.schemaTable)
-  const look = (c: number, cell: TableCell, plain: { color?: string } = {}) => statusLook(t, status, c, cell, benchLook(t, bench, c, cell, schemaLook(t, schema, c, cell, plain)))
+  const api = apiOf(block, style.apiTable)
+  const compare = compareOf(block, style.compareTable)
+  const kv = kvOf(block, style.kvTable)
+  const rowAt = compare || kv || group ? new Map(drawn.rows.map((cells, r) => [cells, r])) : undefined
+  const look = (at: number | undefined) => (c: number, cell: TableCell, plain: { color?: string } = {}) => groupLook(t, group, at, c, statusLook(t, status, c, cell, benchLook(t, bench, c, cell, schemaLook(t, schema, c, cell, compareLook(t, compare, at, c, cell, apiLook(t, api, c, cell, kvLook(t, kv, at, c, cell, plain)))))))
   const shares = percentShares(widths)
   const order = natural.map((_, c) => c)
   const mirror = rtl && mirrored(style)
@@ -1118,7 +1133,7 @@ const renderTable = (el: ElementTable, style: Style, block: Extract<Block, { kin
     return <Text key={k}>{renderInline(el, style, terminalLine(parts), k)}</Text>
   }
 
-  const row = (cells: Inline[][], k: string, isHeader: boolean, border: (k: string, text: string) => RenderElement = bar) => drawsTextRows(style, rtl) ? terminalRow(cells, k, isHeader) : (
+  const row = (cells: Inline[][], k: string, isHeader: boolean, border: (k: string, text: string) => RenderElement = bar, at?: number) => drawsTextRows(style, rtl) ? terminalRow(cells, k, isHeader) : (
     <Box key={k} flexDirection="row" columnGap={columnGap} alignItems="stretch">
       {!box && lead(k)}
       {box && border(`${k}.l`, wall('│ '))}
@@ -1128,7 +1143,7 @@ const renderTable = (el: ElementTable, style: Style, block: Extract<Block, { kin
         const content = cell ? cell.lines[0]! : cells[c]!
         const side = mirror ? (block.align[c] === 'center' ? 'center' : 'flex-start') : cell?.base === 'R' && block.align[c] !== 'center' ? 'flex-end' : justify(c)
         const runs = isHeader ? headerRuns(content) : content
-        const face = isHeader ? { bold: true, color: t.tableHeader } : look(c, cells[c]!, own({ color: t.tableText }))
+        const face = isHeader ? { bold: true, color: t.tableHeader } : look(at)(c, cells[c]!, own({ color: t.tableText }))
         const numberFace = numberPaint(face, isHeader, t)
         const cellBox = (
           <Box key={`${k}.${c}`} {...tableColumn(style, w, shares[c]!, words[c]!)} {...laidCell(style, box)} justifyContent={side}>
@@ -1145,32 +1160,32 @@ const renderTable = (el: ElementTable, style: Style, block: Extract<Block, { kin
     </Box>
   )
 
-  const wrappedRow = (cells: Inline[][], k: string, isHeader: boolean) => {
-    if (style.gridFace) return [row(cells, k, isHeader, laidWall(el, style))]
-    if (!isHeader && cells.some(hasLink)) return [row(cells, k, isHeader, clipped(Math.max(1, ...widths.map((w, c) => mostLines(shown(cells[c]!), w)))))]
+  const wrappedRow = (cells: Inline[][], k: string, isHeader: boolean, at?: number) => {
+    if (style.gridFace) return [row(cells, k, isHeader, laidWall(el, style), at)]
+    if (!isHeader && cells.some(hasLink)) return [row(cells, k, isHeader, clipped(Math.max(1, ...widths.map((w, c) => mostLines(shown(cells[c]!), w)))), at)]
     const wrapped = widths.map((w, c) => {
       const content = cells[c]!
       if (natural[c]! <= w && !inlineText(content).includes('\n')) return [content]
       return wrapInline(isHeader ? headerRuns(content) : content, w)
     })
     return Array.from({ length: Math.max(...wrapped.map(l => l.length)) }, (_, i) =>
-      row(wrapped.map(l => l[i] ?? []), `${k}.${i}`, isHeader))
+      row(wrapped.map(l => l[i] ?? []), `${k}.${i}`, isHeader, undefined, at))
   }
 
   if (box) {
-    const lines: RenderElement[] = [edge(`${key}.t`, '┌─┬┐'), ...wrappedRow(block.header, `${key}.h`, true), edge(`${key}.hr`, '╞═╪╡')]
+    const lines: RenderElement[] = [edge(`${key}.t`, '┌─┬┐'), ...wrappedRow(drawn.header, `${key}.h`, true), edge(`${key}.hr`, '╞═╪╡')]
     layout.rows.forEach((r, i) => {
-      if (i > 0) lines.push(edge(`${key}.r${i}r`, statusEdge(style.statusMatrix, layout.buckets, i - 1, '├─┼┤', '╞═╪╡')))
-      lines.push(...wrappedRow(r, `${key}.r${i}`, false))
+      if (i > 0) lines.push(edge(`${key}.r${i}r`, groupEdge(style.groupTable, group, i, statusEdge(style.statusMatrix, layout.buckets, i - 1, '├─┼┤', '╞═╪╡'), '╞═╪╡')))
+      lines.push(...wrappedRow(r, `${key}.r${i}`, false, rowAt?.get(r)))
     })
     lines.push(edge(`${key}.b`, '└─┴┘'))
     return <Box key={key} flexDirection="column" {...tableRoot(style, flip)}>{lines}{foot}{test}{spark}</Box>
   }
 
-  const body: RenderElement[] = [row(block.header, `${key}.h`, true), rule(`${key}.hr`, true)]
+  const body: RenderElement[] = [row(drawn.header, `${key}.h`, true), rule(`${key}.hr`, true)]
   layout.rows.forEach((r, i) => {
-    body.push(row(r, `${key}.r${i}`, false))
-    if (style.tableStyle !== 'minimal' && i < layout.rows.length - 1) body.push(rule(`${key}.r${i}r`, statusHeavy(style.statusMatrix, layout.buckets, i)))
+    body.push(row(r, `${key}.r${i}`, false, undefined, rowAt?.get(r)))
+    if (style.tableStyle !== 'minimal' && i < layout.rows.length - 1) body.push(rule(`${key}.r${i}r`, heavyBetween(style, layout.buckets, group, i)))
   })
   return <Box key={key} flexDirection="column" {...tableRoot(style, flip)}>{body}{foot}{test}{spark}</Box>
 }
@@ -3224,7 +3239,7 @@ const fillOf = (style: Style): string | undefined => {
 
 const inked = (style: Style): Style => {
   const fill = fillOf(style)
-  const ink = fill && HEX.test(fill) && !darkBackground(fill) ? style.theme.codeText : undefined
+  const ink = fill && HEX.test(fill) && (style.gridFace || !darkBackground(fill)) ? style.theme.codeText : undefined
   return ink ? { ...style, ink, theme: { ...style.theme, tableText: style.theme.tableText ?? ink } } : style
 }
 
