@@ -253,6 +253,36 @@ test('lists get no copy button', async $ => {
   await ui.unmount()
 })
 
+// local: versione dei test upstream "headings draw no copy button by default" e "sectionCopyButtons puts a … button"
+// senza il bottone della lista: 0 bottoni invece di 1, 3 invece di 4
+const SECTIONS = '## Message\n\nHello team.\n\n- one\n- two\n\n### Detail\n\nMore.\n\n## Notes\n\nNot copied.'
+const sections = (surface: 'terminal' | 'desktop') => ({ plugin: 'prismantis', surface, component: 'AssistantMessage' as const, props: { text: SECTIONS, isFirstOfReply: true }, viewport: { columns: 120, rows: 40 } })
+
+test('lists get no copy button: headings draw no copy button by default', async $ => {
+  for (const surface of ['terminal', 'desktop'] as const) {
+    const ui = await $.ui.mount(sections(surface))
+    expect((await ui.findAll({ type: 'Button' })).filter(b => b.props.label === '⧉ copy')).toHaveLength(0)
+    await ui.unmount()
+  }
+})
+
+for (const copyButtonStyle of ['dim', 'inline', 'hover'] as const) test(`lists get no copy button: sectionCopyButtons ${copyButtonStyle} puts one button on each heading, the list inside the section is copied`, { options: { sectionCopyButtons: true, copyButtonStyle } }, async ($, on) => {
+  const copied: string[] = []
+  on('ui.copy', (_, e) => {
+    copied.push(e.text)
+    return { value: { isCopied: true as const } }
+  })
+  for (const surface of ['terminal', 'desktop'] as const) {
+    copied.length = 0
+    const ui = await $.ui.mount(sections(surface))
+    const buttons = (await ui.findAll({ type: 'Button' })).filter(b => b.props.label === '⧉ copy')
+    expect(buttons).toHaveLength(3)
+    await ui.press({ key: buttons[0]!.key! })
+    expect(copied).toEqual(['Hello team.\n\n- one\n- two\n\n### Detail\n\nMore.'])
+    await ui.unmount()
+  }
+})
+
 // local: versione dei due test upstream "copyButtonStyle hover …" senza il bottone delle liste
 const hoverMount = (text: string) => ({ plugin: 'prismantis', surface: 'terminal' as const, component: 'AssistantMessage' as const, props: { text, isFirstOfReply: true }, viewport: { columns: 120, rows: 40 } })
 type FloatNode = { type?: string; props?: Record<string, unknown>; children?: unknown[] }

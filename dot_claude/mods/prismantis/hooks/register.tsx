@@ -11,7 +11,7 @@ import { clipboardCommand, drawsImages, imageCommand } from './clipboard'
 import { FIGURE_HINT } from './figure'
 import { drawDiagrams } from './mermaid'
 import type { CopyButton, DrawPaste, Fold, Hues, TerminalEnv } from './render'
-import { MARK, bashEdits, lineCount, drawMath, drawsHyperlinks, editNotes, fileRoot, hasShellOutput, instanceKey, isReadOnlyCall, leftToEngine, markerRoom, mirrored, noteTip, pasteLang, pathsToProbe, toolPathsToProbe, remember, rememberCall, renderBashEdits, renderBlocks, renderDiffCard, renderExpandedShell, renderFailure, renderReply, renderShellResult, renderToolGroup, renderToolRow, renderTurnDuration, renderUserPrompt, replyRoom, replyStyleFor, takesClickableMarks, takesEditorLinks, takesHttpLinks, takesMonoText, withoutBashEdits } from './render'
+import { MARK, bashEdits, lineCount, drawMath, drawsHyperlinks, editNotes, fileRoot, hasShellOutput, instanceKey, isReadOnlyCall, leftToEngine, markerRoom, mirrored, noteTip, pasteLang, pathsToProbe, toolPathsToProbe, remember, rememberCall, renderBashEdits, renderBlocks, renderDiffCard, renderExpandedCall, renderFailure, renderReply, renderShellResult, renderToolGroup, renderToolRow, renderTurnDuration, renderUserPrompt, replyRoom, replyStyleFor, takesClickableMarks, takesEditorLinks, takesHttpLinks, takesMonoText, withoutBashEdits } from './render'
 import type { SetupStep } from './help'
 import { ESSENTIAL_STEPS, HINT, ISSUE_HINT, NARROW_PANE, narrowHint, SETUP_DONE, SETUP_ESSENTIALS_DONE, SETUP_MORE, SETUP_PANE_KEYS, SETUP_PANE_OPENED, THEME_PREVIEW, findSetup, helpText, languageShowcase, rtlShowcaseText, setupParts, setupSteps, setupText, showcaseText } from './help'
 import { PRESET_NAMES } from './presets'
@@ -682,12 +682,22 @@ const SETUP_BUILD_ERROR = [
   'Found 10 errors in the same file, starting at: src/app.ts:3',
 ]
 
+const SETUP_NPM_TEST = [
+  '> app@1.4.0 test',
+  '> vitest run',
+  ' ✓ src/app.test.ts (12 tests) 48ms',
+  ' Test Files  1 passed (1)',
+  '      Tests  12 passed (12)',
+]
+
 const toolOutputSample = (el: ReturnType<EngineInterface['ui']['resolve']>, style: Style, value: string, id: string, columns: number): RenderElement[] => {
-  const status = { tool: 'Bash', input: { command: 'git status' }, isRunning: false, isErrored: false, isInterrupted: false }
-  const build = { tool: 'Bash', input: { command: 'npm run build', description: 'Build the app' }, isRunning: false, isErrored: true, isInterrupted: false }
-  const statusRow = <el.Box key={`${id}s`}>{renderToolRow(el, style, status, columns)}</el.Box>
-  const buildRow = <el.Box key={`${id}r`}>{renderToolRow(el, style, build, columns)}</el.Box>
-  if (value === 'quiet') return [statusRow, buildRow, renderFailure(el, style, SETUP_BUILD_ERROR.join('\n'), `${id}e`) ?? <el.Box key={`${id}e`} />]
+  const row = (key: string, input: Record<string, string>, isErrored: boolean) => <el.Box key={`${id}${key}`}>{renderToolRow(el, style, { tool: 'Bash', input, isRunning: false, isErrored, isInterrupted: false }, columns)}</el.Box>
+  const statusRow = row('s', { command: 'git status' }, false)
+  const testRow = row('t', { command: 'npm test', description: 'Run the tests' }, false)
+  const buildRow = row('r', { command: 'npm run build', description: 'Build the app' }, true)
+  const failure = renderFailure(el, style, SETUP_BUILD_ERROR.join('\n'), `${id}e`) ?? <el.Box key={`${id}e`} />
+  if (value === 'rows') return [statusRow, testRow, buildRow, failure]
+  if (value === 'quiet') return [statusRow, testRow, <el.Box key={`${id}to`}>{renderShellResult(el, style, { stdout: SETUP_NPM_TEST.join('\n'), stderr: '' })}</el.Box>, buildRow, failure]
   const folded = (lines: readonly string[], keep: number, color?: string) => [
     ...lines.slice(0, keep).map((line, i) => <el.Text key={`l${i}`} color={color}>{`${i === 0 ? '  ⎿  ' : '     '}${line}`}</el.Text>),
     <el.Text key="more" dimColor>{`     … +${lines.length - keep} lines (ctrl+o to expand)`}</el.Text>,
@@ -698,6 +708,8 @@ const toolOutputSample = (el: ReturnType<EngineInterface['ui']['resolve']>, styl
       {folded(SETUP_GIT_STATUS, 3)}
       <el.Text key="allowed" dimColor>{'  ⎿  Allowed by auto mode classifier'}</el.Text>
     </el.Box>,
+    testRow,
+    <el.Box key={`${id}to`} flexDirection="column">{folded(SETUP_NPM_TEST, 3)}</el.Box>,
     buildRow,
     <el.Box key={`${id}e`} flexDirection="column">{folded(['Error: Exit code 2', ...SETUP_BUILD_ERROR], 10, style.theme.codeFlag)}</el.Box>,
   ]
@@ -829,8 +841,11 @@ export const register: Register = (on, options) => {
   }
   const fullWidth = (text: string) => (style.reorder && hasRtl(text) ? { width: '100%' as const } : {})
 
-  const quiet = style.toolOutput === 'quiet'
+  const quiet = style.toolOutput !== 'full'
+  const rows = style.toolOutput === 'rows'
   const quietRow = (expanded: boolean | undefined) => quiet && !expanded
+  const rowOnly = (id: string) => rows || readOnlyCalls.has(id)
+  const showsAbove = (props: object, output: unknown) => hasShellOutput(output) && !(rows && !expandedRow(props))
   const shellCommands = new Map<string, string>()
   const noteCommand = (id: string | undefined, tool: string, input: unknown) => {
     const command = tool === 'Bash' && input !== null && typeof input === 'object' ? (input as { command?: unknown }).command : undefined
@@ -885,11 +900,9 @@ export const register: Register = (on, options) => {
       if (quiet && isReadOnlyCall(e.props.tool, e.props.input)) rememberCall(readOnlyCalls, e.props.tool_use_id)
       const dotDark = await darkDot($, style, e.props.isRunning)
       const drawn = forSurface(style, e, await linkReach($, probes, style))
-      if (expandedRow(e.props)) return next(e)
-      if (!expandedCalls.has(e.props.tool_use_id)) return renderToolRow($.ui.resolve(e), { ...(await withFound($, pathChecks, drawn, toolPathsToProbe(drawn, [e.props.input]))), dotDark }, e.props, e.viewport?.columns)
-      const shell = e.props.tool === 'Bash' || e.props.tool === 'PowerShell'
-      // local: con folded anche l'errore (output stringa) passa da renderExpandedShell, che lo disegna in rosso
-      return shell && (typeof e.props.output !== 'string' || style.toolStyle === 'folded') ? renderExpandedShell($.ui.resolve(e), { ...style, dotDark }, e.props, e.viewport?.columns) : next(e)
+      const grouped = expandedCalls.has(e.props.tool_use_id)
+      if (!grouped && !expandedRow(e.props)) return renderToolRow($.ui.resolve(e), { ...(await withFound($, pathChecks, drawn, toolPathsToProbe(drawn, [e.props.input]))), dotDark }, e.props, e.viewport?.columns)
+      return renderExpandedCall($.ui.resolve(e), { ...style, dotDark }, e.props, grouped, e.viewport?.columns) ?? next(e)
     })
     // local: toolStyle folded. Registrato prima del gestore upstream, così è il più esterno e
     // piega anche le diff card; aperto, passa al gestore upstream con next.
@@ -914,7 +927,7 @@ export const register: Register = (on, options) => {
         await locate($, style)
         const el = $.ui.resolve(e)
         const output = withoutBashEdits(e.props.output)
-        const above = !hasShellOutput(output) ? null : quiet ? renderShellResult(el, style, output) : await next({ ...e, props: { ...e.props, output } })
+        const above = !showsAbove(e.props, output) ? null : quiet ? renderShellResult(el, style, output) : await next({ ...e, props: { ...e.props, output } })
         firstEdit ??= e.props.tool_use_id
         const notes = editNotes(edits, firstEdit === e.props.tool_use_id, shellCommands.get(e.props.tool_use_id))
         const drawn = renderBashEdits(el, forSurface(cards(), e, await linkReach($, probes, style)), edits, folder($, el, await read($, unfolded), (await linkReach($, probes, style)).marks, style.folds === 'open'), e.props.tool_use_id, above !== null, notes, e.viewport?.columns)
@@ -927,7 +940,7 @@ export const register: Register = (on, options) => {
       const out = (e.props.output ?? {}) as Record<string, unknown>
       if (shell && (out.backgroundTaskId || out.isImage || out.interrupted)) return next(e)
       if (e.props.isErrored) return renderFailure(el, style, e.props.output) ?? next(e)
-      if (readOnlyCalls.has(e.props.tool_use_id)) return <el.Box />
+      if (rowOnly(e.props.tool_use_id)) return <el.Box />
       return shell ? renderShellResult(el, style, e.props.output) : next(e)
     })
   }

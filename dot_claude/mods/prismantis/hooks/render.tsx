@@ -1431,6 +1431,22 @@ const copySource = (style: Style, block: Block): string | undefined =>
   : block.kind === 'quote' || block.kind === 'alert' ? unquoted(block).join('\n')
   : undefined
 
+const sectionOf = (blocks: Block[], b: number): Block[] => {
+  const head = blocks[b]
+  if (head?.kind !== 'heading') return []
+  const end = blocks.findIndex((block, i) => i > b && block.kind === 'heading' && block.level <= head.level)
+  return blocks.slice(b + 1, end < 0 ? undefined : end).filter(block => block.kind !== 'notes')
+}
+
+const sectionSource = (style: Style, blocks: Block[], b: number): string | undefined => {
+  if (!style.sectionCopyButtons || style.inside) return undefined
+  const section = sectionOf(blocks, b)
+  if (!section.length || (section.length === 1 && copySource(style, section[0]!) !== undefined)) return undefined
+  return section.map(block => block.raw).join('\n\n')
+}
+
+const blockSource = (style: Style, blocks: Block[], b: number): string | undefined => copySource(style, blocks[b]!) ?? sectionSource(style, blocks, b)
+
 export const drawMath = (el: ElementTable, style: Style, blocks: Block[], drawn: Drawn = new Map()): Drawn => {
   for (const [i, block] of blocks.entries()) {
     const tex = drawn.has(i) ? null : mathOf(block)
@@ -1499,7 +1515,7 @@ export const renderBlocks = (el: ElementTable, style: Style, blocks: Block[], co
   const shown = blocks.map(block => drawable(block, style))
   const rtlTables = shown.map(block => style.reorder && block.kind === 'table' && isRtlTable(style, block))
   const buttons = blocks.map((block, b) => {
-    const text = hover && holdsOnlyEmptyCode(block) ? undefined : copySource(style, block)
+    const text = hover && holdsOnlyEmptyCode(block) ? undefined : blockSource(style, blocks, b)
     const isPlainCode = block.kind === 'code' && !drawn.get(b)?.element
     const { art, grid, hues } = artsOf(drawn.get(b), block, style.theme, rtlTables[b]!)
     const first = text === undefined || isPlainCode ? null : copy?.(text, `copy${b}`, block.kind === 'table' ? '⧉ md' : art === undefined ? undefined : '⧉ source')
@@ -1593,7 +1609,7 @@ export const renderBlocks = (el: ElementTable, style: Style, blocks: Block[], co
         {png}
       </el.Box>
     ) : first
-    return (block.kind === 'quote' || block.kind === 'alert') && !mirrored(style) ? (
+    return (block.kind === 'quote' || block.kind === 'alert' || block.kind === 'heading') && !mirrored(style) ? (
       <Box key={`c${b}`} flexDirection="row" columnGap={2} {...(rtl ? { justifyContent: 'flex-end' as const } : {})}>
         {element}
         {opensWithCopy(block) ? <Box alignSelf="flex-end">{button}</Box> : button}
@@ -2556,7 +2572,7 @@ const quietToolRow = (el: ElementTable, style: Style, row: ToolRow, columns: num
 }
 
 export const renderToolRow = (el: ElementTable, style: Style, row: ToolRow, columns = DEFAULT_COLUMNS): RenderElement => {
-  if (style.toolOutput === 'quiet') return quietToolRow(el, style, row, columns)
+  if (style.toolOutput !== 'full') return quietToolRow(el, style, row, columns)
   const { Text } = el
   const t = style.theme
   const isShell = row.tool === 'Bash' || row.tool === 'PowerShell'
@@ -2886,10 +2902,25 @@ const commandLine = (el: ElementTable, style: Style, row: ToolRow, line: string,
   ))
 }
 
-export const renderExpandedShell = (el: ElementTable, style: Style, row: ToolRow & { output?: unknown }, columns?: number): RenderElement => {
+const commandLines = (el: ElementTable, style: Style, row: ToolRow, columns: number | undefined): RenderElement[] => {
+  const command = (field(row.input, 'command') ?? '').split('\n')
+  return command.flatMap((line, i) => commandLine(el, style, row, line, i, i === command.length - 1, columns === undefined ? undefined : columns - COMMAND_LEAD))
+}
+
+const renderShellCommand = (el: ElementTable, style: Style, row: ToolRow, columns?: number): RenderElement => (
+  <el.Box flexDirection="column">{commandLines(el, style, row, columns)}</el.Box>
+)
+
+export const renderExpandedCall = (el: ElementTable, style: Style, row: ToolRow & { output?: unknown }, withOutput: boolean, columns?: number): RenderElement | undefined => {
+  if (row.tool !== 'Bash' && row.tool !== 'PowerShell') return undefined
+  // local: con folded anche l'errore (output stringa) di una chiamata del gruppo passa da renderExpandedShell, che lo disegna in rosso
+  if (typeof row.output === 'string' && !(withOutput && style.toolStyle === 'folded')) return undefined
+  return withOutput ? renderExpandedShell(el, style, row, columns) : renderShellCommand(el, style, row, columns)
+}
+
+const renderExpandedShell = (el: ElementTable, style: Style, row: ToolRow & { output?: unknown }, columns?: number): RenderElement => {
   const { Box, Text } = el
   const t = style.theme
-  const command = (field(row.input, 'command') ?? '').split('\n')
   const out = row.output !== null && typeof row.output === 'object' ? (row.output as Record<string, unknown>) : {}
   // local: una chiamata fallita ha come output il testo letto dal modello, non { stdout, stderr }; con folded le righe d'errore sono rosse
   const failedText = typeof row.output === 'string' ? lines(row.output) : []
@@ -2898,7 +2929,7 @@ export const renderExpandedShell = (el: ElementTable, style: Style, row: ToolRow
   const { rows, hidden } = outputRows(style, shown, columns === undefined ? undefined : columns - SHELL_FRAME)
   return (
     <Box flexDirection="column">
-      {command.flatMap((line, i) => commandLine(el, style, row, line, i, i === command.length - 1, columns === undefined ? undefined : columns - COMMAND_LEAD))}
+      {commandLines(el, style, row, columns)}
       {row.isRunning ? null : (
         <Box paddingLeft={BOX_INDENT}>
           <Box flexDirection="column" alignSelf="flex-start" borderStyle="round" borderColor={t.codeComment} paddingRight={1}>
@@ -2948,7 +2979,7 @@ const quietToolGroup = (el: ElementTable, style: Style, calls: readonly (ToolRow
   const label = labels.map(pieceText).join(' · ')
   const reasons = failed.map((c, i) => renderFailure(el, style, c.output, `r${i}`)).filter((r): r is RenderElement => r !== undefined)
   const isShell = (c: ToolRow) => c.tool === 'Bash' || c.tool === 'PowerShell'
-  const results = calls.flatMap((c, i) => (c.isErrored || c.output === undefined || !isShell(c) || isReadOnlyCall(c.tool, c.input) ? [] : [<el.Box key={`o${i}`}>{fold ? fold(i, renderShellResult(el, style, c.output)) : renderShellResult(el, style, c.output)}</el.Box>]))
+  const results = style.toolOutput === 'rows' ? [] : calls.flatMap((c, i) => (c.isErrored || c.output === undefined || !isShell(c) || isReadOnlyCall(c.tool, c.input) ? [] : [<el.Box key={`o${i}`}>{fold ? fold(i, renderShellResult(el, style, c.output)) : renderShellResult(el, style, c.output)}</el.Box>]))
   const row = toolLayout(el, style, columns, label, dot, running, (
     <el.Text wrap="truncate-end" dimColor={toolDim(style)}>{drawPieces(el, style, labels.flatMap((l, i) => (i ? [{ text: ' · ' }, ...l] : l)))}</el.Text>
   ))
@@ -2963,7 +2994,7 @@ const quietToolGroup = (el: ElementTable, style: Style, calls: readonly (ToolRow
 }
 
 export const renderToolGroup = (el: ElementTable, style: Style, calls: readonly (ToolRow & { output?: unknown })[], isActive: boolean, columns = DEFAULT_COLUMNS, fold?: FoldResult): RenderElement => {
-  if (style.toolOutput === 'quiet') return quietToolGroup(el, style, calls, isActive, columns, fold)
+  if (style.toolOutput !== 'full') return quietToolGroup(el, style, calls, isActive, columns, fold)
   const { Text } = el
   const t = style.theme
   const failed = calls.filter(c => c.isErrored).length
