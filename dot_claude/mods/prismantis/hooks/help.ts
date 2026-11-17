@@ -3,7 +3,7 @@ import { RANDOM_THEMES } from './theme'
 export const HINT = [
   'Replies in this session are drawn by the prismantis mod, which runs inside Claude Code and is not a command or tool to call: when the user asks to show something with prismantis, write it as markdown in the reply.',
   'Markdown tables, GitHub alerts (> [!WARNING], > [!NOTE]), fenced code with a language tag, and ```mermaid blocks render as colored terminal graphics:',
-  'flowcharts, sequence diagrams, xychart-beta bar or line charts (name each series for the legend: line "east" [..]), pie charts and gantt schedules.',
+  'flowcharts, sequence diagrams, xychart-beta bar or line charts (name each series for the legend: line "east" [..]), pie charts, gantt schedules, quadrantChart grids, mindmap trees, journey mood lines, kanban boards and gitGraph histories.',
   'When a reply carries a numeric series or a flow that is easier to see than read, add a small diagram or chart with short labels, not a second picture of what a figure already shows.',
   'Skip diagrams and pictures for short or simple answers.',
   'Put any command or snippet the user may run or copy in a fenced block with a language tag, never inline code: fenced blocks get a copy button, inline code does not.',
@@ -292,6 +292,76 @@ gantt
     section Ship
     Review   :after r, 2d
     Release  :milestone, 2026-10-12, 0d
+\`\`\`
+
+A quadrant chart numbers its points and lists them under the grid:
+
+\`\`\`mermaid
+quadrantChart
+    title Feature priorities
+    x-axis Low effort --> High effort
+    y-axis Low impact --> High impact
+    quadrant-1 Big bets
+    quadrant-2 Do now
+    quadrant-3 Fill-ins
+    quadrant-4 Skip
+    Reorder: [0.2, 0.85]
+    Search: [0.8, 0.9]
+    Dark mode: [0.3, 0.25]
+    Localisation: [0.75, 0.4]
+\`\`\`
+
+A mind map grows from its root to the right, one color per branch:
+
+\`\`\`mermaid
+mindmap
+    root((Release))
+        Code
+            Tests
+            Review
+        Docs
+            Changelog
+        Ship
+            Tag
+            Announce
+\`\`\`
+
+A user journey draws its mood line across the tasks, green when it goes well and red when it hurts:
+
+\`\`\`mermaid
+journey
+    title First order
+    section Find
+        Search: 4: Shopper
+        Compare: 3: Shopper
+    section Buy
+        Checkout: 1: Shopper
+        Delivery: 5: Shopper, Courier
+\`\`\`
+
+A kanban board puts its columns side by side, each card with its owner, ticket and priority:
+
+\`\`\`mermaid
+kanban
+    todo[To do]
+        a[Fix login timeout]@{ assigned: 'Amy', priority: 'High' }
+        b[Write release notes]@{ ticket: DOC-7 }
+    doing[In progress]
+        c[Dark mode]@{ assigned: 'Ken' }
+    done[Done]
+        d[Search filters]
+\`\`\`
+
+A git graph runs top to bottom, one colored lane per branch:
+
+\`\`\`mermaid
+gitGraph
+    commit id: "init" tag: "v1.0"
+    branch develop
+    commit id: "login"
+    commit id: "fix" type: HIGHLIGHT
+    checkout main
+    merge develop id: "release" tag: "v1.1"
 \`\`\`
 
 A diagram wider than the terminal stays source, with a dim line saying why:

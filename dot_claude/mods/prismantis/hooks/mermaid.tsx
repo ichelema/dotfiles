@@ -12,6 +12,12 @@ import { cells, graphemes, width } from './layout'
 import { artFace, heldLtr, mirrored, remember } from './render'
 import { asIs, hasRtl, holdEngine, holdRow, holdVisual, led } from './rtl'
 import type { Style, Theme } from './theme'
+import { gitGraphText } from './gitgraph'
+import { journeyText } from './journey'
+import { kanbanText } from './kanban'
+import { mindmapText } from './mindmap'
+import { quadrantText } from './quadrant'
+import { ARROW_HUE, BAD_HUE, GOOD_HUE, LINE_HUE, oneLine } from './textart'
 import { renderMermaidAscii, setChartSize } from './vendor/mermaid-text.js'
 
 const MAX_LINES = 80
@@ -64,9 +70,9 @@ const labelBars = (art: string, source: string): string => {
 
 const SIDEWAYS = /^(\s*(?:flowchart|graph)[ \t]+)(LR|RL)\b/
 
-const SUPPORTED = /^(flowchart|graph|statediagram(-v2)?|xychart(-beta)?|sequencediagram|classdiagram|erdiagram|pie|gantt)$/i
+const SUPPORTED = /^(flowchart|graph|statediagram(-v2)?|xychart(-beta)?|sequencediagram|classdiagram|erdiagram|pie|gantt|quadrantchart|mindmap|journey|kanban|gitgraph)$/i
 
-const kindOf = (source: string) => source.replace(/^(\s*%%[^\n]*\n)+/, '').trim().split(/\s/)[0] ?? ''
+const kindOf = (source: string) => source.replace(/^(\s*%%[^\n]*\n)+/, '').trim().split(/[\s:]/)[0] ?? ''
 
 const unsupportedKind = (source: string): string | undefined => {
   const kind = kindOf(source)
@@ -79,6 +85,11 @@ const OWN: Record<string, typeof pieText> = {
     const text = ganttText(source, ascii, columns)
     return text === null ? null : { text }
   },
+  quadrantchart: quadrantText,
+  mindmap: mindmapText,
+  journey: journeyText,
+  kanban: kanbanText,
+  gitgraph: gitGraphText,
 }
 
 const INLINE_TAG = /<\/?(?:b|i|u|s|em|strong|del|code|small|sub|sup|span|mark)\b[^<>\n]*>/gi
@@ -259,7 +270,8 @@ const paintPie = (art: string, slices: number[][], style: Style): Painted => {
   const t = style.theme
   const palette = diagramPalette(t)
   const grid = art.split('\n').map(cells)
-  const hue = (slice: number) => (slice < 0 ? t.diagramText : palette[slice % palette.length])
+  const named: Record<number, string | undefined> = { [LINE_HUE]: t.diagram, [ARROW_HUE]: t.accent, [GOOD_HUE]: t.diffAdded, [BAD_HUE]: t.diffRemoved }
+  const hue = (slice: number) => (slice in named ? named[slice] : slice < 0 ? t.diagramText : palette[slice % palette.length])
   return { grid, colors: grid.map((row, r) => row.map((_, c) => hue(slices[r]?.[c] ?? -1))) }
 }
 
@@ -312,9 +324,9 @@ export const boxArt = ({ Box, Text }: ElementTable, style: Style, art: string, k
 const EDGE_LABEL = /(-[-.=]+\s*)"([^"\n]+)"(\s*[-.=]+>)|\|([^|\n]+)\|/g
 
 const cap = (label: string, max: number) => {
-  const flat = label.replace(/<br\s*\/?>/gi, ' ').replace(/\s+/g, ' ').trim()
-  const chars = graphemes(flat)
-  return chars.length > max ? `${chars.slice(0, max - 1).join('').trimEnd()}…` : flat
+  const text = oneLine(label)
+  const chars = graphemes(text)
+  return chars.length > max ? `${chars.slice(0, max - 1).join('').trimEnd()}…` : text
 }
 
 export const shortenEdgeLabels = (source: string, max: number): string =>
