@@ -1,6 +1,6 @@
 {
   "name": "prismantis",
-  "version": "0.45.4",
+  "version": "0.46.0",
   "description": "Colorful, themeable rendering for Claude Code replies: tables, headings, code, numbers, paths and links.",
   "author": {
     "name": "Nahum Litvin",
@@ -92,6 +92,41 @@
         "grid",
         "minimal"
       ]
+    },
+    "tableLayout": {
+      "type": "string",
+      "title": "Table layout",
+      "description": "classic: today's look, columns share the width and shrink to the terminal. auto: the same, and a table too wide to fit even its longest words stacks each row as label and value pairs. compact: every column sits at its longest word, so the table stays narrow and long cells wrap. stacked: every table draws as label and value pairs. In the desktop app the lines of every layout draw as thin colored boxes to a share of the width.",
+      "default": "classic",
+      "options": ["classic", "auto", "compact", "stacked"]
+    },
+    "statusMatrix": {
+      "type": "string",
+      "title": "Status matrix",
+      "description": "How the status cells of a table draw. A status column is the one whose cells are things like ✓, passed, failed or pending. off (the default) keeps tables as written. color: those cells draw in theme colors (green for a pass, red for a failure, amber for a warning, gray for a wait). summary: also draws a count line under the table, like `✓ 2 · ✗ 1 · ⚠ 1`. group: also reorders rows by status and draws a heavy rule where a group changes.",
+      "default": "off",
+      "options": ["color", "summary", "group", "off"]
+    },
+    "testMatrix": {
+      "type": "string",
+      "title": "Test report",
+      "description": "A report line under a table that reads like test results: a status column of things like ✓ or failed next to durations like 120 ms. report draws the share of the run that passed, a count of every other kind of result and the time all of it took, in the theme's status colors; it replaces the statusMatrix count line when both draw. off (the default) keeps tables as written.",
+      "default": "off",
+      "options": ["report", "off"]
+    },
+    "benchTable": {
+      "type": "string",
+      "title": "Benchmarks",
+      "description": "How a table that compares benchmarks draws: a column of changes like -10% or +3%. off (the default) keeps tables as written. color draws each change in the theme's colors, green for an improvement and red for a regression; timings read as lower is better, unless a header speaks of req/s, throughput or a score. trend also draws a sparkline of the runs under the table, each step colored by whether it improved.",
+      "default": "off",
+      "options": ["trend", "color", "off"]
+    },
+    "schemaTable": {
+      "type": "string",
+      "title": "Schema",
+      "description": "How a table that describes a database schema draws: a column of fields beside a column of types. off (the default) keeps tables as written. types draws each type cell in the theme's colors by its family: text types like varchar in the string color, numeric types like int in the number color, booleans in the emphasis color, time types like timestamp in the link color. keys draws the constraint cells: PK in the accent color, FK in the link color, unique and index cells in gray. full does both.",
+      "default": "off",
+      "options": ["full", "types", "keys", "off"]
     },
     "promptStyle": {
       "type": "string",

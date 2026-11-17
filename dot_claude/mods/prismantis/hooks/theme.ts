@@ -1,10 +1,14 @@
+import type { BenchTable } from './bench-table'
 import type { PluginOptions, RenderSurface } from 'claude-code'
 
 import type { ClipboardBackend } from './clipboard'
 import type { PresetName } from './presets'
 import { PRESET_BACKGROUNDS, PRESET_NAMES, PRESETS } from './presets'
+import type { SchemaTable } from './schema-table'
+import type { StatusMatrix } from './status'
 import type { Shape, Terminal } from './rtl'
 import { TERMINALS } from './rtl'
+import type { TestMatrix } from './test-report'
 
 const TOKENS = [
   'accent', 'heading', 'strong', 'emphasis', 'inlineCode', 'codeText', 'codeCommand', 'codeFlag', 'codeString', 'codeComment', 'codeFill', 'codeBorder',
@@ -20,6 +24,11 @@ export type Style = {
   background?: string
   headingStyle: 'bold' | 'underline' | 'uppercase' | 'banner'
   tableStyle: 'box' | 'rules' | 'grid' | 'minimal'
+  tableLayout: 'classic' | 'auto' | 'compact' | 'stacked'
+  statusMatrix: StatusMatrix
+  testMatrix: TestMatrix
+  benchTable: BenchTable
+  schemaTable: SchemaTable
   taskStyle: 'checks' | 'ticks' | 'box' | 'progress'
   listMarker: 'dots' | 'dash'
   promptStyle: 'bubble' | 'wide' | 'bar' | 'chevron' | 'off' | 'framed'
@@ -118,6 +127,11 @@ export const resolveStyle = (options: PluginOptions): Style => {
     ...(PRESET_BACKGROUNDS[preset] ? { background: PRESET_BACKGROUNDS[preset] } : {}),
     headingStyle: pick(options.headingStyle, ['bold', 'underline', 'uppercase', 'banner'] as const, 'banner'),
     tableStyle: pick(options.tableStyle, ['box', 'rules', 'grid', 'minimal'] as const, 'box'),
+    tableLayout: pick(options.tableLayout, ['classic', 'auto', 'compact', 'stacked'] as const, 'classic'),
+    statusMatrix: pick(options.statusMatrix, ['off', 'color', 'summary', 'group'] as const, 'off'),
+    testMatrix: pick(options.testMatrix, ['off', 'report'] as const, 'off'),
+    benchTable: pick(options.benchTable, ['trend', 'color', 'off'] as const, 'off'),
+    schemaTable: pick(options.schemaTable, ['full', 'types', 'keys', 'off'] as const, 'off'),
     taskStyle: pick(options.taskStyle, ['checks', 'ticks', 'box', 'progress'] as const, 'checks'),
     listMarker: pick(options.listMarker, ['dots', 'dash'] as const, 'dots'),
     promptStyle: pick(options.promptStyle, ['bubble', 'wide', 'bar', 'chevron', 'off', 'framed'] as const, 'bubble'),
