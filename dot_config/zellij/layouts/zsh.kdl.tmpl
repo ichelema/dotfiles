@@ -20,6 +20,12 @@ layout {
             pane size=30 borderless=true {
                 plugin location="radar"
             }
+            // mini rail (4 colonne): parte collassata, Alt+. → a → b la alterna con la rail piena
+            pane size=4 borderless=true {
+                plugin location="radar" {
+                    mini true
+                }
+            }
             children
         }
     }
@@ -31,6 +37,12 @@ layout {
         pane split_direction="vertical" {
             pane size=30 borderless=true {
                 plugin location="radar"
+            }
+            // mini rail (4 colonne): parte collassata, Alt+. → a → b la alterna con la rail piena
+            pane size=4 borderless=true {
+                plugin location="radar" {
+                    mini true
+                }
             }
             pane focus=true
         }

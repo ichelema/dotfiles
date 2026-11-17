@@ -146,6 +146,7 @@ keybinds clear-defaults=true {
         bind "left" { MessagePlugin "radar" { name "zj_radar.cmd.v1"; payload "attention-prev"; }; }
         bind "up" { MessagePlugin "radar" { name "zj_radar.cmd.v1"; payload "session-next"; }; }
         bind "down" { MessagePlugin "radar" { name "zj_radar.cmd.v1"; payload "session-prev"; }; }
+        bind "b" { MessagePlugin "radar" { name "zj_radar.cmd.v1"; payload "sidebar-toggle"; }; }
     }
 {{- end }}
     // Workspace = sessioni: Alt+. → w
@@ -326,6 +327,7 @@ load_plugins {
         "tmux left" "tab che ti aspetta, precedente"
         "tmux up" "sessione successiva"
         "tmux down" "sessione precedente"
+        "tmux b" "rail piena / mini rail"
 {{- end }}
     }
 }
