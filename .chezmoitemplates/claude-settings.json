@@ -210,7 +210,7 @@
   "inputNeededNotifEnabled": false,
   "agentPushNotifEnabled": true,
   "pluginConfigs": {
-    "prismantis@inline": { "options": { "theme": "nord", "tableStyle": "box", "toolStyle": "hide", "toolRows": true, "toolOutput": "quiet", "promptStyle": "framed", "headingStyle": "banner", "diffStyle": "bar", "codeStyle": "framed", "listMarker": "dash", "maxColumns": "180", "promptMaxColumns": "180"{{ if eq .chezmoi.os "darwin" }}, "latex": true{{ end }} } },
+    "prismantis@inline": { "options": { "theme": "nord", "tableStyle": "box", "toolStyle": "hide", "toolRows": true, "toolOutput": "quiet", "promptStyle": "framed", "headingStyle": "banner", "diffStyle": "bar", "codeStyle": "framed", "listMarker": "dash", "maxColumns": "180", "promptMaxColumns": "180", "statusMatrix": "summary", "testMatrix": "report", "benchTable": "trend", "schemaTable": "full"{{ if eq .chezmoi.os "darwin" }}, "latex": true{{ end }} } },
     "filetree@claude-code-filetree": { "options": {
       "start": "off",
       "column": "size",
