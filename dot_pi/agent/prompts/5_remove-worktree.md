@@ -1,12 +1,11 @@
 ---
-description:
-  Rimuove un worktree finito (dopo il merge), il suo branch e fa pulizia, evitando le trappole note
-  su Windows/MSYS2
-argument-hint: <worktree-name>
+description: "Rimuove un worktree finito (dopo il merge), il suo branch e fa pulizia, evitando le trappole note su Windows/MSYS2"
+argument-hint: "<worktree-name>"
+generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
 Rimuovi il worktree `$1` (directory sotto `.pi/worktrees/`, es.
-`review+ICH-73-sol-opus` o `ich-73-verifica-fattibilita-5df44e`) e il branch che vi è
+`review+ICH-73-sol-gpt` o `ich-73-verifica-fattibilita-5df44e`) e il branch che vi è
 agganciato, poi fai pulizia. Funziona sia su Windows/MSYS2 sia su Linux: i comandi sono Bash puro e
 portabile; i passi solo-Windows sono marcati.
 
@@ -28,15 +27,18 @@ Determina la root con:
 git rev-parse --path-format=absolute --git-common-dir   # <repo-root>/.git
 ```
 
-`<repo-root>` è quel valore senza il suffisso `/.git`. Se la cwd corrente è dentro il worktree da
-rimuovere (`git rev-parse --show-toplevel` = path del worktree, confronta i due path dopo
-`cygpath -m`), esci con un comando a sé, `cd "<repo-root>"`, e verifica con `pwd`: su Windows git
-non cancella una directory che fa da cwd alla shell (`Device or resource busy`, vedi più sotto).
+`<repo-root>` è quel valore senza il suffisso `/.git`. Se la sessione di pi è
+stata avviata dentro il worktree da rimuovere (`git rev-parse --show-toplevel` = path del worktree,
+confronta i due path dopo `cygpath -m`), fermati e chiedi all'utente di rilanciare pi dalla root:
+in pi ogni comando parte dalla directory della sessione e un `cd` non la cambia. Su Windows git non
+cancella una directory che fa da cwd a un processo (`Device or resource busy`, vedi più sotto), e
+senza quella directory pi non può più eseguire comandi.
 
 **Windows/MSYS2, drive `subst`.** Se `git worktree list` mostra il worktree con una lettera di drive
 diversa da quella della tua cwd (es. entry `E:/AI/...` ma cwd `/d/AI/...`, con `E:` alias `subst` di
-`D:`), spostati sulla root vista con la **stessa lettera dell'entry** (`cd /e/AI/Claude/Trinity`):
-git confronta i path testualmente e non risolve i `subst`.
+`D:`), lavora dalla root vista con la **stessa lettera dell'entry**, premettendo il `cd` a ogni
+comando (`cd /e/AI/Claude/Trinity && <comando>`): git confronta i path testualmente e non risolve i
+`subst`.
 
 ## Ispezione prima di toccare qualcosa
 
@@ -114,8 +116,10 @@ con path `D:/...` nelle entry ha già cancellato worktree e branch estranei (li 
 
 **Windows: `error: failed to delete '...': Device or resource busy`.** Git ha già deregistrato il
 worktree (verifica: sparisce da `git worktree list`) ma la directory è ancora aperta da un processo
-(sessione di pi, terminale, editor). Non ripetere il comando: chiudi chi la tiene e poi
-cancella la sola directory con `rm -rf "<wt-path>"`.
+(sessione di pi, terminale, editor). Non ripetere il comando. Resta da cancellare la sola
+directory, con `rm -rf "<wt-path>"`, dopo aver chiuso chi la tiene: la permission policy di pi
+blocca `rm -r` fuori da `~/.pi/agent/tmp` e non va aggirata, quindi mostra il comando all'utente,
+che lo esegue a mano.
 
 ### 3. Allinea il default branch locale
 
@@ -148,8 +152,10 @@ esplicita dell'utente. Il branch remoto, se esiste ancora ed è mergiato
 
 ## Directory orfana (nessuna entry in `git worktree list`)
 
-Succede dopo un `remove` andato a metà (vedi "resource busy"). La cartella non è più un worktree:
-`rm -rf "<repo-root>/.pi/worktrees/$1"`. Prima controlla che dentro non ci siano
+Succede dopo un `remove` andato a metà (vedi "resource busy"). La cartella non è più un worktree e
+va cancellata con `rm -rf "<repo-root>/.pi/worktrees/$1"`: la permission policy di pi blocca `rm -r`
+fuori da `~/.pi/agent/tmp` e non va aggirata, quindi mostra il comando all'utente, che lo esegue a
+mano. Prima controlla che dentro non ci siano
 file da salvare (`ls -la`; con il file `.git` presente puoi provare `git -C <dir> status --short`,
 ma se punta a un gitdir già rimosso fallirà: in quel caso confronta a mano). Niente `prune`.
 
@@ -161,6 +167,27 @@ git branch --list
 ls "<repo-root>/.pi/worktrees/"
 git -C "<repo-root>" status -sb | head -1
 ```
+
+## Chiusura del lavoro nel progetto
+
+Salta questa sezione se il worktree era detached (worktree di review) o se il branch non è stato
+mergiato.
+
+Il workflow finisce qui, ma il progetto può chiedere altro dopo il merge: note di ripresa, log
+delle decisioni, memorie. Nessun command precedente lo fa: è questo il momento. Cerca in
+`<repo-root>`:
+
+- file di passaggio tra sessioni (`RIPRESA.md`, `RICONSEGNA.md`, `HANDOFF.md` o simili) e una
+  cartella `memory/`;
+- una procedura di chiusura scritta in quei file o in `AGENTS.md` o `CLAUDE.md` del progetto
+  (es. «dopo ogni merge chiudi il lotto»).
+
+Poi:
+
+- se il progetto definisce una procedura di chiusura, eseguila ora, per intero e nell'ordine
+  scritto, senza aspettare che l'utente la chieda;
+- se quei file esistono ma senza una procedura, chiedi all'utente se aggiornarli;
+- se non esiste nulla, non creare file.
 
 Alla fine stampa esclusivamente questa tabella, sostituendo i segnaposto:
 
@@ -179,6 +206,8 @@ Alla fine stampa esclusivamente questa tabella, sostituendo i segnaposto:
 │ Default branch       │ <default> = <sha> — fast-forward: eseguito / già allineato / saltato: <motivo> │
 ├──────────────────────┼──────────────────────────────────────────────────────────┤
 │ Worktree residui     │ <elenco o "nessuno">                                     │
+├──────────────────────┼──────────────────────────────────────────────────────────┤
+│ Chiusura del lavoro  │ eseguita (<commit>) / da fare: <cosa manca> / non prevista / saltata: <motivo> │
 └──────────────────────┴──────────────────────────────────────────────────────────┘
 ```
 

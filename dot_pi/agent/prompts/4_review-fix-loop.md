@@ -1,18 +1,16 @@
 ---
-description:
-  Due review indipendenti in parallelo (Reviewer su GPT, ReviewerOpus su Opus) su worktree isolati,
-  loop di fix minimi e report finale
-argument-hint: <issue-id...> <model>
+description: "Due review indipendenti in parallelo (ReviewerOpus su Opus, Reviewer su GPT) su worktree isolati, loop di fix minimi e report finale"
+argument-hint: "<issue-id...> <model>"
+generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
 Esegui due review indipendenti e parallele della PR delle issue indicate su worktree isolati, poi
 applica i fix dei finding reali in un loop di al massimo 3 round. In uscita, smista i finding
 residui (fix, issue Linear o PR in draft) senza perderne nessuno e scrivi un report sintetico.
 
-Le due review usano lo stesso prompt del reviewer su due modelli diversi: l'agente `Reviewer` (modello
-fissato in `~/.pi/agent/agents/Reviewer.md`, GPT) e l'agente `ReviewerOpus` (modello fissato in
-`~/.pi/agent/agents/ReviewerOpus.md`, Opus). Se uno dei due agenti non compare tra i tipi di agente
-disponibili, fermati e dillo all'utente prima di creare i worktree.
+Le due review usano lo stesso prompt del reviewer su due modelli diversi: `ReviewerOpus`
+(review `opus`) e `Reviewer` (review `gpt`). Il modello di ciascuno è fissato nel suo file in
+`~/.pi/agent/agents/`.
 
 L'ultimo argomento è il modello: identifica il worktree di implementazione creato da
 `/1_create-worktree` (e quindi il branch della PR). Non sceglie il modello di esecuzione.
@@ -69,18 +67,37 @@ Per ogni round:
    Se una delle directory esiste già (round precedente non ripulito), fermati. Non toccare il file
    `.git` dentro i worktree.
 2. Esegui `/3_independent-review` sui due worktree in parallelo, uno per reviewer,
-   con argomenti `<issue-id...> <model> <review-wt-path>`. Pi espande i prompt template solo quando
-   l'utente li scrive nell'editor: né tu né un subagente potete invocarlo come slash command, e un
+   con argomenti `<issue-id...> <model> <review-wt-path>`. Pi espande i template
+   solo dall'editor: né tu né un subagente potete invocarlo come slash command, e un
    `/...` nel prompt di un subagente non viene espanso. Ogni reviewer scrive i file di appoggio solo
-   in `<review-wt-path>/.review-tmp/`, mai altrove.
-   - review `gpt`: tool Agent con `subagent_type: Reviewer`; nel prompt digli di leggere
+   nella cartella della sua review sotto `$HOME/.pi/agent/tmp/` (la definisce
+   `3_independent-review`), mai altrove.
+   - review `opus`: tool Agent con `subagent_type: ReviewerOpus`; nel prompt digli di leggere
      `~/.pi/agent/prompts/3_independent-review.md` e di seguirlo con quegli
      argomenti al posto di `$ARGUMENTS`;
-   - review `opus`: tool Agent con `subagent_type: ReviewerOpus`, stesso prompt della review `gpt`.
+   - review `gpt`: tool Agent con `subagent_type: Reviewer`, stesso prompt della review
+     `opus`.
 
-   Lancia le due Agent nello stesso messaggio, così girano in parallelo. Se `<model>` coincide con
-   uno dei due modelli di review (`gpt` o `opus`), segnalalo: quella review gira sullo stesso
-   modello che ha scritto il codice ed è meno indipendente.
+   Dal secondo round aggiungi a entrambi i prompt la lista degli scarti dei round precedenti (vedi
+   «Triage dei finding»), uno per riga con file, simbolo o snippet e motivo, e questa istruzione:
+   «Se un tuo candidato coincide con uno di questi scarti, controlla il motivo nel codice attuale:
+   se regge, metti il candidato in `REFUTED` citando la riga che lo prova; se non regge,
+   riproponilo e spiega perché il motivo non vale più».
+
+   Prima di lanciarle controlla l'indipendenza delle review:
+
+   ```bash
+   printf 'sessione: %s/%s\n' "$PI_PROVIDER" "$PI_MODEL"
+   grep -H -m1 '^model:' "$HOME/.pi/agent/agents/ReviewerOpus.md" "$HOME/.pi/agent/agents/Reviewer.md"
+   ```
+
+   Se il modello di un reviewer coincide con quello della sessione, o il suo nome contiene
+   `<model>` (l'etichetta di chi ha scritto il codice: `opus` in `claude-opus-5-5`, `sol` in
+   `gpt-6.2-sol`), segnalalo: quella review gira sullo stesso modello che ha scritto il codice ed è
+   meno indipendente.
+
+   Poi lancia le due Agent nello stesso messaggio, ciascuna con `run_in_background: false`: girano
+   in parallelo e ricevi i due report completi.
 
 3. Raccogli i due report.
 4. Rimuovi i due worktree leggendo e seguendo
@@ -91,22 +108,32 @@ Le review sono read-only: nessun reviewer modifica file.
 
 ## Triage dei finding
 
-Fondi i due report e per ogni finding decidi se è reale e merita un fix:
+Fondi i due report. Un finding presente in entrambi (stesso difetto, stesso punto, stesso motivo)
+va tenuto una volta sola, con lo scenario più concreto e l'esito più forte (`CONFIRMED` prevale su
+`PLAUSIBLE`), segnando che l'hanno trovato tutti e due.
 
-- è verificabile nel codice, non un'ipotesi;
+Per ogni finding decidi se è reale e merita un fix:
+
+- il meccanismo è verificabile nel codice, non è un'ipotesi; un innesco incerto (`PLAUSIBLE`) non
+  basta per scartarlo;
 - è un difetto o una violazione di requisito, non una preferenza stilistica;
 - è dentro lo scope delle issue.
 
 L'accordo dei due reviewer è un segnale forte ma non una prova: verifica comunque ogni finding nel
-codice. La discordanza non è un motivo per scartare: controlla il finding singolarmente. Scarta i
-falsi positivi e le preferenze stilistiche, senza riproporli nel round successivo.
+codice, partendo dalla prova del report (`file:riga`, scenario ed esito del verify) invece di rifare
+l'analisi da zero. La discordanza non è un motivo per scartare: se l'altro reviewer ha confutato lo
+stesso candidato (riga `REFUTED` in «Aspetti verificati senza anomalie»), confronta le due prove
+nel codice. Scarta le preferenze stilistiche e, solo con una prova come per `REFUTED`, i falsi
+positivi: la riga che contraddice il finding, la guard che lo gestisce o l'invariante che lo rende
+impossibile. Tieni la lista degli scarti, ognuno con file, simbolo o snippet e il motivo in una
+riga. Nel loop la passi ai reviewer dal secondo round e la riporti nel commento sulla PR.
 
 ## Fix minimi e chirurgici
 
 Sul worktree di implementazione `<wt-path>`, applica solo i finding reali:
 
-- prima del primo fix entra con un comando a sé, `cd "<wt-path>"`; dopo il push, o se ti fermi
-  prima, esci con `cd "<repo-root>"`: lo step 5 non può cancellare la cwd della sessione;
+- in pi ogni comando parte in una shell nuova: quando un comando deve girare dentro il worktree
+  scrivi `cd "<wt-path>" && <comando>` nello stesso comando;
 - comandi sempre con `git -C "<wt-path>"`, `mise -C "<wt-path>"` e path assoluti;
 - la minima modifica che risolve il difetto;
 - nessun refactoring, nessuna riscrittura, nessun cambio di architettura;
@@ -150,7 +177,8 @@ Crea le issue senza chiedere conferma, con `issueCreate` via
 
 - team e progetto della issue di origine (quella nel cui scope cade il finding);
 - titolo operativo e corpo con `Problem` e `Acceptance criteria` come in `/0_create-issue`, più file
-  e righe del finding;
+  e righe del finding e il suo esito: `CONFIRMED`, oppure `PLAUSIBLE` con cosa rende incerto
+  l'innesco;
 - tipo `bug`; priorità `3` per `MEDIUM`, `4` per `LOW`;
 - lingua del progetto Linear.
 
@@ -168,6 +196,8 @@ Scrivi un solo commento, nella lingua del progetto Linear, con
 - i `BLOCKER` e `HIGH` aperti, con file e righe;
 - le issue create, con link;
 - i finding scartati come falsi positivi, con il motivo in una riga.
+
+Accanto a ogni finding fixato o aperto scrivi l'esito del verify, `CONFIRMED` o `PLAUSIBLE`.
 
 ## Report finale
 

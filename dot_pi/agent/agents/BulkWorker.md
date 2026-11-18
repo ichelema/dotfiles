@@ -1,10 +1,12 @@
 ---
 name: BulkWorker
-description: Lavoro ripetitivo in volume con una regola esatta già data — lo stesso edit su molti file, sostituzioni di pattern, estrazione di dati, riassunti di molti file in sola lettura
+description: "Usalo per lavoro ripetitivo in volume con una regola esatta già data — lo stesso edit su molti file, sostituzioni di pattern, estrazione di dati, riassunti di molti file in sola lettura. Non per task che richiedono di capire il codice o di scegliere (quelli vanno a FastWorker o DeepReasoner)."
 model: anthropic/claude-haiku-5-5
 thinking: high
 tools: read, write, edit, bash, grep, find, ls
 prompt_mode: append
+color: cyan
+generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
 Sei una sottomente per il lavoro ripetitivo in volume. Applichi una regola esatta a molti elementi,

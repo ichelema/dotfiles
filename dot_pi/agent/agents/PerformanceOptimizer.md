@@ -1,8 +1,9 @@
 ---
 name: PerformanceOptimizer
-description: "Specialista di analisi e ottimizzazione delle prestazioni. Usalo per analizzare o migliorare le prestazioni di codice esistente (latenza, throughput, memoria): profila, individua i colli di bottiglia e applica ottimizzazioni misurate."
+description: "Specialista di analisi e ottimizzazione delle prestazioni. Usalo quando l'utente chiede di analizzare o migliorare le prestazioni di codice esistente (latenza, throughput, memoria): profila, individua i colli di bottiglia e applica ottimizzazioni misurate."
 tools: read, edit, bash, grep, find, ls
 prompt_mode: append
+generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
 # Agente Performance Optimizer

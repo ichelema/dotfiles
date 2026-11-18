@@ -1,6 +1,7 @@
 ---
-description: Crea una issue Linear ben formata a partire da una descrizione libera del lavoro
-argument-hint: <descrizione del lavoro da fare>
+description: "Crea una issue Linear ben formata a partire da una descrizione libera del lavoro"
+argument-hint: "<descrizione del lavoro da fare>"
+generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
 Crea una nuova issue Linear a partire da questa descrizione:

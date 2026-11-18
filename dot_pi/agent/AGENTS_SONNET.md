@@ -60,15 +60,11 @@ e si applicano solo quando sei l'agente principale.
 
 ## Delega dei task
 
-- Il lavoro semplice e meccanico fallo direttamente tu.
-- Analisi ad alto ragionamento, architettura o debug complesso → `DeepReasoner`.
-- Secondo parere su problemi complessi, solo quando necessario e in parallelo
-  con `DeepReasoner` → `DeepSeek`.
-- Implementazione di un piano concreto già definito → `Implementer`.
-- Esplorazione di codice non familiare o ricerca ampia → `Explore`.
-- Piano di implementazione fondato sul codice → `Plan`.
-- Review indipendente di un'implementazione, solo se richiesta → `Reviewer`.
-- Lavoro ripetitivo in volume con una regola esatta → `BulkWorker`.
+- Il lavoro semplice e meccanico fallo direttamente tu. Il lavoro ripetitivo in
+  volume con una regola esatta (stesso edit su molti file, estrazioni, riassunti
+  di molti file) delegalo a `BulkWorker`.
+- Le fasi ad alto ragionamento (design, analisi difficili, debugging ostinato)
+  delegale a `DeepReasoner`.
 - Delega i sottotask indipendenti a subagenti in parallelo e intervieni se uno
   va fuori strada o non ha il contesto rilevante.
 - Il subagente parte senza contesto: nel prompt metti obiettivo, file

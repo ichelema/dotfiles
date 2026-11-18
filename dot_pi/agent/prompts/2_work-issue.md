@@ -1,8 +1,7 @@
 ---
-description:
-  Prende in carico una o più issue Linear e le implementa nel worktree creato allo step 1, fino alla
-  PR (senza merge)
-argument-hint: <issue-id...> <model>
+description: "Prende in carico una o più issue Linear e le implementa nel worktree creato allo step 1, fino alla PR (senza merge); con auto, dopo l'ok al piano prosegue da solo fino alla review"
+argument-hint: "<issue-id...> <model> [auto [review|loop]]"
+generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
 Prendi in carico le issue Linear indicate e implementale nel worktree già creato da
@@ -16,14 +15,18 @@ esecuzione.
 
 ## Validazione degli argomenti
 
-Dividi `$ARGUMENTS` in token separati da spazi:
+Dividi `$ARGUMENTS` in token separati da spazi (maiuscole o minuscole non contano per le parole
+chiave):
 
-- l'ultimo token è il modello;
-- i token precedenti sono gli issue ID (almeno uno).
+- se gli ultimi due token sono `auto` e poi `review` o `loop`, toglili: `<mode>` è `auto` e
+  `<review-mode>` è l'ultimo dei due;
+- altrimenti, se l'ultimo token è `auto`, toglilo: `<mode>` è `auto` e `<review-mode>` è `loop`;
+- senza queste parole chiave `<mode>` è manuale.
 
-Se i token sono meno di 2, fermati e mostra:
+Dei token restanti l'ultimo è il modello e i precedenti sono gli issue ID (almeno uno). Se restano
+meno di 2 token, fermati e mostra:
 
-`/2_work-issue <issue-id...> <model>`
+`/2_work-issue <issue-id...> <model> [auto [review|loop]]`
 
 ## Localizzazione del worktree
 
@@ -57,20 +60,16 @@ principale.
 Usa `git -C "<wt-path>"` per ogni comando Git e path assoluti sotto `<wt-path>` per ogni lettura o
 modifica di file.
 
-### Entrata e uscita dal worktree
+### Comandi dentro il worktree
 
-Dopo le verifiche qui sotto entra nel worktree con un comando a sé: `cd "<wt-path>"`. Così la
-statusline mostra il worktree; i comandi restano comunque con `git -C` e path assoluti.
+In pi ogni comando parte in una shell nuova, dalla directory della sessione: un `cd` dato come
+comando a sé non vale per il comando successivo. Quando un comando deve girare dentro il worktree
+scrivi `cd "<wt-path>" && <comando>` nello stesso comando, ogni volta. I comandi Git restano con
+`git -C`; per leggere, modificare e scrivere file usa sempre path assoluti sotto `<wt-path>`.
 
 Ogni volta che restituisci il controllo (fine lavoro, domanda all'utente, errore che ti ferma),
-ferma i processi in background avviati nel worktree, poi esci con un comando a sé:
-
-```bash
-repo_root="$(git -C "<wt-path>" rev-parse --path-format=absolute --git-common-dir)"; cd "${repo_root%/.git}" && pwd
-```
-
-Su Windows git non cancella una directory che fa da cwd alla shell (`Device or resource busy` allo
-step 5).
+ferma i processi in background avviati nel worktree: su Windows git non cancella una directory che
+fa da cwd a un processo (`Device or resource busy` allo step 5).
 
 Verifica prima di iniziare:
 
@@ -141,7 +140,7 @@ migliore dei casi ridondante, nel peggiore sovrascrive una transizione appena av
 ## Piano prima dell'implementazione
 
 Se il codice coinvolto non ti è familiare e prevedi di leggere più di 3 file che non hai già letto,
-delega l'esplorazione all'agente `Explore`. Nel prompt passagli titolo, descrizione, criteri di
+delega l'esplorazione a `Scoper`. Nel prompt passagli titolo, descrizione, criteri di
 accettazione e commenti rilevanti delle issue, e il percorso del worktree. Il suo report è un input,
 non una decisione: verifica a campione i file che indica. Se il report segnala il task come
 complesso, leggi tu i file chiave prima di scrivere il piano.
@@ -168,16 +167,21 @@ e sottosessioni e tabelle.
 
 Attendi l'ok dell'utente sul piano prima di scrivere codice.
 
+In modo `auto` aggiungi al piano la catena che seguirà dopo la PR (sezione «Modo auto») e la
+modalità di review: dopo l'ok non farai altre domande.
+
 ## Implementazione
 
 Obiettivo: implementare tutte le issue indicate.
 
 Sei il lead.
 
-Delega il ragionamento all'agente `DeepReasoner` e l'implementazione già definita all'agente `Implementer`.
-Il lavoro ripetitivo in volume con una regola esatta va all'agente `BulkWorker`.
-Per una decisione di design con trade-off reali, chiedi lo stesso quesito anche all'agente `DeepSeek`
-(in parallelo a `DeepReasoner`) e confronta le due conclusioni prima di scegliere.
+Delega il ragionamento a DeepReasoner, l'implementazione già definita a FastWorker (se la
+sessione gira già sul modello di FastWorker, fallo tu).
+Il lavoro ripetitivo in volume con una regola esatta va a BulkWorker.
+Per una decisione di design con trade-off reali, chiedi lo stesso quesito anche a DeepSeek
+(stesso prompt su un'altra famiglia di modelli): lancia i due agenti nello stesso messaggio,
+ciascuno con `run_in_background: false`, e confronta le due conclusioni prima di scegliere.
 
 Mantieni tutte le modifiche entro lo scope delle issue. Ogni riga modificata deve essere
 riconducibile a un requisito di una delle issue: le deviazioni vanno segnalate all'utente, non
@@ -280,6 +284,9 @@ Fermati qui. Il passo successivo è la review, in una sessione nuova, a scelta d
 `/4_review-fix-loop <issue-id...> <model>` (due review in parallelo e fix in
 loop). Il merge resta all'utente.
 
+In modo `auto` non ti fermi qui e non serve una sessione nuova: dopo la «Verifica finale» prosegui
+con «Modo auto». Il merge resta comunque all'utente.
+
 ## Verifica finale
 
 ```bash
@@ -287,10 +294,12 @@ git -C "<wt-path>" status --short          # deve essere vuoto
 git -C "<wt-path>" log --oneline "<default>".."<branch>"
 ```
 
-Poi esci dal worktree come indicato in «Entrata e uscita dal worktree».
+Poi ferma i processi in background avviati nel worktree, come indicato in «Comandi dentro il
+worktree».
 
-Alla fine stampa esclusivamente questa tabella, sostituendo i segnaposto con i valori effettivi;
-`<model>` è l'ultimo argomento ricevuto:
+In modo `auto` la tabella si stampa solo alla fine di «Modo auto». Alla fine stampa
+esclusivamente questa tabella, sostituendo i segnaposto con i valori effettivi; `<model>` è il
+modello ricavato in «Validazione degli argomenti»:
 
 ```
 ┌────────────────────────┬──────────────────────────────────────────────────────────┐
@@ -312,7 +321,7 @@ Alla fine stampa esclusivamente questa tabella, sostituendo i segnaposto con i v
 ├────────────────────────┼──────────────────────────────────────────────────────────┤
 │ Pull Request           │ <url> (magic words: <Fixes/Refs> per ogni issue)         │
 ├────────────────────────┼──────────────────────────────────────────────────────────┤
-│ Prossimo passo         │ /3_independent-review <issue-id...> <model> oppure /4_review-fix-loop <issue-id...> <model> │
+│ Prossimo passo         │ /2_work-simplify e /2_work-verify <issue-id...> <model> (facoltativi), poi /3_independent-review <issue-id...> <model> oppure /4_review-fix-loop <issue-id...> <model> │
 └────────────────────────┴──────────────────────────────────────────────────────────┘
 ```
 
@@ -320,3 +329,23 @@ Nell'output scrivila come tabella markdown a due colonne (`| Campo | Valore |`),
 di disegno del riquadro: fuori da un blocco di codice il renderer unisce le righe `│` in un
 paragrafo e le manda a capo. Il riquadro sopra indica solo campi e ordine. Con più issue, le celle
 «Issue Linear» e «Stato Linear» diventano una riga della tabella per ogni issue.
+
+## Modo auto
+
+Solo con `<mode>` = `auto`. Dopo l'ok al piano l'utente non è più davanti al PC: non fare altre
+domande. Da lì in poi segui `~/.pi/agent/prompts/issue-cycle.md`:
+
+- le regole di «Esecuzione senza presidio» e del «Registro»: crea il registro subito dopo l'ok al
+  piano, con intestazione `# 2_work-issue auto <review-mode> <model>`; «il ciclo della issue
+  corrente» è questa catena;
+- prima della review, il controllo sul modello della sessione di «Modello di implementazione»;
+- dopo la «Verifica finale», nell'ordine, gli step 2b, 2c, 3 o 4 e 5 di «Ciclo per issue», con
+  `<review-mode>` come modalità di review e tutti gli issue ID di questo command al posto di
+  `<issue-id>`.
+
+Non pubblicare il commento su Linear di `issue-cycle` e non fare mai il merge.
+
+Alla fine ferma i processi in background avviati nel worktree, poi stampa la tabella di «Verifica
+finale» senza la riga «Prossimo
+passo», seguita dalle sezioni «Decisioni prese in autonomia», «Questioni aperte» e «Prossimi passi»
+del «Report finale» di `issue-cycle`, costruite rileggendo il registro.

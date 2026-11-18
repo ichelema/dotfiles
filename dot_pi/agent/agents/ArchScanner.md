@@ -6,9 +6,11 @@ thinking: max
 tools: read, write, bash, grep, find, ls
 allowed_subagents: general-purpose
 prompt_mode: append
+color: purple
+generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
-# arch-scanner
+# ArchScanner
 
 ## Ruolo
 
@@ -49,8 +51,9 @@ servizio o layer), ciascuno analizzabile da un singolo subagente. Scrivi il pian
 
 ### Fase 2 - Analisi parallela
 
-Lancia un subagente `general-purpose` per ambito, tutti in un unico messaggio così girano in
-parallelo. Ognuno riceve ambito (path), stack, contesto minimo dal piano e il contratto di output.
+Lancia un subagente `general-purpose` per ambito, tutti in un unico messaggio e ciascuno con
+`run_in_background: false`, così girano in parallelo e ne aspetti i
+risultati. Ognuno riceve ambito (path), stack, contesto minimo dal piano e il contratto di output.
 Scrive `.arch-scan/<ambito>.md` e ti restituisce un riepilogo di 5 righe.
 
 ### Fase 3 - Sintesi (tu)

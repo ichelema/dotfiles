@@ -1,7 +1,7 @@
 ---
-description:
-  Review avversaria indipendente e read-only dell'implementazione di una o più issue Linear
-argument-hint: <issue-id...> <model> [<review-path>]
+description: "Review avversaria indipendente e read-only dell'implementazione di una o più issue Linear"
+argument-hint: "<issue-id...> <model> [hard|soft] [<review-path>]"
+generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
 Agisci come un Principal Software Engineer incaricato di eseguire una review avversaria indipendente
@@ -19,16 +19,40 @@ che questo command dice di chiedere, chiudi invece il report con verdetto
 ## Validazione degli argomenti
 
 Dividi `$ARGUMENTS` in token separati da spazi. Se l'ultimo token è un path assoluto (inizia con `/`
-o `<LETTERA>:`), è `<review-path>`: toglilo dalla lista. Dei token restanti:
+o `<LETTERA>:`), è `<review-path>`: toglilo dalla lista. Se ora l'ultimo token è `hard` o `soft`
+(maiuscole o minuscole), è `<mode>`: toglilo dalla lista. Senza questo token `<mode>` è `hard`. Dei
+token restanti:
 
 - l'ultimo è il modello di implementazione;
 - i precedenti sono gli issue ID (almeno uno).
 
 Se restano meno di 2 token, fermati e mostra:
 
-`/3_independent-review <issue-id...> <model> [<review-path>]`
+`/3_independent-review <issue-id...> <model> [hard|soft] [<review-path>]`
 
 Non tentare di dedurre la issue dal branch corrente o dalla cronologia Git.
+
+## Modo della review
+
+In pi un prompt non può cambiare il modello della sessione: la review la fa un agente con modello
+fisso. Se hai il tool Agent sei la sessione principale: non fare tu la review, orchestra.
+
+- `hard`: la review la fa `ReviewerOpus`, il verify dei candidati `ReviewerSoft`.
+  1. Lancia il tool Agent con `subagent_type: ReviewerOpus` e `run_in_background: true`: il
+     risultato riporta l'`Agent ID`, che ti serve per riprenderlo. Nel prompt digli di leggere
+     `~/.pi/agent/prompts/3_independent-review.md`, di seguirlo con gli stessi argomenti senza
+     `hard` al posto di `$ARGUMENTS` e di fermarsi ai candidati come descritto in «Chi fa il
+     verify» (sezione 7), perché il verify lo lancia la sessione principale.
+  2. Aspetta il suo output con `get_subagent_result` (`agent_id` = quell'ID, `wait: true`).
+  3. Se ti ha restituito dei candidati, segui «Chi fa il verify»: lanci `ReviewerSoft` e poi
+     riprendi il reviewer con gli esiti. Se ti ha restituito già il report (nessun candidato, o
+     verdetto `BLOCCATO`), salta questo passo.
+  4. Mostra il report del reviewer senza cambiarlo.
+- `soft`: lancia il tool Agent con `subagent_type: ReviewerSoft` e `run_in_background: false`. Nel
+  prompt digli di leggere `~/.pi/agent/prompts/3_independent-review.md` e di seguirlo con gli
+  stessi argomenti senza `soft` al posto di `$ARGUMENTS`. Poi mostra il suo report senza cambiarlo.
+
+Se non hai il tool Agent sei il reviewer: esegui la review tu, come descritto sotto.
 
 ## Localizzazione del codice da recensire
 
@@ -58,7 +82,7 @@ insieme alla creazione e rimozione del tuo worktree di review è l'unica scrittu
 
 ```bash
 git fetch origin
-git -C "<rev-path>" status --short -- . ':!.review-tmp'    # deve essere vuoto
+git -C "<rev-path>" status --short    # deve essere vuoto
 git -C "<rev-path>" rev-parse HEAD    # deve coincidere con:
 git rev-parse "origin/<branch>"
 ```
@@ -72,7 +96,7 @@ Non modificare nulla.
 
 In particolare:
 
-- non modificare, creare, eliminare o rinominare file fuori da `<rev-path>/.review-tmp/`;
+- non modificare, creare, eliminare o rinominare file fuori da `<tmp-path>` (definita sotto);
 - non applicare fix, patch o refactoring;
 - non eseguire formatter, linter con auto-fix, code generator, migration o aggiornamenti di
   snapshot;
@@ -84,8 +108,10 @@ In particolare:
 
 Puoi eseguire comandi di ispezione e test solo se non modificano file tracciati o lo stato del
 repository. Prima di iniziare registra lo stato Git corrente; al termine verifica che non sia
-cambiato, ignorando la cartella `<rev-path>/.review-tmp/`: è l'unico posto dove puoi creare file
-di appoggio (script, output di test, benchmark). Non eliminare eventuali modifiche preesistenti
+cambiato. I file di appoggio (script, output di test, benchmark) vanno solo in `<tmp-path>`, una
+cartella fuori dal worktree: `$HOME/.pi/agent/tmp/<nome>`, dove `<nome>` è il nome della directory
+di `<rev-path>` (es. `review+ICH-97-sol`).
+Creala con `mkdir -p`. Non eliminare eventuali modifiche preesistenti
 dell'utente.
 
 ## 1. Ricostruisci il contratto delle issue
@@ -158,7 +184,72 @@ Se il changeset rimane ambiguo, fermati e chiedi chiarimenti invece di recensire
 Analizza sia il diff sia il codice circostante necessario a comprenderne il comportamento. Non
 limitarti alle righe modificate.
 
-Verifica almeno:
+### Angoli di ricerca
+
+Percorri questi angoli uno dopo l'altro, nello stesso contesto: non lanciare subagenti per cercare
+i problemi. Ogni angolo produce candidati (vedi «Candidati» sotto).
+
+- **A. Riga per riga.** Leggi ogni hunk del diff riga per riga, poi la funzione che lo contiene.
+  Per ogni riga chiediti quale input, stato, tempistica o piattaforma la rende sbagliata:
+  condizioni invertite, off-by-one, null/nil non gestiti, `await` mancanti, controlli falsy-zero,
+  variabile sbagliata da copia-incolla, errori inghiottiti in un catch, metacaratteri regex non
+  escapati. Un bug in una riga non modificata di una funzione toccata è in scope se il changeset
+  lo rende raggiungibile o doveva correggerlo per soddisfare la issue.
+- **B. Comportamento rimosso.** Per ogni riga che il diff cancella o sostituisce, nomina
+  l'invariante o il comportamento che garantiva e cerca dove il nuovo codice lo ristabilisce. Se
+  non lo trovi è un candidato: guard rimossa, percorso d'errore perso, validazione ristretta, test
+  cancellato che copriva un caso reale.
+- **C. Caller e callee.** Per ogni funzione modificata cerca i caller con grep sul simbolo dentro
+  `<rev-path>` e controlla se la modifica rompe un punto di chiamata: nuova precondizione, valore
+  di ritorno con forma diversa, nuova eccezione, dipendenza di ordine o di tempistica. Controlla
+  anche i callee: una modifica parallela nello stesso changeset rende insicura una chiamata?
+- **D. Trappole del linguaggio.** Cerca le trappole tipiche del linguaggio e del framework del
+  diff, per esempio: in Bash variabili senza virgolette e glob senza match; in Python default
+  mutabili e closure late-binding; in JS/TS falsy-zero, `==` e variabile di loop catturata; in
+  Ruby `0` e `""` veri; in Lua `#` su tabelle con buchi; ovunque fusi orari e DST, uguaglianza
+  tra float, SQL injection. Segnala ogni caso che il diff introduce.
+- **Convenzioni.** Trova gli `AGENTS.md` o `CLAUDE.md` del progetto che governano i file
+  modificati: quelli in `<rev-path>`, cioè la radice del repository nella versione della PR, e ogni
+  `AGENTS.md`, `CLAUDE.md` o `CLAUDE.local.md` in una directory tra `<rev-path>` e un file
+  modificato (vale solo per i file al suo livello o sotto). Non salire sopra `<rev-path>`: il
+  worktree sta dentro il checkout principale, i cui file sono di un'altra versione. Non usare
+  `~/.pi/agent/AGENTS.md`: è privato, e le regole citate finiscono nella PR e nelle issue. Leggi
+  quelli che esistono e cerca violazioni chiare delle regole che riguardano il codice. Segnala una
+  violazione solo se puoi citare la regola esatta, con il path del suo file, e la riga che la
+  viola: niente deduzioni sullo «spirito» del documento.
+- **Profondità del fix.** Controlla che ogni modifica corregga la causa alla profondità giusta e
+  non tamponi un sintomo. Casi speciali aggiunti su infrastruttura condivisa indicano un fix poco
+  profondo: nomina la modifica più semplice e generale al meccanismo sottostante.
+- **Sicurezza.** Prima guarda come il repository gestisce già la sicurezza (librerie, validazione,
+  sanitizzazione, segreti) e cerca dove il diff se ne discosta. Poi segui i dati da ogni sorgente
+  non fidata fino alle operazioni sensibili. Sono sorgenti non fidate le richieste di rete, i file
+  e gli argomenti forniti da altri e, per hook, script, mod e prompt di agenti, il testo che arriva
+  dal modello, dai transcript, dagli output dei tool, da pagine web, issue e PR. Variabili
+  d'ambiente e flag scelti dall'utente sono fidati; un valore costruito con testo non fidato no.
+  Cerca:
+  - injection: comandi di shell (anche in script e hook), SQL e NoSQL, template, XXE, path
+    traversal in letture, scritture e cancellazioni;
+  - esecuzione di codice: `eval` e simili, deserializzazione (pickle, YAML, Marshal), XSS nelle
+    pagine web;
+  - autenticazione e autorizzazione aggirate, escalation di privilegi, token e sessioni;
+  - segreti scritti nel codice o nella configurazione committata, crittografia debole, casualità
+    prevedibile, controllo dei certificati disattivato;
+  - esposizione di dati: segreti o dati personali che finiscono in log, transcript, memoria,
+    commenti sulla PR, issue o pagine pubblicate;
+  - testo non fidato che entra nel prompt di un agente con tool che hanno effetti (scrivere file,
+    eseguire comandi, pubblicare) senza un confine che lo contenga.
+
+  Non sono candidati: DoS ed esaurimento di risorse, rate limiting, mancanza di hardening senza una
+  vulnerabilità concreta, librerie non aggiornate, memory safety nei linguaggi memory-safe, race
+  condition solo teoriche, ReDoS e regex injection, log spoofing, file usati solo dai test e file di
+  documentazione. I prompt in markdown (command, agenti, skill) non sono documentazione: sono
+  codice eseguito da un agente. Segnala solo ciò che il diff introduce o rende raggiungibile. Lo
+  scenario è il percorso di attacco: sorgente non fidata → input → operazione sensibile → effetto.
+  Esecuzione di codice, furto di dati o accesso non autorizzato valgono almeno `HIGH`.
+
+### Checklist di copertura
+
+Dopo gli angoli, controlla di aver coperto almeno:
 
 - corrispondenza tra implementazione e ogni acceptance criterion;
 - correttezza logica e semantica;
@@ -177,6 +268,22 @@ Verifica almeno:
 - documentazione o changelog richiesti dal tipo di modifica.
 
 Cerca attivamente controesempi che possano falsificare la correttezza dell'implementazione.
+
+### Candidati
+
+Raccogli in una sola lista i candidati di tutte le fonti: requisiti non soddisfatti, sezione 2,
+angoli, checklist, test (sezione 5) e sweep (sezione 6). Ogni candidato ha:
+
+- `file:riga`;
+- una sintesi in una frase;
+- lo scenario di fallimento: input o stato concreto → output sbagliato, crash o perdita di dati;
+  per semplificazione, convenzioni e profondità del fix, il costo concreto (cosa è duplicato o
+  sprecato, quale regola è violata);
+- il requisito o l'invariante violato.
+
+Metti in lista ogni candidato che ha uno scenario, anche se non sei sicuro che sia un difetto: lo
+decide il verify (sezione 7). Scartare da soli i candidati incerti è la causa principale dei bug
+mancati. Un sospetto senza scenario, invece, non è un candidato.
 
 ### Strategia di lettura
 
@@ -206,9 +313,45 @@ modificare snapshot o fixture. Riporta esattamente i comandi eseguiti e il relat
 Per ogni test mancante importante, descrivi il caso da aggiungere e il risultato atteso, ma non
 scrivere né modificare il test.
 
-## 6. Valida rigorosamente ogni finding
+## 6. Sweep dei buchi
 
-Prima di includere un problema nel report:
+Prima del verify fai un'ultima passata, come un revisore nuovo che ha già la lista dei candidati.
+Rileggi il diff e le funzioni che lo contengono cercando solo difetti che non sono in lista: non
+riconfermare e non riformulare quelli presenti. Concentrati su ciò che la prima passata tende a
+perdere: codice spostato o estratto che ha perso una guard o un ancoraggio; trappole di secondo
+livello (default valutato una volta sola, non determinismo di `hash()`, scope di un lock ridotto,
+metodi predicato con side effect); setup e teardown asimmetrici nei test; default di
+configurazione invertiti. Aggiungi alla lista i candidati nuovi; se non ne trovi, non riempirla.
+
+## 7. Verify dei candidati
+
+Togli i duplicati (stesso difetto, stesso punto, stesso motivo): tieni quello con lo scenario più
+concreto. Se la lista è vuota, salta questa sezione.
+
+Ogni candidato riceve uno di tre esiti:
+
+- `CONFIRMED`: puoi nominare l'input o lo stato che lo innesca e il risultato sbagliato;
+- `PLAUSIBLE`: il meccanismo è reale, ma l'innesco è incerto (tempistica, ambiente, dati rari);
+- `REFUTED`: il candidato è falso o il problema è già gestito.
+
+`PLAUSIBLE` è il default. Non confutare un candidato perché «speculativo» o perché «dipende dallo
+stato a runtime» quando lo stato è realistico: race condition, null/nil su un percorso raro ma
+raggiungibile (handler d'errore, cache fredda, campo opzionale assente), falsy-zero trattato come
+assente, off-by-one su un limite che il codice non esclude, retry a valanga e fallimenti parziali,
+regex o allowlist troppo larghe o troppo strette. `REFUTED` vale solo con una prova dal codice: il
+codice non dice quello che il candidato afferma (cita la riga), il caso è impossibile per tipo,
+costante o invariante (mostralo), il changeset lo gestisce già (cita la guard), oppure è solo
+stile senza effetto osservabile.
+
+Alcuni candidati non hanno un innesco: riuso e semplificazione della sezione 2, convenzioni,
+profondità del fix. Per questi l'esito dipende dal costo dichiarato: `CONFIRMED` se il costo è
+verificabile nel codice (la funzione da riusare esiste, la regola citata dice quello e la riga la
+viola, la forma più semplice fa lo stesso lavoro); `PLAUSIBLE` se il costo dipende da condizioni
+che il codice non mostra, per esempio un percorso caldo non dimostrato; `REFUTED` se il costo è
+falso. Al posto dei sei passi qui sotto, controlla nel codice il costo e che la forma proposta non
+cambi il comportamento.
+
+Per decidere l'esito di ogni candidato:
 
 1. individua il percorso di esecuzione concreto;
 2. verifica che sia raggiungibile;
@@ -217,19 +360,56 @@ Prima di includere un problema nel report:
 5. prova a costruire un input, uno stato o una sequenza che riproduca il problema;
 6. indica le prove disponibili nel codice o nell'output dei test.
 
-Non presentare preferenze stilistiche come bug. Non gonfiare il report con osservazioni speculative.
+**Chi fa il verify.** Chi ha trovato un candidato tende a confermarlo. Nel modo `hard` il verify lo
+fa quindi un altro agente, `ReviewerSoft`, e lo lancia la sessione principale: il reviewer non ha
+il tool Agent.
 
-Se una conclusione non può essere verificata, etichettala esplicitamente come `Da verificare`,
-spiegando quale informazione manca.
+Se sei il reviewer e la sessione principale ti ha chiesto di fermarti ai candidati: non fare il
+verify e non fare la «Pulizia». Restituisci `<rev-path>`, `<tmp-path>`, la baseline della sezione
+3, i requisiti a cui si riferiscono i candidati e i candidati numerati, con `file:riga`, sintesi e
+scenario o costo. Poi fermati: la sessione ti riprende con gli esiti.
+
+Se sei la sessione principale: lancia il tool Agent **una sola volta**, con
+`subagent_type: ReviewerSoft` e `run_in_background: false`, e passagli tutti i candidati insieme.
+Nel prompt metti:
+
+- che il compito è solo il verify: niente nuovi problemi, niente review completa;
+- `<rev-path>`, la baseline della sezione 3 e il comando del diff,
+  `git -C "<rev-path>" diff <baseline>...HEAD`;
+- i requisiti a cui si riferiscono i candidati;
+- i candidati numerati, con `file:riga`, sintesi e scenario o costo;
+- i tre esiti, le regole su `PLAUSIBLE` e `REFUTED`, la regola per i candidati senza innesco e i
+  sei passi qui sopra, copiati alla lettera;
+- i vincoli della sezione «Vincolo assoluto: modalità read-only», con i file di appoggio solo in
+  `<tmp-path>/verify/`: prima di rispondere cancella quella cartella e nient'altro, con `rm -rf` e
+  il percorso scritto per esteso;
+- il formato della risposta: una riga per candidato, `<n> | <esito> | <prova con file:riga>`.
+
+Poi riprendi il reviewer: tool Agent con `resume` = il suo `Agent ID`,
+`subagent_type: ReviewerOpus` e `run_in_background: false`, e nel prompt la risposta del verify
+senza cambiarla; se il verify è fallito, diglielo.
+
+Se sei il reviewer e la sessione ti riprende con gli esiti: la risposta è valida se ha una riga per
+ogni candidato e ogni `REFUTED` cita `file:riga`. Se manca la riga di un candidato, o un `REFUTED`
+non ha la prova, fai tu il verify di quel candidato. Se nessuno ti ha chiesto di fermarti ai
+candidati (per esempio nel modo `soft`, in `/4_review-fix-loop` o in `/issue-cycle`) o il verify è
+fallito, fai tu il verify di tutti i
+candidati. In entrambi i casi usa le stesse regole e riprendi ogni candidato da zero, come se
+l'avesse scritto un altro.
+
+I candidati `CONFIRMED` e `PLAUSIBLE` diventano i finding del report; scarta i `REFUTED`. Non
+presentare preferenze stilistiche come bug.
 
 ## Pulizia
 
-Come ultima azione prima di restituire il report cancella `<rev-path>/.review-tmp/`, sempre:
-`git worktree remove` rifiuta un worktree con file non tracciati e `--force` è vietato.
+Come ultima azione prima di restituire il report cancella `<tmp-path>`, sempre, con un comando a sé
+e il percorso scritto per esteso: `rm -rf "$HOME/.pi/agent/tmp/<nome>"`. La permission policy di pi
+lascia passare `rm -r` solo così: sotto `$HOME/.pi/agent/tmp`, senza altre variabili, senza `~` e
+senza glob.
 
 Se il worktree di review lo hai creato tu (nessun `<review-path>` passato), rimuovilo prima di
 restituire il report: leggi e segui `~/.pi/agent/prompts/5_remove-worktree.md`
-(non puoi invocarlo come slash command: pi li espande solo dall'editor) con
+(pi espande i template solo dall'editor: non puoi invocarlo come slash command) con
 nome del worktree = `review+<base-name>`. Se lo ha creato `/4_review-fix-loop`, lascialo: lo
 rimuove il loop.
 
@@ -252,6 +432,8 @@ Aggiungi una motivazione sintetica e concreta.
 - branch, baseline e commit;
 - file esaminati;
 - comandi e test eseguiti;
+- candidati per esito del verify (`CONFIRMED`, `PLAUSIBLE`, `REFUTED`) e chi l'ha fatto
+  (`ReviewerSoft` o tu, inline);
 - limiti dell'analisi.
 
 ### Copertura dei requisiti
@@ -279,7 +461,7 @@ Per ogni finding usa questa struttura:
 
 1. titolo breve;
 2. severità;
-3. confidenza: alta, media o bassa;
+3. esito del verify: `CONFIRMED` o `PLAUSIBLE`; per un `PLAUSIBLE`, cosa rende incerto l'innesco;
 4. requisito o invariante violato;
 5. evidenza con file e righe;
 6. scenario concreto di riproduzione;
@@ -297,12 +479,13 @@ Elenca esclusivamente i casi che migliorerebbero materialmente la capacità di r
 
 ### Rischi residui e punti da verificare
 
-Separa chiaramente i rischi dimostrati dalle ipotesi ancora non verificabili.
+Separa chiaramente i rischi dimostrati dalle ipotesi ancora non verificabili. I sospetti senza uno
+scenario vanno qui, non tra i finding.
 
 ### Aspetti verificati senza anomalie
 
 Elenca brevemente le aree effettivamente controllate nelle quali non hai trovato problemi. Non usare
-formule generiche.
+formule generiche. Per ogni candidato `REFUTED` basta una riga con la prova che lo confuta.
 
 ### Conclusione operativa
 
@@ -316,7 +499,7 @@ Indica:
 ## Regole di qualità
 
 - Sii scettico ma accurato.
-- Privilegia pochi finding dimostrabili rispetto a molti sospetti.
+- Nessun finding senza uno scenario concreto, e nessun `PLAUSIBLE` scartato solo perché incerto.
 - Non fidarti delle conclusioni, dei commenti o dei test prodotti dall'agente precedente.
 - Verifica il comportamento partendo dal codice e dai requisiti.
 - Cita sempre percorsi e numeri di riga quando disponibili.

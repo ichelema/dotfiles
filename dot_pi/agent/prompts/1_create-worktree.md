@@ -1,6 +1,7 @@
 ---
-description: Crea un branch e un worktree pulito per implementare una o più issue Linear
-argument-hint: <source-branch> <issue-id...> <model>
+description: "Crea un branch e un worktree pulito per implementare una o più issue Linear"
+argument-hint: "<source-branch> <issue-id...> <model>"
+generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
 Crea un branch e un worktree separato del branch remoto indicato, relativo a una o più issue Linear.
