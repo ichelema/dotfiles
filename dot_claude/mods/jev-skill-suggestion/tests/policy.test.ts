@@ -203,6 +203,27 @@ test('the rerank can flip the winner, and its fits nouls can reject the whole sh
   expect(decide(wide, stray, skills, config).name).toBeNull()
 })
 
+test('a gate-exempt skill on top skips the gate, and then only the rerank can suggest it', () => {
+  const exempt: PolicyConfig = { ...config, gateExempt: new Set(['commit']) }
+  const prose = readWide(wideAnswer('commit', { commit: 0.6, pdf: 0.4 }, PROSE))!
+  expect(passesGate(prose, exempt)).toBe(true)
+  const fits = readRerank(rerankAnswer('commit', { commit: 0.95, pdf: 0.1 }))
+  expect(decide(prose, fits, skills, exempt, true)).toEqual({
+    name: 'commit',
+    reason: 'rerank of 2, fits 0.95, gate 0.10 skipped (exempt)',
+  })
+  const unfit = readRerank(rerankAnswer('commit', { commit: 0.2, pdf: 0.1 }))
+  expect(decide(prose, unfit, skills, exempt, true).name).toBeNull()
+  expect(decide(prose, null, skills, exempt)).toEqual({
+    name: null,
+    reason: 'commit is gate-exempt, but no rerank checked it',
+  })
+  // Exempt but not on top: the gate applies as before.
+  const notTop: PolicyConfig = { ...config, gateExempt: new Set(['pdf']) }
+  expect(passesGate(prose, notTop)).toBe(false)
+  expect(decide(prose, null, skills, notTop)).toEqual({ name: null, reason: 'needs a skill 0.10 < 0.3' })
+})
+
 test('with the rerank off the top of the ranking is suggested; with it attempted and failed, nothing is', () => {
   const wide = readWide(wideAnswer('powerpoint', DECK, ACTION))
   expect(decide(wide, null, skills, config)).toEqual({

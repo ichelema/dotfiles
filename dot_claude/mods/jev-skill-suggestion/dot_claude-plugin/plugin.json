@@ -124,6 +124,12 @@
       "description": "Comma-separated skill names the decision model is never offered; they stay reachable by typing /name",
       "default": ""
     },
+    "gateExempt": {
+      "type": "string",
+      "title": "Gate exempt",
+      "description": "Comma-separated skill names that skip the 'needs a skill' gate when they top the ranking; the rerank's fits check alone decides (guidance skills such as dataviz)",
+      "default": ""
+    },
     "timeoutMs": {
       "type": "number",
       "title": "Latency budget (ms)",

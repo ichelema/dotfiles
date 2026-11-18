@@ -196,6 +196,7 @@ With a key set, the prompt text and every candidate skill's name and one-line de
   excerptChars:     number  SKILL.md characters each candidate brings (default 700)
   alwaysListed:     string  comma-separated names that stay in the listing
   neverSuggested:   string  comma-separated names never offered to the decision model
+  gateExempt:       string  comma-separated names that skip the gate when they top the ranking (the rerank alone decides)
   timeoutMs:        number  latency budget per request (default 800)
   logDecisions:     boolean log each decision (default true)
 ```

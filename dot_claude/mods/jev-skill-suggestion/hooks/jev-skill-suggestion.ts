@@ -183,6 +183,7 @@ export const register: Register = (on, options) => {
     shortlist: Math.max(1, Math.round(number('shortlist', 3))),
     gateThreshold: number('gateThreshold', 0.3),
     fitsThreshold: number('fitsThreshold', 0.3),
+    gateExempt: parseNames(text('gateExempt', '')),
   }
 
   // The names every skill_listing attachment carried so far. Once non-empty,
@@ -190,14 +191,13 @@ export const register: Register = (on, options) => {
   // word on which skills the model is allowed to invoke, and `$.command.list()`
   // also names commands the model may not.
   const listed = new Set<string>()
-  // The main listing's names, kept in this file under $HOME between sessions:
-  // a session's first prompt runs before any listing, and without them the
-  // bundled skills (`builtin` in `$.command.list()`) could not be offered to
-  // it. `remembered` is that file as read once; `lastSaved` what was written.
-  // ponytail: one file for every session and project, last writer wins, so a first prompt may see a stale list; key it by project if that bites.
+  // The bundled skills the main listing carried, kept in this file under $HOME
+  // between sessions: a session's first prompt runs before any listing, and
+  // without them the bundled skills (`builtin` in `$.command.list()`) could not
+  // be offered to it. `remembered` is that file as read once.
+  // ponytail: $.fs has no rename, so two sessions writing at once can garble the file; the next listing rewrites it, and a first prompt that reads it garbled just offers no bundled skill.
   const listedFile = '.claude/jev-skill-suggestion.listed.json'
   let remembered: Set<string> | null = null
-  let lastSaved = ''
   // The skill suggested for the current prompt, so a skill.prompt that loads
   // it can be told apart from one the model reached for on its own.
   let suggested: string | null = null
@@ -235,12 +235,17 @@ export const register: Register = (on, options) => {
     const skills = parseListing(e.text)
     for (const skill of skills) listed.add(skill.name)
 
-    const names = JSON.stringify(skills.map((skill) => skill.name))
-    if (!e.agentId && skills.length > 0 && names !== lastSaved) {
-      lastSaved = names
-      const home = (await $.env.get('HOME')) ?? ''
+    // Only the bundled names: the same in every project, so sessions do not
+    // undo each other's file. Compared with the disk, not with memory, so a
+    // garbled file is put right by the next listing of any session.
+    const home = (await $.env.get('HOME')) ?? ''
+    if (!e.agentId && skills.length > 0 && home) {
       try {
-        if (home) await $.fs.write(`${home}/${listedFile}`, names)
+        const builtin = new Set((await $.command.list()).filter((c) => c.source === 'builtin').map((c) => c.name))
+        const names = JSON.stringify(skills.map((skill) => skill.name).filter((name) => builtin.has(name)).sort())
+        const file = `${home}/${listedFile}`
+        const onDisk = (await $.fs.exists(file)) ? await $.fs.read(file) : ''
+        if (onDisk !== names) await $.fs.write(file, names)
       } catch (error) {
         $.ui.log(`[jev-skill-suggestion] could not save the listed names: ${String(error)}`)
       }

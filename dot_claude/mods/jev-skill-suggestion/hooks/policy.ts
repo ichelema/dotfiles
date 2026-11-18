@@ -587,6 +587,13 @@ export interface PolicyConfig {
   gateThreshold: number
   /** The best `fits` under which the whole shortlist is dropped. */
   fitsThreshold: number
+  /**
+   * Skills that skip the gate when they top the ranking, so the rerank's
+   * `fits` alone decides: a guidance skill (`dataviz`) improves an answer the
+   * model could write anyway, which the gate's three questions always read
+   * as prose.
+   */
+  gateExempt?: ReadonlySet<string>
 }
 
 /** The shortlist the second request reads: the top of the ranking, by name. */
@@ -603,7 +610,13 @@ export function shortlistOf(wide: Wide, skills: readonly Skill[], count: number)
 
 /** Whether the first request's answer is worth a second look at all. */
 export function passesGate(wide: Wide, config: PolicyConfig): boolean {
-  return wide.gate === null || wide.gate >= config.gateThreshold
+  return wide.gate === null || wide.gate >= config.gateThreshold || gateExempted(wide, config)
+}
+
+/** Whether the gate is passed only because the top of the ranking is exempt from it. */
+export function gateExempted(wide: Wide, config: PolicyConfig): boolean {
+  const top = wide.ranked[0]?.name
+  return wide.gate !== null && wide.gate < config.gateThreshold && top !== undefined && (config.gateExempt?.has(top) ?? false)
 }
 
 export interface Suggestion {
@@ -642,6 +655,11 @@ export function decide(
   if (shortlist.length === 0) return { name: null, reason: 'nothing ranked' }
 
   if (!rerank && rerankAttempted) return { name: null, reason: 'rerank gave no answer; no suggestion' }
+  // An exempt skill skipped the gate on the rerank's word: without one, nothing checked it.
+  const exempted = gateExempted(wide, config)
+  if (exempted && !rerank) {
+    return { name: null, reason: `${wide.ranked[0]?.name} is gate-exempt, but no rerank checked it` }
+  }
 
   if (rerank) {
     const values = Object.values(rerank.fits)
@@ -656,7 +674,7 @@ export function decide(
       }
       return {
         name: rerank.winner,
-        reason: `rerank of ${shortlist.length}${fit === undefined ? '' : `, fits ${fit.toFixed(2)}`}`,
+        reason: `rerank of ${shortlist.length}${fit === undefined ? '' : `, fits ${fit.toFixed(2)}`}${exempted ? `, gate ${(wide.gate as number).toFixed(2)} skipped (exempt)` : ''}`,
       }
     }
     return { name: null, reason: `rerank named ${rerank.winner}, not on the shortlist` }
