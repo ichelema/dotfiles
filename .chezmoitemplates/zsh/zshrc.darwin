@@ -50,6 +50,7 @@ export PATH
 export ENABLE_LSP_TOOL=1
 
 alias claude='claude --system-prompt-file "$HOME/.claude/system-prompt.md" --disallowedTools="DesignSync,NotebookEdit,PowerShell,Artifact,ArtifactComments,ArtifactData,ArtifactCheck,SendFeedback"'
+alias claude-art='command claude --system-prompt-file "$HOME/.claude/system-prompt.md" --disallowedTools="DesignSync,NotebookEdit,PowerShell,SendFeedback"'
 
 # Claude Code dentro herdr: herdr ridisegna le immagini kitty con a=p, ma Claude Code accetta solo
 # kitty e Ghostty (herdr risponde "libghostty")

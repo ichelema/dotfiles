@@ -63,6 +63,7 @@ export ENABLE_LSP_TOOL=1
 export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent.socket"
 
 alias claude='claude --system-prompt-file "$HOME/.claude/system-prompt.md" --disallowedTools="DesignSync,NotebookEdit,PowerShell,Artifact,ArtifactComments,ArtifactData,ArtifactCheck,SendFeedback"'
+alias claude-art='command claude --system-prompt-file "$HOME/.claude/system-prompt.md" --disallowedTools="DesignSync,NotebookEdit,PowerShell,SendFeedback"'
 
 # Claude Code dentro herdr: herdr ridisegna le immagini kitty con a=p, ma Claude Code accetta solo
 # kitty e Ghostty (herdr risponde "libghostty"). Fuori da herdr WezTerm non gestisce i placeholder U=1
