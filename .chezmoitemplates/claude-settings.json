@@ -159,7 +159,7 @@
     "claude-api": "off",
     "claude-in-chrome": "off",
     "code-review": "off",
-    "dataviz": "off",
+    "dataviz": "on",
     "debug": "off",
     "deep-research": "off",
     "design-sync": "off",
