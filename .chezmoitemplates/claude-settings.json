@@ -15,7 +15,10 @@
     "MCP_TIMEOUT": "60000",
     "ENABLE_CLAUDEAI_MCP_SERVERS": "false",
     "CLAUDE_CODE_PLUGIN_DIRS": "~/.claude/mods",
-{{- if ne .chezmoi.os "darwin" }}
+{{- /* sul VPS la root è piccola: i temporanei vanno sul disco dati, come ~/.cache e ~/.npm */}}
+{{- if index . "vps" }}
+    "CLAUDE_CODE_TMPDIR": "/mnt/data/home-offload/claude-tmp",
+{{- else if ne .chezmoi.os "darwin" }}
     "CLAUDE_CODE_TMPDIR": "{{ .chezmoi.homeDir }}/.claude/tmp",
 {{- end }}
 {{- /* 0 = classificatore locale dell'auto mode: il server-side non giudica i Bash dei subagenti gpt-bridge, a cui risponde la mod senza richiesta all'API */}}

@@ -4,7 +4,7 @@ import { expect, test } from 'claude-code/testing'
 test('rm under ~/.claude/tmp runs, anything reaching outside it is still held', async ($, on) => {
   on('session.start', () => ({ cwd: '/w' }) as never)
   // As claude.exe sees it on MSYS2: lowercased, while commands write /e/msys64/home/Sphynx.
-  on('env.get', () => ({ value: 'e:\\msys64\\home\\sphynx' }) as never)
+  on('env.get', (_, e) => ({ value: e.name === 'HOME' ? 'e:\\msys64\\home\\sphynx' : undefined }) as never)
   on('tool.call', () => ({ result: { ran: true } as never }))
   await $.session.start({ cwd: '/w', surface: null, isInteractive: false } as never)
   const run = (command: string) => $.tool.call({ tool: 'Bash', tool_use_id: command, command } as never)
@@ -32,10 +32,45 @@ test('rm under ~/.claude/tmp runs, anything reaching outside it is still held', 
     expect({ command, r: await run(command) }).toMatchObject({ command, r: { deny: expect.stringContaining('needs a person') } })
 })
 
+// On the VPS CLAUDE_CODE_TMPDIR moves the scratchpads to the data disk.
+test('rm under CLAUDE_CODE_TMPDIR runs, its root and anything outside it are held', async ($, on) => {
+  const env: Record<string, string> = { HOME: '/home/u', CLAUDE_CODE_TMPDIR: '/mnt/data/home-offload/claude-tmp/' }
+  on('session.start', () => ({ cwd: '/w' }) as never)
+  on('env.get', (_, e) => ({ value: env[e.name] }) as never)
+  on('tool.call', () => ({ result: { ran: true } as never }))
+  await $.session.start({ cwd: '/w', surface: null, isInteractive: false } as never)
+  const run = (command: string) => $.tool.call({ tool: 'Bash', tool_use_id: command, command } as never)
+
+  for (const command of [
+    'rm -rf /mnt/data/home-offload/claude-tmp/claude-1001/-w/s1/scratchpad/target',
+    'cd /mnt/data/home-offload/claude-tmp/x && rm -rf build',
+    'rm -rf ~/.claude/tmp/x /home/u/.claude/tmp/y',
+  ])
+    expect({ command, r: await run(command) }).toMatchObject({ command, r: { result: { ran: true } } })
+
+  for (const command of [
+    'rm -rf /mnt/data/home-offload/claude-tmp',
+    'rm -rf /mnt/data/home-offload/claude-tmp/',
+    'rm -rf /mnt/data/home-offload/claude-tmp/../.cache',
+    'rm -rf /mnt/data/home-offload/claude-tmpfoo/x',
+    'rm -rf /mnt/data/home-offload/claude-tmp/x /mnt/data/home-offload/.cache',
+  ])
+    expect({ command, r: await run(command) }).toMatchObject({ command, r: { deny: expect.stringContaining('needs a person') } })
+})
+
+test('CLAUDE_CODE_TMPDIR set to / exempts nothing', async ($, on) => {
+  on('session.start', () => ({ cwd: '/w' }) as never)
+  on('env.get', (_, e) => ({ value: e.name === 'CLAUDE_CODE_TMPDIR' ? '/' : undefined }) as never)
+  on('tool.call', () => ({ result: { ran: true } as never }))
+  await $.session.start({ cwd: '/w', surface: null, isInteractive: false } as never)
+  const r = await $.tool.call({ tool: 'Bash', tool_use_id: 'x', command: 'rm -rf /etc/x' } as never)
+  expect(r).toMatchObject({ deny: expect.stringContaining('needs a person') })
+})
+
 // Trinity's reviewer deletes its scratch folder before `git worktree remove`.
 test('rm of .review-tmp inside a review worktree runs, nothing else does', async ($, on) => {
   on('session.start', () => ({ cwd: '/w' }) as never)
-  on('env.get', () => ({ value: 'e:\\msys64\\home\\sphynx' }) as never)
+  on('env.get', (_, e) => ({ value: e.name === 'HOME' ? 'e:\\msys64\\home\\sphynx' : undefined }) as never)
   on('tool.call', () => ({ result: { ran: true } as never }))
   await $.session.start({ cwd: '/w', surface: null, isInteractive: false } as never)
   const run = (command: string) => $.tool.call({ tool: 'Bash', tool_use_id: command, command } as never)

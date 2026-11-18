@@ -30,7 +30,8 @@ let where = "pane"; // "band" when the terminal is too narrow for the pane
 // risky command is refused with no queue.
 let isInteractive = true;
 // rm under ~/.claude/tmp (the agent's scratch folder) runs without a hold.
-// session.start adds HOME's absolute forms (E:/… and /e/… on MSYS2).
+// session.start adds HOME's absolute forms (E:/… and /e/… on MSYS2) and
+// CLAUDE_CODE_TMPDIR, where the scratchpads live when it is set elsewhere.
 const tmpPrefixes = ["~/.claude/tmp/", "$HOME/.claude/tmp/", "${HOME}/.claude/tmp/"];
 // rm of .review-tmp/ inside a review worktree runs without a hold: Trinity's
 // reviewer (3_independent-review.md) deletes it before `git worktree remove`.
@@ -48,6 +49,15 @@ export function register(on) {
       }
     } catch {
       // only the ~ and $HOME forms are exempt
+    }
+    try {
+      // No trailing /, and "/" alone is dropped: it would exempt every path.
+      const tmpDir = (await $.env.get("CLAUDE_CODE_TMPDIR"))?.replace(/\\/g, "/").replace(/\/+$/, "");
+      if (tmpDir) {
+        tmpPrefixes.push(`${tmpDir}/`);
+      }
+    } catch {
+      // only the ~/.claude/tmp forms are exempt
     }
     return next(e);
   });
