@@ -70,7 +70,6 @@ export default function (pi: ExtensionAPI) {
           const statuses = footerData.getExtensionStatuses();
           const advisor = statuses.get("q-advisor");
           const extensions = [
-            statuses.get("ponytail"),
             advisorModel
               ? advisor?.replace(
                   /Advisor: (\$.*)$/,

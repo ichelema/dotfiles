@@ -233,18 +233,7 @@ describe("nord-footer integration", () => {
       color === "muted" ? `\x1b[90m${text}\x1b[39m` : text,
     );
 
-    footer.setExtensionStatus("ponytail", "○ 🐴 ponytail: ⚡ FULL");
     footer.setExtensionStatus("q-advisor", "│ Advisor: $0.00");
-    expect(footer.component.render(80)[0]).toContain("🐴 ponytail: ⚡ FULL");
-    expect(footer.component.render(80)[0]).toContain(
-      "Advisor:\x1b[90m deepseek/deepseek-v4-flash $0.00\x1b[39m",
-    );
-
-    footer.setExtensionStatus("ponytail", "○ 🐴 ponytail: 🔥 ULTRA");
-    expect(footer.component.render(80)[0]).toContain("🐴 ponytail: 🔥 ULTRA");
-
-    footer.setExtensionStatus("ponytail", "");
-    expect(footer.component.render(80)[0]).not.toContain("🐴 ponytail:");
     expect(footer.component.render(80)[0]).toContain(
       "Advisor:\x1b[90m deepseek/deepseek-v4-flash $0.00\x1b[39m",
     );

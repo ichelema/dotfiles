@@ -52,15 +52,6 @@
     "npm:pi-omplike-advisor",
     "npm:@juancrg90/nightfox-themes",
     "npm:@pi-archimedes/image-paste",
-    {
-      "source": "git:github.com/DietrichGebert/ponytail",
-      "skills": [
-        "+skills/ponytail-help/SKILL.md",
-        "+skills/ponytail-gain/SKILL.md",
-        "+skills/ponytail-debt/SKILL.md",
-        "+skills/ponytail-audit/SKILL.md"
-      ]
-    },
     "npm:@tintinweb/pi-subagents",
     "npm:pi-web-search",
     "npm:@sting8k/pi-vcc",
