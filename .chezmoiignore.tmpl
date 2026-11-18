@@ -92,6 +92,9 @@ CLAUDE.md
 .config/navi/**
 .local/share/navi
 .local/share/navi/**
+# TypeScript 6 per typescript-language-server (mise npm:typescript@6), solo Linux
+.node_modules
+.node_modules/**
 {{- end }}
 {{- if and (ne .chezmoi.os "linux") (ne .chezmoi.os "darwin") }}
 # zsh: ponte ZDOTDIR, API key e funzioni comuni a Linux e macOS (non Windows)
