@@ -72,6 +72,9 @@
     "npm:pi-diet-lsp",
     "npm:pi-btw"
   ],
+{{- if eq .chezmoi.os "windows" }}
+  "shellPath": "D:\\msys64\\usr\\bin\\bash.exe",
+{{- end }}
   "showCacheMissNotices": true,
   "steeringMode": "one-at-a-time",
   "terminal": {
