@@ -273,6 +273,10 @@ alias q='noglob q'   # così "?" e "*" nella domanda non vengono espansi da zsh
 
 # pi con la chiave Anthropic (riusa HINDSIGHT_ANTHROPIC_API_KEY da api-keys.zsh)
 alias pi='ANTHROPIC_API_KEY="$HINDSIGHT_ANTHROPIC_API_KEY" command pi'
+{{- if eq .chezmoi.hostname "ov-beb073" }}
+# via SSH pi non vede un display: DISPLAY finto così il plugin image-paste usa lo shim xclip (clipboard del PC via tunnel 7777/7778)
+[[ -n $SSH_CONNECTION && -z $DISPLAY ]] && alias pi='DISPLAY=:0 ANTHROPIC_API_KEY="$HINDSIGHT_ANTHROPIC_API_KEY" command pi'
+{{- end }}
 
 # zeshij abbreviato: senza argomenti apre il picker, con argomenti li passa (zes connect nome, zes list)
 alias zes='zeshij'
