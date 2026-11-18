@@ -190,6 +190,14 @@ export const register: Register = (on, options) => {
   // word on which skills the model is allowed to invoke, and `$.command.list()`
   // also names commands the model may not.
   const listed = new Set<string>()
+  // The main listing's names, kept in this file under $HOME between sessions:
+  // a session's first prompt runs before any listing, and without them the
+  // bundled skills (`builtin` in `$.command.list()`) could not be offered to
+  // it. `remembered` is that file as read once; `lastSaved` what was written.
+  // ponytail: one file for every session and project, last writer wins, so a first prompt may see a stale list; key it by project if that bites.
+  const listedFile = '.claude/jev-skill-suggestion.listed.json'
+  let remembered: Set<string> | null = null
+  let lastSaved = ''
   // The skill suggested for the current prompt, so a skill.prompt that loads
   // it can be told apart from one the model reached for on its own.
   let suggested: string | null = null
@@ -226,6 +234,17 @@ export const register: Register = (on, options) => {
 
     const skills = parseListing(e.text)
     for (const skill of skills) listed.add(skill.name)
+
+    const names = JSON.stringify(skills.map((skill) => skill.name))
+    if (!e.agentId && skills.length > 0 && names !== lastSaved) {
+      lastSaved = names
+      const home = (await $.env.get('HOME')) ?? ''
+      try {
+        if (home) await $.fs.write(`${home}/${listedFile}`, names)
+      } catch (error) {
+        $.ui.log(`[jev-skill-suggestion] could not save the listed names: ${String(error)}`)
+      }
+    }
 
     // With the mod loading skills itself, a listing that still names any is
     // context the setup command would have saved: say so once.
@@ -368,7 +387,22 @@ export const register: Register = (on, options) => {
     }
     // Loading the skill itself, the mod is not bound to what the engine would
     // list: a skill hidden with skillOverrides is still a candidate.
-    const skills = catalog(commands, injectContent ? new Set() : listed, neverSuggested)
+    // Before this session's listing, the last session's names stand in for it.
+    if (listed.size === 0 && remembered === null) {
+      remembered = new Set()
+      const home = (await $.env.get('HOME')) ?? ''
+      try {
+        const file = `${home}/${listedFile}`
+        if (home && (await $.fs.exists(file))) {
+          const saved: unknown = JSON.parse(await $.fs.read(file))
+          if (Array.isArray(saved)) for (const name of saved) if (typeof name === 'string') remembered.add(name)
+        }
+      } catch (error) {
+        $.ui.log(`[jev-skill-suggestion] could not read the listed names: ${String(error)}`)
+      }
+    }
+    const skillNames = listed.size > 0 ? listed : (remembered ?? new Set<string>())
+    const skills = catalog(commands, injectContent ? new Set() : listed, neverSuggested, skillNames)
     if (skills.length === 0) {
       if (logDecisions) $.ui.log('[jev-skill-suggestion] no candidate skills; nothing to suggest')
       return next(e)

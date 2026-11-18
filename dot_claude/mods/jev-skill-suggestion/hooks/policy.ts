@@ -139,16 +139,22 @@ export function parseListing(text: string): Skill[] {
  * names configured out. When the engine's listing has been seen, only skills
  * it listed are offered: the listing is the engine's word on which skills the
  * model is allowed to invoke.
+ *
+ * `$.command.list()` reports Claude Code's bundled skills (`dataviz`, `loop`)
+ * as `builtin` too, like `/help`: only the engine's skill listing tells them
+ * apart, so a `builtin` is offered when `skillNames` (the names a listing
+ * carried) has it.
  */
 export function catalog(
   commands: readonly { name: string; description: string; source: string }[],
   listed: ReadonlySet<string>,
   excluded: ReadonlySet<string>,
+  skillNames: ReadonlySet<string> = new Set(),
 ): Skill[] {
   const seen = new Set<string>()
   const skills: Skill[] = []
   for (const command of commands) {
-    if (command.source === 'builtin') continue
+    if (command.source === 'builtin' && !skillNames.has(command.name)) continue
     if (listed.size > 0 && !listed.has(command.name)) continue
     if (excluded.has(command.name) || seen.has(command.name)) continue
     seen.add(command.name)

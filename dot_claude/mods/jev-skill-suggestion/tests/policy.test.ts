@@ -128,6 +128,18 @@ test('the catalog drops built-ins and excluded names, and narrows to the listing
   expect(catalog(commands, new Set(['lint']), new Set()).map((s) => s.name)).toEqual(['lint'])
 })
 
+test('a built-in is offered only when a skill listing carried it: bundled skills yes, commands no', () => {
+  const commands = [
+    { name: 'help', description: 'Show help', source: 'builtin' },
+    { name: 'dataviz', description: 'Chart guidance', source: 'builtin' },
+    { name: 'commit', description: 'Create a git commit', source: 'plugin' },
+  ]
+  const listing = new Set(['dataviz', 'commit'])
+  expect(catalog(commands, new Set(), new Set(), listing).map((s) => s.name)).toEqual(['dataviz', 'commit'])
+  expect(catalog(commands, listing, parseNames('dataviz'), listing).map((s) => s.name)).toEqual(['commit'])
+  expect(catalog(commands, new Set(), new Set(), new Set()).map((s) => s.name)).toEqual(['commit'])
+})
+
 test('the first request ranks every skill and asks the three gate nouls, boolean on the Gateway', () => {
   const typesafe = wideQuestions('typesafe', skills) as Record<
     string,
