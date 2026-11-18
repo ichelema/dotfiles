@@ -56,9 +56,10 @@ model_list:
       reasoning_effort:
         effort: max
 
-  # GPT-6.1 Sol: slug gpt-6.1-sol verificato il 2026-11-11 sullo stesso endpoint
-  # (context_window 500000, max_context_window 872000, effort fino a ultra).
-  - model_name: claude-gpt-6-1-sol-high
+  # GPT-6.2 Sol (sostituisce 6.1 Sol): slug gpt-6.2-sol verificato il 2026-11-18
+  # sullo stesso endpoint (context_window 500000, max_context_window 872000,
+  # default_reasoning_level low, effort fino a ultra).
+  - model_name: claude-gpt-6-2-sol-high
     model_info:
       mode: responses
       max_input_tokens: 794000
@@ -68,11 +69,11 @@ model_list:
       cache_creation_input_token_cost: 0
       cache_read_input_token_cost: 0
     litellm_params:
-      model: chatgpt/gpt-6.1-sol
+      model: chatgpt/gpt-6.2-sol
       reasoning_effort:
         effort: high
 
-  - model_name: claude-gpt-6-1-sol-xhigh
+  - model_name: claude-gpt-6-2-sol-xhigh
     model_info:
       mode: responses
       max_input_tokens: 794000
@@ -82,12 +83,12 @@ model_list:
       cache_creation_input_token_cost: 0
       cache_read_input_token_cost: 0
     litellm_params:
-      model: chatgpt/gpt-6.1-sol
+      model: chatgpt/gpt-6.2-sol
       reasoning_effort:
         effort: xhigh
 
   # dict obbligatorio: 'max' come stringa verrebbe scartato
-  - model_name: claude-gpt-6-1-sol-max
+  - model_name: claude-gpt-6-2-sol-max
     model_info:
       mode: responses
       max_input_tokens: 794000
@@ -97,7 +98,7 @@ model_list:
       cache_creation_input_token_cost: 0
       cache_read_input_token_cost: 0
     litellm_params:
-      model: chatgpt/gpt-6.1-sol
+      model: chatgpt/gpt-6.2-sol
       reasoning_effort:
         effort: max
 
@@ -172,16 +173,16 @@ model_list:
         effort: max
 
   # =========================
-  # GPT-6 Astra (via ChatGPT Max OAuth)
+  # GPT-6.2 Astra (via ChatGPT Max OAuth, sostituisce GPT-6 Astra)
   # =========================
-  # Dati verificati il 2026-09-26 su:
-  #   GET https://chatgpt.com/backend-api/codex/models?client_version=1.94.0
-  #   slug gpt-6-astra, context_window 272000 (max_context_window 872000),
-  #   default_reasoning_level medium, input_modalities text+image.
+  # Dati verificati il 2026-11-18 su:
+  #   GET https://chatgpt.com/backend-api/codex/models?client_version=1.99.0
+  #   slug gpt-6.2-astra, context_window 272000 (max_context_window 872000),
+  #   default_reasoning_level low, input_modalities text+image.
   # Effort ammessi (supported_reasoning_levels): low, medium, high, xhigh,
   # max, ultra (ultra = massimo reasoning con delega automatica dei task).
 
-  - model_name: claude-gpt-6-astra-low
+  - model_name: claude-gpt-6-2-astra-low
     model_info:
       mode: responses
       max_input_tokens: 272000
@@ -191,11 +192,11 @@ model_list:
       cache_creation_input_token_cost: 0
       cache_read_input_token_cost: 0
     litellm_params:
-      model: chatgpt/gpt-6-astra
+      model: chatgpt/gpt-6.2-astra
       reasoning_effort:
         effort: low
 
-  - model_name: claude-gpt-6-astra-medium
+  - model_name: claude-gpt-6-2-astra-medium
     model_info:
       mode: responses
       max_input_tokens: 272000
@@ -205,11 +206,11 @@ model_list:
       cache_creation_input_token_cost: 0
       cache_read_input_token_cost: 0
     litellm_params:
-      model: chatgpt/gpt-6-astra
+      model: chatgpt/gpt-6.2-astra
       reasoning_effort:
         effort: medium
 
-  - model_name: claude-gpt-6-astra-high
+  - model_name: claude-gpt-6-2-astra-high
     model_info:
       mode: responses
       max_input_tokens: 272000
@@ -219,11 +220,11 @@ model_list:
       cache_creation_input_token_cost: 0
       cache_read_input_token_cost: 0
     litellm_params:
-      model: chatgpt/gpt-6-astra
+      model: chatgpt/gpt-6.2-astra
       reasoning_effort:
         effort: high
 
-  - model_name: claude-gpt-6-astra-xhigh
+  - model_name: claude-gpt-6-2-astra-xhigh
     model_info:
       mode: responses
       max_input_tokens: 272000
@@ -233,11 +234,11 @@ model_list:
       cache_creation_input_token_cost: 0
       cache_read_input_token_cost: 0
     litellm_params:
-      model: chatgpt/gpt-6-astra
+      model: chatgpt/gpt-6.2-astra
       reasoning_effort:
         effort: xhigh
 
-  - model_name: claude-gpt-6-astra-max
+  - model_name: claude-gpt-6-2-astra-max
     model_info:
       mode: responses
       max_input_tokens: 272000
@@ -247,11 +248,11 @@ model_list:
       cache_creation_input_token_cost: 0
       cache_read_input_token_cost: 0
     litellm_params:
-      model: chatgpt/gpt-6-astra
+      model: chatgpt/gpt-6.2-astra
       reasoning_effort:
         effort: max
 
-  - model_name: claude-gpt-6-astra-ultra
+  - model_name: claude-gpt-6-2-astra-ultra
     model_info:
       mode: responses
       max_input_tokens: 272000
@@ -261,7 +262,7 @@ model_list:
       cache_creation_input_token_cost: 0
       cache_read_input_token_cost: 0
     litellm_params:
-      model: chatgpt/gpt-6-astra
+      model: chatgpt/gpt-6.2-astra
       reasoning_effort:
         effort: ultra
 
