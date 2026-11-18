@@ -161,7 +161,7 @@
     "batch": "off",
     "claude-api": "on",
     "claude-in-chrome": "off",
-    "code-review": "on",
+    "code-review": "off",
     "dataviz": "on",
     "debug": "off",
     "deep-research": "off",
@@ -174,8 +174,8 @@
     "run": "on",
     "run-skill-generator": "off",
     "schedule": "on",
-    "security-review": "on",
-    "simplify": "on",
+    "security-review": "off",
+    "simplify": "off",
     "update-config": "off",
     "verify": "off",
     "workflow-authoring": "on"
@@ -259,7 +259,7 @@
       "gateExempt": "dataviz",
       "inject": "suggest",
       "logDecisions": true,
-      "neverSuggested": "trinity:dream,trinity:nota_del_giorno,trinity:promote,trinity:reflect,trinity:workflow:0_create-issue,trinity:workflow:1_create-worktree,trinity:workflow:2_work-issue,trinity:workflow:3_independent-review,trinity:workflow:4_remove-worktree,trinity:workflow:5_review-fix-loop"
+      "neverSuggested": "trinity:dream,trinity:nota_del_giorno,trinity:promote,trinity:reflect,trinity:workflow:0_create-issue,trinity:workflow:1_create-worktree,trinity:workflow:2_work-issue,trinity:workflow:2_work-simplify,trinity:workflow:2_work-verify,trinity:workflow:3_independent-review,trinity:workflow:4_review-fix-loop,trinity:workflow:5_remove-worktree"
     } }{{ end }}
   }
 }
