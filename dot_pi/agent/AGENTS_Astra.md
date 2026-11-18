@@ -1,4 +1,4 @@
-# Supplemento GPT-6 Astra
+# Supplemento GPT-6.2 Astra
 
 Queste indicazioni integrano `AGENTS.md` entro i suoi vincoli
 e si applicano solo quando sei l'agente principale.

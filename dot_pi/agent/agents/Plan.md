@@ -1,7 +1,7 @@
 ---
 name: Plan
 description: Senior software architect for precise implementation planning
-model: openai-codex/gpt-6.1-sol
+model: openai-codex/gpt-6.2-sol
 thinking: high
 tools: read, bash, grep, find, ls
 prompt_mode: append

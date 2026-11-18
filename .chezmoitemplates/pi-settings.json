@@ -12,10 +12,10 @@
   ],
   "enabledModels": [
     "deepseek/deepseek-flash",
-    "openai-codex/gpt-6.1-sol",
+    "openai-codex/gpt-6.2-sol",
     "openai-codex/gpt-6.1-terra",
     "openai-codex/gpt-6-luna",
-    "openai-codex/gpt-6-astra",
+    "openai-codex/gpt-6.2-astra",
     "openrouter/moonshotai/kimi-k3.1-pro",
     "openrouter/z-ai/glm-5.3-flash",
     "openrouter/z-ai/glm-5.3",

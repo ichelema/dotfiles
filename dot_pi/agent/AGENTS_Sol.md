@@ -1,4 +1,4 @@
-# Supplemento GPT-5.6 Sol
+# Supplemento GPT-6.2 Sol
 
 Queste indicazioni integrano `AGENTS.md` entro i suoi vincoli
 e si applicano solo quando sei l'agente principale.

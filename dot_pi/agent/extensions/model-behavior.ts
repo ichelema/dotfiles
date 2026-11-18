@@ -6,8 +6,8 @@ import {
 } from "@earendil-works/pi-coding-agent";
 
 const files: Record<string, string> = {
-	"gpt-6-astra": "AGENTS_Astra.md",
-	"gpt-6.1-sol": "AGENTS_Sol.md",
+	"gpt-6.2-astra": "AGENTS_Astra.md",
+	"gpt-6.2-sol": "AGENTS_Sol.md",
 	"claude-sonnet-5-5": "AGENTS_SONNET.md",
 	"claude-fable-5-2": "AGENTS_FABLE.md",
 	"claude-opus-5-5": "AGENTS_OPUS.md",
