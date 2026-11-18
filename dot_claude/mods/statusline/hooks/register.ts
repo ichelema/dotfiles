@@ -27,7 +27,6 @@ const GIT_STAT_MS = 120_000
 const TITLE_MS = 60_000
 
 export type Data = {
-  ponytail?: string
   model: string
   modelId: string
   effort?: string
@@ -89,9 +88,6 @@ const truncate = (s: string, max: number) => (s.length > max ? `${s.slice(0, max
 
 export const line = (d: Data, now: number) => {
   const out: string[] = []
-  if (d.ponytail && d.ponytail !== 'off')
-    out.push(paint(C.green, d.ponytail === 'full' ? '[PONYTAIL]' : `[PONYTAIL:${d.ponytail.toUpperCase()}]`))
-
   const effort = d.effort ?? 'medium'
   const [color, label] = EFFORT[effort] ?? [C.green, effort.charAt(0).toUpperCase() + effort.slice(1)]
   const model = d.model.replace(/\s*\(([0-9.]*[kKmM]*) context\)/, ' $1')
@@ -146,7 +142,6 @@ export const prettyModel = (id: string) => {
 // ── Stato della sessione (un processo Claude Code = una sessione principale) ──
 let current: string | undefined
 let isWin = false
-let configDir = ''
 let transcript = ''
 let sessionId = ''
 let title: string | undefined
@@ -223,12 +218,11 @@ const refresh = ($: EngineInterface): Promise<void> => {
 const draw = async ($: EngineInterface) => {
   try {
     const now = await $.clock.now()
-    const [cwd, model, usage, settings, flag] = await Promise.all([
+    const [cwd, model, usage, settings] = await Promise.all([
       $.session.cwd(),
       $.session.model(),
       $.session.usage(),
       $.settings.read(),
-      readOr($, `${configDir}/ponytail-state/${sessionId}`),
     ])
     const branch = await branchOf($, cwd)
     if (branch && now - statAt >= GIT_STAT_MS) {
@@ -245,7 +239,6 @@ const draw = async ($: EngineInterface) => {
     const s = settings as { fastMode?: boolean; effortLevel?: string }
     current = line(
         {
-          ponytail: flag?.trim(),
           model: prettyModel(model),
           modelId: modelId || model,
           effort: effort ?? s.effortLevel,
@@ -283,18 +276,11 @@ export const register: Register = on => {
     try {
       const home = (await $.env.get('HOME'))?.replace(/\\/g, '/') ?? ''
       isWin = /^[A-Za-z]:/.test(home)
-      configDir = native((await $.env.get('CLAUDE_CONFIG_DIR')) ?? `${home}/.claude`)
       if (!timerOn) {
         $.clock.every(REFRESH_MS, () => void refresh($))
         timerOn = true
       }
     } catch {}
-    void refresh($)
-    return next(e)
-  })
-
-  // Il badge ponytail cambia al prompt: ridisegna subito.
-  on('classic.UserPromptSubmit', ($, e, next) => {
     void refresh($)
     return next(e)
   })

@@ -18,7 +18,6 @@ test('compone la riga con tutti i segmenti', async () => {
   const out = plain(
     line(
       {
-        ponytail: 'ultra',
         model: 'Opus 5.5 (1M context)',
         modelId: 'claude-opus-5-5',
         effort: 'xhigh',
@@ -39,11 +38,11 @@ test('compone la riga con tutti i segmenti', async () => {
   )
   const hhmm = `${String(resets.getHours()).padStart(2, '0')}:${String(resets.getMinutes()).padStart(2, '0')}`
   expect(out).toBe(
-    `[PONYTAIL:ULTRA] | Opus 5.5 1M XHigh ⚡ | Trinity@master (+12 -3) | Session: una sessione con un titolo mol… | 50k/200k (25%) | cache 90k↓/10k↑ (90%) ⏳30m | 5h 43% @${hhmm} | 7d -`,
+    `Opus 5.5 1M XHigh ⚡ | Trinity@master (+12 -3) | Session: una sessione con un titolo mol… | 50k/200k (25%) | cache 90k↓/10k↑ (90%) ⏳30m | 5h 43% @${hhmm} | 7d -`,
   )
 })
 
-test('senza flag ponytail né cache: niente badge né segmento cache', async () => {
+test('senza cache: niente segmento cache', async () => {
   const out = plain(
     line(
       { model: 'Opus 5.5', modelId: '', fast: false, cwd: '/home/x/repo', tokens: 0, window: 200_000, cacheRead: 0, cacheCreate: 0, rateLimits: [] },
@@ -55,7 +54,6 @@ test('senza flag ponytail né cache: niente badge né segmento cache', async () 
 
 test('a SessionStart scrive la riga con i dati della sessione', async ($, on) => {
   const files: Record<string, string> = {
-    'cfg/ponytail-state/abcdef1234': 'full\n',
     'AI/Repo/.git/HEAD': 'ref: refs/heads/feat/x\n',
   }
   on('env.get', (_, e) => ({ value: e.name === 'HOME' ? 'E:\\home' : '/e/cfg' }) as never)
@@ -88,7 +86,7 @@ test('a SessionStart scrive la riga con i dati della sessione', async ($, on) =>
   await $.classic.SessionStart({ source: 'startup', session_id: 'abcdef1234', transcript_path: 'E:\\t.jsonl' } as never)
 
   expect(plain(await written)).toBe(
-    '[PONYTAIL] | Opus 5.5 High | Repo@feat/x (+5 -1) | Session: rinominata "bis" | 2k/200k (0%) | 5h - | 7d -',
+    'Opus 5.5 High | Repo@feat/x (+5 -1) | Session: rinominata "bis" | 2k/200k (0%) | 5h - | 7d -',
   )
 })
 

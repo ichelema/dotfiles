@@ -266,21 +266,6 @@ fi
 # ===== Build single-line output =====
 out=""
 
-# ===== Ponytail mode badge (stato per sessione, scritto dagli hook ponytail di Trinity) =====
-ponytail_flag="${claude_config_dir}/ponytail-state/${session_id}"
-if [ -f "$ponytail_flag" ]; then
-	p_mode=""
-	read -r p_mode <"$ponytail_flag"
-	p_mode="${p_mode//[[:space:]]/}"
-	if [ -n "$p_mode" ] && [ "$p_mode" != "off" ]; then
-		if [ "$p_mode" = "full" ]; then
-			p_badge="[PONYTAIL]"
-		else
-			p_badge="[PONYTAIL:${p_mode^^}]"
-		fi
-		out+="${green}${p_badge}${reset} ${dim}|${reset} "
-	fi
-fi
 out+="${blue}${model_name}${reset} "
 case "$effort_level" in
 low) out+="${dim}Low${reset}" ;;
