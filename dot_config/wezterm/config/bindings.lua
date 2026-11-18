@@ -132,7 +132,7 @@ end
 local function scrollback_in_editor(window, pane)
    -- righe logiche: le righe spezzate a capo tornano intere
    local text = pane:get_logical_lines_as_text(pane:get_dimensions().scrollback_rows)
-   -- ponytail: un solo file, sovrascritto a ogni apertura
+   -- un solo file, sovrascritto a ogni apertura
    local path = platform.is_win and (os.getenv('TEMP') .. '\\wezterm-scrollback.txt')
       or ((os.getenv('TMPDIR') or '/tmp') .. '/wezterm-scrollback.txt')
    local f = assert(io.open(path, 'w'))

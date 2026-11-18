@@ -7,7 +7,7 @@ from functools import lru_cache
 
 @lru_cache(maxsize=64)
 def repo_name(wd: str) -> str:
-    # ponytail: cache mai svuotata, un cambio di origin si vede dopo il riavvio di kitty
+    # cache mai svuotata, un cambio di origin si vede dopo il riavvio di kitty
     try:
         url = subprocess.run(['git', '-C', wd, 'remote', 'get-url', 'origin'],
                              capture_output=True, text=True, timeout=1).stdout.strip()

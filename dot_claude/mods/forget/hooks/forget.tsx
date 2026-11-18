@@ -81,7 +81,7 @@ const PANE = 'forget'
 /**
  * Il pannello di `/forget tui`: i prompt del contesto (assenti finché il transcript non è letto), il turno di ogni
  * id con cui lo schermo può disegnarne il prompt, l'id che ha disegnato davvero, i turni spuntati, l'errore di lettura.
- * ponytail: una variabile del modulo come `selection`: se la mod si ricarica col pannello aperto le spunte si perdono e
+ * una variabile del modulo come `selection`: se la mod si ricarica col pannello aperto le spunte si perdono e
  * il pannello chiede di riaprirlo; passare a `$.state` se capita spesso.
  */
 let panel: { prompts?: PromptRow[]; ids: Map<string, number>; drawn: Map<number, string>; picked: Set<number>; error?: string } | undefined
@@ -201,7 +201,7 @@ export function forget(messages: readonly SessionMessage[], drop: Ranges): { mes
   // Fino al primo turno tolto i tool_result restano col loro handle: il motore li tiene interi, con le righe
   // agganciate (promemoria, avvisi), e la richiesta dopo resta uguale fin lì, quindi in cache. La loro copia
   // punta però al tool_use di prima del confine: dopo la compattazione relink.mjs la ricollega alla sua copia.
-  // ponytail: dopo il primo turno tolto il motore li ricostruisce senza handle e perde immagini, dati
+  // dopo il primo turno tolto il motore li ricostruisce senza handle e perde immagini, dati
   // strutturati e righe agganciate; tenuti, se relink.mjs fallisse un --resume ritroverebbe i turni tolti.
   // Togliere quando il motore riaggancia da solo la copia.
   const first = Math.min(...drop.map(r => r[0]))

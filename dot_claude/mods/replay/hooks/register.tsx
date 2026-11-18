@@ -41,7 +41,7 @@ const linesOf = (s: string) => (s === '' ? [] : s.split('\n'))
 // is skipped: every old line shows removed, every new one added.
 const MAX_LCS_LINES = 400
 
-// ponytail: O(n·m) LCS, capped at MAX_LCS_LINES; switch to Myers if big Write replays need real matching
+// O(n·m) LCS, capped at MAX_LCS_LINES; switch to Myers if big Write replays need real matching
 const sideBySide = (a: string[], b: string[]): Row[] => {
   if (a.length > MAX_LCS_LINES || b.length > MAX_LCS_LINES)
     return Array.from({ length: Math.max(a.length, b.length) }, (_, k) => ({
@@ -132,7 +132,7 @@ const xterm = (n: number): string => {
   return hex(g, g, g)
 }
 
-// ponytail: SGR colors/bold/dim only; other escapes (OSC 8 links) dropped
+// SGR colors/bold/dim only; other escapes (OSC 8 links) dropped
 const parseAnsi = (line: string): Span[] => {
   const spans: Span[] = []
   let style: Style = {}

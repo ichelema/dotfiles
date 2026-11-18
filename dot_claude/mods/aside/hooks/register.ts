@@ -209,7 +209,7 @@ export function register(on: On, options: PluginOptions = {}) {
     host = {
       fork: prompt => $.model.fork({ prompt }),
       messages: () => $.session.messages(),
-      // ponytail: 64000 is the API's ceiling (absent means 1024); a liveModel with a lower output limit gets the call refused, then pass its own limit.
+      // 64000 is the API's ceiling (absent means 1024); a liveModel with a lower output limit gets the call refused, then pass its own limit.
       complete: prompt => $.model.complete({ model: liveModel, maxTokens: 64000, system: LIVE_SYSTEM, prompt }),
       invalidate: () => $.ui.invalidate('ui.render'),
       open: () => $.ui.open({ id: PANE_ID, title: 'aside', focus: true }),

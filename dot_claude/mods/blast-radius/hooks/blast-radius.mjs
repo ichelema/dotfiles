@@ -165,7 +165,7 @@ function classify(command) {
 // Words that can come before the real command without changing what it does.
 const PREFIXES = new Set(["command", "exec", "env", "nohup", "time", "then", "do", "else", "!"]);
 
-// ponytail: textual check; a symlink inside tmp followed by `rm -r link/` reaches outside it
+// textual check; a symlink inside tmp followed by `rm -r link/` reaches outside it
 function isScratch(target, dir) {
   // No \ → / here: unquoted, bash eats the backslashes, so such a path is held.
   const fold = (s) => (isCaseless ? s.toLowerCase() : s);

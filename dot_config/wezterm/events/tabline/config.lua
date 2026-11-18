@@ -8,7 +8,7 @@ return {
    -- larghezza minima di una tab, in celle (stacco compreso)
    min_width = 18,
 
-   -- ponytail: larghezza stimata dei pulsanti integrati (─ □ ✕) a destra, se la cwd non è centrata ritoccala
+   -- larghezza stimata dei pulsanti integrati (─ □ ✕) a destra, se la cwd non è centrata ritoccala
    buttons_width = 9,
 
    -- glifi letti a caricamento: un nome sbagliato blocca subito la config, non il redraw

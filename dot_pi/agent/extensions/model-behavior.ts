@@ -55,7 +55,7 @@ export async function buildModelPrompt(
 	);
 
 	// pi-subagents 0.19 emits this standalone tag in both append and replace.
-	// ponytail: package convention, update this check if its prompt format changes.
+	// package convention, update this check if its prompt format changes.
 	const child = /^<active_agent name="[^"\r\n]+"\/>\r?$/m.test(
 		customPrompt ?? systemPrompt,
 	);

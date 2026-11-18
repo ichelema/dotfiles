@@ -195,7 +195,7 @@ export const register: Register = (on, options) => {
   // between sessions: a session's first prompt runs before any listing, and
   // without them the bundled skills (`builtin` in `$.command.list()`) could not
   // be offered to it. `remembered` is that file as read once.
-  // ponytail: $.fs has no rename, so two sessions writing at once can garble the file; the next listing rewrites it, and a first prompt that reads it garbled just offers no bundled skill.
+  // $.fs has no rename, so two sessions writing at once can garble the file; the next listing rewrites it, and a first prompt that reads it garbled just offers no bundled skill.
   const listedFile = '.claude/jev-skill-suggestion.listed.json'
   let remembered: Set<string> | null = null
   // The skill suggested for the current prompt, so a skill.prompt that loads

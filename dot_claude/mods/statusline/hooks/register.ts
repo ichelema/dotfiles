@@ -19,7 +19,7 @@ const C = {
 const paint = (color: string, s: string) => `${color}${s}\x1b[0m`
 const SEP = ` ${paint(C.dim, '|')} `
 
-// ponytail: TTL fisso, l'API delle mod non espone prompt_cache.ttl; 5 * 60_000 se la sessione usa la cache da 5 minuti
+// TTL fisso, l'API delle mod non espone prompt_cache.ttl; 5 * 60_000 se la sessione usa la cache da 5 minuti
 const CACHE_TTL_MS = 3_600_000
 const REFRESH_MS = 30_000
 // git diff costa ~0,7 s su MSYS2: è la voce più cara della barra, quindi gira al massimo ogni 2 minuti.

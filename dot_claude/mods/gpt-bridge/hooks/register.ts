@@ -13,7 +13,7 @@ Prima di ogni gruppo di chiamate ai tool scrivi una riga breve su cosa stai per 
 Fermati solo per azioni distruttive o veri cambi di perimetro.
 Chiudi con una sintesi breve: cosa hai fatto, cosa hai verificato, cosa resta aperto.`
 
-// ponytail: schemi ridotti dei tool built-in (il motore non li espone alle mod);
+// schemi ridotti dei tool built-in (il motore non li espone alle mod);
 // il motore esegue il tool con questi argomenti. Allineare a mano se Claude Code li cambia.
 const str = { type: 'string' }
 const int = { type: 'integer' }
@@ -155,7 +155,7 @@ export const register: Register = on => {
       // (misurato: 3 hit su 4 con la chiave, 1 su 4 senza). Un id per run del subagente.
       const req = { model: e.model, max_tokens: 32000, system: `${spec.prompt}\n\nDirectory di lavoro: ${await $.session.cwd()}`, tools, messages, litellm_session_id: e.agentId, ...think }
       const argv = [curl, '-sS', '-X', 'POST', `${LITELLM}/v1/messages`, '-H', 'content-type: application/json', '-H', 'anthropic-version: 2023-06-01', '-H', `x-litellm-api-key: Bearer ${key}`, '--data-binary', '@-']
-      // ponytail: curl via $.process.spawn perché $.http.fetch abortisce a 30 s fissi e non fa streaming;
+      // curl via $.process.spawn perché $.http.fetch abortisce a 30 s fissi e non fa streaming;
       // spawn non ha tetto di tempo e il budget dell'hook conta solo il codice qui, non l'attesa dei pezzi.
       const proc = $.process.spawn({ argv: [...argv, '-N'], input: JSON.stringify({ ...req, stream: true }) })
       let buf = ''
@@ -172,7 +172,7 @@ export const register: Register = on => {
 
       let final = Object.keys(calls).map(Number).sort((a, b) => a - b).map(i => [i, calls[i]!] as const)
       if (lost) {
-        // ponytail: LiteLLM#45348 — in streaming il provider chatgpt manda le tool call parallele senza
+        // LiteLLM#45348 — in streaming il provider chatgpt manda le tool call parallele senza
         // argomenti. Ripeto SOLO questo passo senza streaming e uso quelle tool call (il testo è già
         // uscito in streaming). Togliere quando LiteLLM rilascia la PR #45356.
         const r = await $.process.run(argv, { stdin: JSON.stringify(req), timeoutMs: 600000 })

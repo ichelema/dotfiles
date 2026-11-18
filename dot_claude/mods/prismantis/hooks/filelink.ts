@@ -68,7 +68,7 @@ const blockTexts = (block: Block, out: Set<string>) => {
   }
 }
 
-// ponytail: anche le risposte negative restano in cache fino al prossimo prompt (forgetFiles)
+// anche le risposte negative restano in cache fino al prossimo prompt (forgetFiles)
 const seen = new Map<string, Promise<boolean>>()
 const exists = (fs: Fs, path: string): Promise<boolean> => {
   let found = seen.get(path)
