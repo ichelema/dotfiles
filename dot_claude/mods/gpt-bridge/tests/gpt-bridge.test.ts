@@ -66,6 +66,37 @@ test('un errore HTTP senza eventi SSE diventa testo visibile e end_turn', async 
   expect(r.stopReason).toBe('end_turn')
 })
 
+// Lancia un passo con `content` come prompt del subagente e restituisce la richiesta mandata a LiteLLM.
+const sentFor = async ($: any, on: any, content: unknown) => {
+  let sent: any
+  on('agent.list', () => agent('gpt-bridge:worker'))
+  on('session.messages', () => ({ value: [{ role: 'user', content }] }) as never)
+  on('session.cwd', () => ({ value: 'E:/wd' }) as never)
+  on('process.spawn', async function* (_: unknown, e: any) {
+    sent = JSON.parse(e.input!)
+    yield { stream: 'stdout', text: SSE }
+    return { value: { code: 0, signal: null } }
+  })
+  on('turn.step', async function* () { throw new Error('non deve arrivare al motore') })
+  await drain($.turn.step(step as never))
+  return sent
+}
+
+test('[gpt-model: …] nel prompt cambia modello ed effort della chiamata', async ($, on) => {
+  const sent = await sentFor($, on, [
+    { type: 'text', text: '<system-reminder>promemoria del motore</system-reminder>' },
+    { type: 'text', text: '[gpt-model: claude-gpt-6-2-astra-high]\nAnalizza il deadlock.' },
+  ])
+  expect(sent.model).toBe('claude-gpt-6-2-astra-high')
+  expect(sent.output_config).toEqual({ effort: 'high' })
+})
+
+test('[gpt-model: …] con un alias non claude-gpt-* viene ignorato', async ($, on) => {
+  const sent = await sentFor($, on, '[gpt-model: fable]\nAnalizza.')
+  expect(sent.model).toBe('claude-gpt-6-2-sol-xhigh')
+  expect(sent.output_config).toEqual({ effort: 'xhigh' })
+})
+
 test('lascia passare i turni degli altri agenti al motore', async ($, on) => {
   on('agent.list', () => agent('Explore'))
   on('turn.step', async function* () { return { turnId: 't1', index: 0, answer: 'motore', toolUses: [], stopReason: 'end_turn', usage: null } })
@@ -127,6 +158,8 @@ test('registra gpt-bridge:<nome> per ogni agente Trinity con gpt-model nel front
   const r = registered.find(a => a.name === 'reviewer')
   expect(r.model).toBe('claude-gpt-6-2-sol-xhigh')
   expect(r.description).toContain('[GPT claude-gpt-6-2-sol-xhigh] Review avversaria in sola lettura.')
+  expect(r.description).toContain('[gpt-model: <alias LiteLLM>]') // come chiedere un altro modello
+  expect(registered.find(a => a.name === 'worker').description).toContain('[gpt-model: <alias LiteLLM>]')
   expect(r.tools).toEqual(['Read', 'Grep', 'Glob', 'Bash', 'SubagentHandback'])
   expect(r.prompt).toBe('Sei un reviewer avversario.')
   const d = registered.find(a => a.name === 'deep-reasoner')

@@ -34,6 +34,16 @@ type Chunk = { kind: 'text' | 'thinking'; index: number; text: string }
 const ERR = (text: string) => `[gpt-bridge] ${text}`
 const EMPTY = /^\s*(\{\s*\})?\s*$/ // argomenti assenti: '' oppure '{}'
 
+// Override per chiamata: riga `[gpt-model: claude-gpt-…]` nel prompt del subagente (il tool Agent
+// accetta solo alias Claude in `model`). Solo alias claude-gpt-*: un alias inesistente dà un errore
+// LiteLLM visibile, mai un ripiego su Claude. Cercata in tutto il primo messaggio, che può portare
+// anche promemoria del motore oltre al prompt.
+const OVERRIDE = /^\s*\[gpt-model:\s*(claude-gpt-[\w.-]+)\s*\]/m
+const HINT = ' Per un altro modello o effort GPT metti nel prompt la riga [gpt-model: <alias LiteLLM>], es. [gpt-model: claude-gpt-6-2-astra-high].'
+const promptText = (m: any): string =>
+  typeof m?.content === 'string' ? m.content
+    : (Array.isArray(m?.content) ? m.content : []).filter((b: any) => b?.type === 'text').map((b: any) => b.text).join('\n')
+
 type Spec = { prompt: string; tools: string[] }
 // Agenti serviti dalla mod, per tipo: il worker interno più i gemelli letti da agents/*.md di Trinity.
 const AGENTS: Record<string, Spec> = { 'gpt-bridge:worker': { prompt: PROMPT, tools: TOOLS.map(t => t.name) } }
@@ -62,7 +72,7 @@ export const register: Register = on => {
     if (root) curl = `${root}\\System32\\curl.exe`
     await $.agent.register({
       name: 'worker',
-      description: 'Subagente generico su GPT-6.2 Sol (xhigh) via LiteLLM: secondo parere indipendente, review avversaria, analisi e implementazione con un modello non-Claude.',
+      description: 'Subagente generico su GPT-6.2 Sol (xhigh) via LiteLLM: secondo parere indipendente, review avversaria, analisi e implementazione con un modello non-Claude.' + HINT,
       prompt: PROMPT,
       model: MODEL,
       tools: TOOLS.map(t => t.name),
@@ -84,7 +94,7 @@ export const register: Register = on => {
         AGENTS[`gpt-bridge:${name}`] = { prompt: body, tools }
         await $.agent.register({
           name,
-          description: `[GPT ${model}] ${fields.description ?? ''} Usalo solo quando il command o l'utente chiede esplicitamente un modello non-Claude; altrimenti usa trinity:${name}.`,
+          description: `[GPT ${model}] ${fields.description ?? ''} Usalo solo quando il command o l'utente chiede esplicitamente un modello non-Claude; altrimenti usa trinity:${name}.${HINT}`,
           prompt: body,
           model,
           tools,
@@ -148,12 +158,13 @@ export const register: Register = on => {
       // Riassunto del ragionamento in streaming (chunk `thinking` nel pannello). Con `thinking` nella
       // richiesta LiteLLM ignora il reasoning_effort della config: l'effort va ripetuto qui, letto dal
       // suffisso dell'alias (claude-gpt-…-xhigh). Suffisso sconosciuto: niente thinking, resta la config.
-      const effort = e.model.split('-').pop() ?? ''
+      const model = OVERRIDE.exec(promptText(messages[0]))?.[1] ?? e.model
+      const effort = model.split('-').pop() ?? ''
       const think = ['low', 'medium', 'high', 'xhigh', 'max'].includes(effort) ? { thinking: { type: 'adaptive', summary: 'detailed' }, output_config: { effort } } : {}
       // Affinità di cache: il provider chatgpt di LiteLLM manda al backend l'header `session_id` preso da
       // `litellm_session_id`; senza, usa un uuid nuovo a ogni chiamata e la cache del prefisso si perde
       // (misurato: 3 hit su 4 con la chiave, 1 su 4 senza). Un id per run del subagente.
-      const req = { model: e.model, max_tokens: 32000, system: `${spec.prompt}\n\nDirectory di lavoro: ${await $.session.cwd()}`, tools, messages, litellm_session_id: e.agentId, ...think }
+      const req = { model, max_tokens: 32000, system: `${spec.prompt}\n\nDirectory di lavoro: ${await $.session.cwd()}`, tools, messages, litellm_session_id: e.agentId, ...think }
       const argv = [curl, '-sS', '-X', 'POST', `${LITELLM}/v1/messages`, '-H', 'content-type: application/json', '-H', 'anthropic-version: 2023-06-01', '-H', `x-litellm-api-key: Bearer ${key}`, '--data-binary', '@-']
       // curl via $.process.spawn perché $.http.fetch abortisce a 30 s fissi e non fa streaming;
       // spawn non ha tetto di tempo e il budget dell'hook conta solo il codice qui, non l'attesa dei pezzi.
