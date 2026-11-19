@@ -4,6 +4,8 @@ argument-hint: "<descrizione del lavoro da fare>"
 generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
+<!-- pi:cmd /0_create-issue $ARGUMENTS -->
+
 Crea una nuova issue Linear a partire da questa descrizione:
 
 $ARGUMENTS

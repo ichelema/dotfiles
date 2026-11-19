@@ -4,6 +4,8 @@ argument-hint: "<issue-id...> <model>"
 generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
+<!-- pi:cmd /2_work-simplify $ARGUMENTS -->
+
 Migliora la qualità del codice della PR delle issue indicate e applica i fix, senza cambiarne il
 comportamento. Non cercare bug di correttezza: è il compito di `/3_independent-review` e
 `/4_review-fix-loop`.

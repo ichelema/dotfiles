@@ -4,6 +4,8 @@ argument-hint: "<worktree-name>"
 generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
+<!-- pi:cmd /5_remove-worktree $ARGUMENTS -->
+
 Rimuovi il worktree `$1` (directory sotto `.pi/worktrees/`, es.
 `review+ICH-73-sol-gpt` o `ich-73-verifica-fattibilita-5df44e`) e il branch che vi è
 agganciato, poi fai pulizia. Funziona sia su Windows/MSYS2 sia su Linux: i comandi sono Bash puro e

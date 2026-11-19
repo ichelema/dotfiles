@@ -4,6 +4,8 @@ argument-hint: "<source-branch> <issue-id...> <model>"
 generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
+<!-- pi:cmd /1_create-worktree $ARGUMENTS -->
+
 Crea un branch e un worktree separato del branch remoto indicato, relativo a una o più issue Linear.
 
 ## Validazione degli argomenti

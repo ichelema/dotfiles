@@ -4,6 +4,8 @@ argument-hint: "<review|loop> <source-branch> <issue-id...> [<model>]"
 generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
+<!-- pi:cmd /issue-cycle $ARGUMENTS -->
+
 Porta le issue Linear indicate dal worktree fino alla PR recensita e corretta, eseguendo per ogni
 issue gli step di `~/.pi/agent/prompts/`. Pi espande i template
 solo dall'editor: non puoi invocare gli step come slash command. Per ogni step leggi il

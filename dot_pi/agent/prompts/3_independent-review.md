@@ -4,6 +4,8 @@ argument-hint: "<issue-id...> <model> [hard|soft] [<review-path>]"
 generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
+<!-- pi:cmd /3_independent-review $ARGUMENTS -->
+
 Agisci come un Principal Software Engineer incaricato di eseguire una review avversaria indipendente
 dell'implementazione relativa alle issue Linear elencate in `$ARGUMENTS` (uno o più ID separati da
 spazi).

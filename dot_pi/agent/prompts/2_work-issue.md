@@ -4,6 +4,8 @@ argument-hint: "<issue-id...> <model> [auto [review|loop]]"
 generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
+<!-- pi:cmd /2_work-issue $ARGUMENTS -->
+
 Prendi in carico le issue Linear indicate e implementale nel worktree già creato da
 `/1_create-worktree`.
 

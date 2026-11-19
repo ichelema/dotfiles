@@ -4,6 +4,8 @@ argument-hint: "<issue-id...> <model>"
 generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
+<!-- pi:cmd /2_work-verify $ARGUMENTS -->
+
 Verifica che il codice della PR delle issue indicate faccia davvero quello che deve: compila e
 avvia l'app, portala dove gira il codice cambiato e cattura quello che vedi. La cattura è la prova;
 nient'altro lo è.

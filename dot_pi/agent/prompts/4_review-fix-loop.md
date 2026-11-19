@@ -4,6 +4,8 @@ argument-hint: "<issue-id...> <model>"
 generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
+<!-- pi:cmd /4_review-fix-loop $ARGUMENTS -->
+
 Esegui due review indipendenti e parallele della PR delle issue indicate su worktree isolati, poi
 applica i fix dei finding reali in un loop di al massimo 3 round. In uscita, smista i finding
 residui (fix, issue Linear o PR in draft) senza perderne nessuno e scrivi un report sintetico.
