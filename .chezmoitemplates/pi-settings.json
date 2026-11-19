@@ -30,11 +30,17 @@
       "config": {
         "@vanillagreen/pi-tool-renderer": {
           "alignAssistantMessages": false,
+          "bashOutputMode": "summary",
           "enabled": true,
-          "registerBatchTool": false,
-          "renderMutationTools": true,
+          "mcpOutputMode": "summary",
+          "readOutputMode": "summary",
+          "registerBatchTool": true,
+          "renderMutationTools": false,
+          "searchOutputMode": "count",
           "splitDiffs": true,
-          "styledCodeBlocks": false
+          "styledCodeBlocks": false,
+          "toolChrome": "transparent",
+          "userMessageTrailingBlankLine": false
         }
       }
     }
