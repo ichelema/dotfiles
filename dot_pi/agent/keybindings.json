@@ -10,5 +10,7 @@
   "app.session.tree": "ctrl+alt+t",
   "app.session.resume": "ctrl+alt+r",
   "app.model.select": "ctrl+alt+m",
-  "app.thinking.cycle": "ctrl+alt+tab"
+  "app.thinking.cycle": "ctrl+alt+tab",
+  "tui.input.newLine": ["alt+enter", "ctrl+j"],
+  "app.message.followUp": "ctrl+alt+enter"
 }
