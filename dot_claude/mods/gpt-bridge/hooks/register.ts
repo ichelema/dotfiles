@@ -24,6 +24,9 @@ const TOOLS = [
   { name: 'Bash', description: 'Esegue un comando bash e restituisce il suo output.', input_schema: { type: 'object', properties: { command: str, description: str, timeout: int }, required: ['command'] } },
   { name: 'Edit', description: 'Sostituisce old_string (unica nel file) con new_string.', input_schema: { type: 'object', properties: { file_path: str, old_string: str, new_string: str, replace_all: { type: 'boolean' } }, required: ['file_path', 'old_string', 'new_string'] } },
   { name: 'Write', description: 'Scrive un file, sovrascrivendolo se esiste.', input_schema: { type: 'object', properties: { file_path: str, content: str }, required: ['file_path'] } },
+  // Tool MCP (schemi da tools/list del server, ridotti): GPT li riceve solo se la sessione li ha (vedi `present`).
+  { name: 'mcp__context7__resolve-library-id', description: "Context7: risolve il nome di una libreria in un ID Context7 (/org/project). Chiamalo prima di query-docs, salvo un ID già noto. Al massimo 3 chiamate per domanda.", input_schema: { type: 'object', properties: { libraryName: { type: 'string', description: "Nome ufficiale della libreria (es. 'Next.js')." }, query: { type: 'string', description: 'Cosa cercare nella documentazione; serve a ordinare i risultati. Niente dati riservati.' } }, required: ['query', 'libraryName'] } },
+  { name: 'mcp__context7__query-docs', description: 'Context7: documentazione ed esempi aggiornati di una libreria, per ID Context7. Al massimo 3 chiamate per domanda.', input_schema: { type: 'object', properties: { libraryId: { type: 'string', description: "ID Context7 esatto (es. '/vercel/next.js' o '/org/project/version')." }, query: { type: 'string', description: 'Un solo concetto, specifico. Niente dati riservati.' }, language: { type: 'string', description: "Linguaggio del codice (es. 'Ruby', 'C'): ordina gli esempi in quel linguaggio." } }, required: ['libraryId', 'query'] } },
   // Il motore (2.1.295) consegna il report del subagente solo tramite questa chiamata: è l'ultima azione del run.
   { name: 'SubagentHandback', description: 'Consegna il report finale al chiamante e termina il run. Chiamalo come ultima azione, con il report completo in message.', input_schema: { type: 'object', properties: { message: str }, required: ['message'] } },
 ]
@@ -79,7 +82,7 @@ export const register: Register = on => {
     })
     // Agenti Trinity con `gpt-model:` nel frontmatter → gemello gpt-bridge:<nome>: stesso prompt,
     // descrizione e tool, modello GPT (l'effort viene dal suffisso dell'alias, es. -sol-xhigh).
-    // Tool senza schema nella mod (MCP, Agent) vengono scartati: GPT non potrebbe chiamarli.
+    // Tool senza schema nella mod (Agent, MCP fuori da TOOLS) vengono scartati: GPT non potrebbe chiamarli.
     const dir = await $.env.get('TRINITY_PLUGIN_DIR')
     if (dir) {
       const out = (await $.process.run(['bash', '-c', 'for f in "$0"/agents/*.md; do printf "\\n===agent:%s\\n" "$(basename "$f" .md)"; cat "$f"; done', dir])).stdout
@@ -154,7 +157,10 @@ export const register: Register = on => {
       // SubagentHandback esiste solo quando il motore lo annuncia nel primo messaggio del subagente
       // (modalità auto); altrove GPT sprecherebbe chiamate su un tool assente.
       const handback = JSON.stringify(messages[0]).includes('SubagentHandback(')
-      const tools = TOOLS.filter(t => spec.tools.includes(t.name) && (t.name !== 'SubagentHandback' || handback))
+      // Un tool MCP va a GPT solo se il suo server è connesso in questa sessione: altrove la chiamata fallirebbe.
+      const mcp = spec.tools.filter(t => t.startsWith('mcp__'))
+      const present = new Set(mcp.length ? (await $.tool.list().catch(() => [])).map(t => t.name) : [])
+      const tools = TOOLS.filter(t => spec.tools.includes(t.name) && (t.name !== 'SubagentHandback' || handback) && (!t.name.startsWith('mcp__') || present.has(t.name)))
       // Riassunto del ragionamento in streaming (chunk `thinking` nel pannello). Con `thinking` nella
       // richiesta LiteLLM ignora il reasoning_effort della config: l'effort va ripetuto qui, letto dal
       // suffisso dell'alias (claude-gpt-…-xhigh). Suffisso sconosciuto: niente thinking, resta la config.

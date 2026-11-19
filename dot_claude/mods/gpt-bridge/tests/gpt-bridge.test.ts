@@ -97,6 +97,22 @@ test('[gpt-model: …] con un alias non claude-gpt-* viene ignorato', async ($, 
   expect(sent.output_config).toEqual({ effort: 'xhigh' })
 })
 
+test('manda a GPT un tool MCP solo se la sessione lo ha', async ($, on) => {
+  on('tool.list', () => ({ value: [{ name: 'Read', description: '', mcp: false }, { name: 'mcp__context7__query-docs', description: '', mcp: true }] }) as never)
+  const sent = await sentFor($, on, 'Cerca la documentazione.')
+  const names = sent.tools.map((t: any) => t.name)
+  expect(names).toContain('mcp__context7__query-docs')
+  expect(names).not.toContain('mcp__context7__resolve-library-id') // server senza questo tool: escluso
+  expect(names).toContain('Read')
+  expect(sent.tools.find((t: any) => t.name === 'mcp__context7__query-docs').input_schema.required).toEqual(['libraryId', 'query'])
+})
+
+test('senza server MCP connessi GPT non riceve tool MCP', async ($, on) => {
+  on('tool.list', () => ({ value: [{ name: 'Read', description: '', mcp: false }] }) as never)
+  const sent = await sentFor($, on, 'Analizza.')
+  expect(sent.tools.map((t: any) => t.name).filter((n: string) => n.startsWith('mcp__'))).toEqual([])
+})
+
 test('lascia passare i turni degli altri agenti al motore', async ($, on) => {
   on('agent.list', () => agent('Explore'))
   on('turn.step', async function* () { return { turnId: 't1', index: 0, answer: 'motore', toolUses: [], stopReason: 'end_turn', usage: null } })
@@ -145,7 +161,7 @@ test('registra gpt-bridge:<nome> per ogni agente Trinity con gpt-model nel front
   on('env.get', (_, e) => ({ value: e.name === 'TRINITY_PLUGIN_DIR' ? 'E:/trinity' : undefined }) as never)
   on('process.run', (_, e) => {
     if (e.argv[0] === 'bash' && String(e.argv[2]).includes('agents/*.md')) return { value: { exitCode: 0, stderr: '', stdout: [
-      '', '===agent:reviewer', '---', 'name: reviewer', 'description: >-', '  Review avversaria', '  in sola lettura.', 'model: fable', 'gpt-model: claude-gpt-6-2-sol-xhigh', 'tools: Read, Grep, Glob, Bash', 'color: red', '---', '', 'Sei un reviewer avversario.', '',
+      '', '===agent:reviewer', '---', 'name: reviewer', 'description: >-', '  Review avversaria', '  in sola lettura.', 'model: fable', 'gpt-model: claude-gpt-6-2-sol-xhigh', 'tools: Read, Grep, Glob, Bash, mcp__context7__query-docs, mcp__linear__get_issue', 'color: red', '---', '', 'Sei un reviewer avversario.', '',
       '', '===agent:deep-reasoner', '---', 'name: deep-reasoner', 'description: Analisi.', 'model: fable', 'gpt-model: claude-gpt-6-2-sol-max', 'effort: max', '---', 'Ragiona a fondo.', '',
       '', '===agent:scoper', '---', 'name: scoper', 'model: haiku', '---', 'Solo Claude.',
     ].join('\n') } } as never
@@ -160,9 +176,9 @@ test('registra gpt-bridge:<nome> per ogni agente Trinity con gpt-model nel front
   expect(r.description).toContain('[GPT claude-gpt-6-2-sol-xhigh] Review avversaria in sola lettura.')
   expect(r.description).toContain('[gpt-model: <alias LiteLLM>]') // come chiedere un altro modello
   expect(registered.find(a => a.name === 'worker').description).toContain('[gpt-model: <alias LiteLLM>]')
-  expect(r.tools).toEqual(['Read', 'Grep', 'Glob', 'Bash', 'SubagentHandback'])
+  expect(r.tools).toEqual(['Read', 'Grep', 'Glob', 'Bash', 'mcp__context7__query-docs', 'SubagentHandback']) // MCP senza schema nella mod: scartato
   expect(r.prompt).toBe('Sei un reviewer avversario.')
   const d = registered.find(a => a.name === 'deep-reasoner')
   expect(d.model).toBe('claude-gpt-6-2-sol-max') // qualsiasi livello di effort nell'alias
-  expect(d.tools).toEqual(['Read', 'Grep', 'Glob', 'Bash', 'Edit', 'Write', 'SubagentHandback']) // senza tools: tutti quelli con schema
+  expect(d.tools).toEqual(['Read', 'Grep', 'Glob', 'Bash', 'Edit', 'Write', 'mcp__context7__resolve-library-id', 'mcp__context7__query-docs', 'SubagentHandback']) // senza tools: tutti quelli con schema
 })
