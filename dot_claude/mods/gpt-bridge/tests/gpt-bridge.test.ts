@@ -66,7 +66,7 @@ test('un errore HTTP senza eventi SSE diventa testo visibile e end_turn', async 
   expect(r.stopReason).toBe('end_turn')
 })
 
-// Lancia un passo con `content` come prompt del subagente e restituisce la richiesta mandata a LiteLLM.
+// Lancia un passo con `text` come prompt del subagente e restituisce la richiesta mandata a LiteLLM.
 const sentFor = async ($: any, on: any, content: unknown) => {
   let sent: any
   on('agent.list', () => agent('gpt-bridge:worker'))
