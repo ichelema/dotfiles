@@ -1,17 +1,20 @@
 import { expect, mock, test } from "bun:test";
+import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
-// Il pacchetto di pi non è risolvibile da qui: lo si carica dall'installazione e lo si espone al modulo.
-const dist = join(
-	homedir(),
-	".pi/agent/install/releases/1.5.2/node_modules/@earendil-works/pi-coding-agent/dist",
+// Il pacchetto di pi non è risolvibile da qui: lo si carica dall'installazione corrente
+// (versione in install/current-version) tramite l'entry pubblica, e lo si espone al modulo.
+const install = join(homedir(), ".pi/agent/install");
+const version = readFileSync(join(install, "current-version"), "utf8").trim();
+const pkg = join(
+	install,
+	"releases",
+	version,
+	"node_modules/@earendil-works/pi-coding-agent",
 );
-const { UserMessageComponent } = await import(
-	join(dist, "modes/interactive/components/user-message.js")
-);
-const { initTheme } = await import(
-	join(dist, "modes/interactive/theme/theme.js")
+const { UserMessageComponent, initTheme } = await import(
+	join(pkg, "dist/index.js")
 );
 mock.module("@earendil-works/pi-coding-agent", () => ({
 	UserMessageComponent,
