@@ -279,13 +279,14 @@ tutti gli effetti.
 
 ## Non fare il merge
 
-Fermati qui. Il passo successivo è la review, in una sessione nuova, a scelta dell'utente:
-`/3_independent-review <issue-id...> <model>` (una review) oppure
-`/4_review-fix-loop <issue-id...> <model>` (due review in parallelo e fix in
-loop). Il merge resta all'utente.
+Fermati qui. Il passo successivo è la review, a scelta dell'utente:
+`/3_independent-review <issue-id...> <model> [hard|soft]`
+(una review: `hard` è il default, `soft` la delega a un modello più leggero),
+oppure `/4_review-fix-loop <issue-id...> <model>`
+(due review in parallelo e fix in loop). Il merge resta all'utente.
 
-In modo `auto` non ti fermi qui e non serve una sessione nuova: dopo la «Verifica finale» prosegui
-con «Modo auto». Il merge resta comunque all'utente.
+In modo `auto` non ti fermi qui: dopo la «Verifica finale» prosegui con «Modo auto».
+Il merge resta comunque all'utente.
 
 ## Verifica finale
 
@@ -321,7 +322,7 @@ modello ricavato in «Validazione degli argomenti»:
 ├────────────────────────┼──────────────────────────────────────────────────────────┤
 │ Pull Request           │ <url> (magic words: <Fixes/Refs> per ogni issue)         │
 ├────────────────────────┼──────────────────────────────────────────────────────────┤
-│ Prossimo passo         │ /2_work-simplify e /2_work-verify <issue-id...> <model> (facoltativi), poi /3_independent-review <issue-id...> <model> oppure /4_review-fix-loop <issue-id...> <model> │
+│ Prossimo passo         │ /2_work-simplify e /2_work-verify <issue-id...> <model> (facoltativi), poi /3_independent-review <issue-id...> <model> [hard|soft] oppure /4_review-fix-loop <issue-id...> <model> │
 └────────────────────────┴──────────────────────────────────────────────────────────┘
 ```
 
