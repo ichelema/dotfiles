@@ -12,7 +12,8 @@ ATTESA=${CLAUDE_NOTIFICA_ATTESA:-240}
 
 # invia <titolo> <priorità> <tag> <testo>: un invio fallito non ferma mai Claude
 invia() {
-  curl -fsS -m 10 -o /dev/null -H "Title: $1" -H "Priority: $2" -H "Tags: $3" \
+  # -4: su IPv6 ntfy.sh conta la quota sul prefisso condiviso del provider (429 sul VPS Infomaniak)
+  curl -4 -fsS -m 10 -o /dev/null -H "Title: $1" -H "Priority: $2" -H "Tags: $3" \
     --data-raw "${4:0:200}" "https://ntfy.sh/$canale" || true
 }
 
