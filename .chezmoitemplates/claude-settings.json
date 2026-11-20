@@ -201,7 +201,8 @@
     "replay@inline": false,
     "filetree@claude-code-filetree": true,
     "cache-tax@claude-code-mods": true,
-    "prompt-rail@oikon48": true
+    "prompt-rail@oikon48": true,
+    "scratchpad@scratchpad": true
   },
   "extraKnownMarketplaces": {
     "claude-code-filetree": {
@@ -220,6 +221,12 @@
       "source": {
         "source": "github",
         "repo": "oikon48/prompt-rail"
+      }
+    },
+    "scratchpad": {
+      "source": {
+        "source": "directory",
+        "path": "{{ .chezmoi.homeDir }}/.claude/mods/scratchpad"
       }
     }
   },

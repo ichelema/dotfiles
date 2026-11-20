@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "scratchpad",
+  "version": "1.0.0",
+  "description": "Save short notes beside your conversation.",
+  "owner": { "name": "Yash Thakker" },
+  "plugins": [
+    {
+      "name": "scratchpad",
+      "description": "Save short notes beside your conversation.",
+      "version": "1.0.0",
+      "author": { "name": "Yash Thakker" },
+      "source": "./",
+      "category": "productivity"
+    }
+  ]
+}
