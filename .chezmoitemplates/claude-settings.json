@@ -258,8 +258,9 @@
       "provider": "typesafe",
       "timeoutMs": 1500,
       "gateThreshold": 0.3,
-      "fitsThreshold": 0.7,
+      "fitsThreshold": 0.6,
       "gateExempt": "dataviz",
+      "alwaysListed": "context7-mcp,trinity:linear,trinity:hindsight",
       "inject": "suggest",
       "logDecisions": true,
       "neverSuggested": "trinity:dream,trinity:nota_del_giorno,trinity:promote,trinity:reflect,trinity:workflow:0_create-issue,trinity:workflow:1_create-worktree,trinity:workflow:2_work-issue,trinity:workflow:2_work-simplify,trinity:workflow:2_work-verify,trinity:workflow:3_independent-review,trinity:workflow:4_review-fix-loop,trinity:workflow:5_remove-worktree"
