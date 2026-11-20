@@ -1,4 +1,4 @@
-import type { EngineInterface, Register, SessionRateLimit } from 'claude-code'
+import type { EngineInterface, OpEventResult, Register, SessionRateLimit } from 'claude-code'
 
 // Porta in-process di ~/.claude/statusline.sh: la mod calcola la riga e la mette in
 // CLAUDE_STATUSLINE; la statusline nativa la stampa e basta (niente jq). Saltati rispetto allo script:
@@ -40,6 +40,8 @@ export type Data = {
   cacheRead: number
   cacheCreate: number
   lastStepAt?: number
+  // cache-tax dice che la cache è calda (keepwarm) anche se il nostro orologio è scaduto
+  taxWarm?: boolean
   rateLimits: readonly SessionRateLimit[]
 }
 
@@ -118,7 +120,7 @@ export const line = (d: Data, now: number) => {
     if (d.lastStepAt !== undefined) {
       const left = Math.floor((d.lastStepAt + CACHE_TTL_MS - now) / 1000)
       const ttl = CACHE_TTL_MS / 1000
-      if (left <= 0) s += ` ${paint(C.red, '⏳scaduta')}`
+      if (left <= 0) s += d.taxWarm ? ` ${paint(C.green, '⏳calda')}` : ` ${paint(C.red, '⏳scaduta')}`
       else {
         const ttlColor = left > ttl / 2 ? C.green : left > ttl / 5 ? C.yellow : C.red
         s += ` ${paint(ttlColor, `⏳${left >= 60 ? `${Math.floor(left / 60)}m` : `${left}s`}`)}`
@@ -215,14 +217,35 @@ const refresh = ($: EngineInterface): Promise<void> => {
   return running
 }
 
+// $.cacheTax esiste solo con la mod cache-tax installata (senza, la chiamata lancia);
+// cold è la sua stima sul TTL di 1 h. Sottoinsieme del contratto in cache-tax/types/index.d.ts.
+declare module 'claude-code' {
+  interface EngineInterface {
+    cacheTax: { status: () => Promise<{ cold: boolean | null }> }
+  }
+}
+const cacheTaxWarm = async ($: EngineInterface) => {
+  try {
+    return (await $.cacheTax.status()).cold === false
+  } catch {
+    return false
+  }
+}
+
+// I ping di keepwarm (cache-tax) sono $.model.fork, non turn.step: un fork
+// risposto rilegge (o riscrive) il prefisso e fa ripartire il TTL come un turno.
+export const forkRenews = (r: OpEventResult<'model.fork'>) =>
+  'value' in r && r.value?.isAnswered === true && r.value.usage.cache_read_input_tokens + r.value.usage.cache_creation_input_tokens > 0
+
 const draw = async ($: EngineInterface) => {
   try {
     const now = await $.clock.now()
-    const [cwd, model, usage, settings] = await Promise.all([
+    const [cwd, model, usage, settings, taxWarm] = await Promise.all([
       $.session.cwd(),
       $.session.model(),
       $.session.usage(),
       $.settings.read(),
+      cacheTaxWarm($),
     ])
     const branch = await branchOf($, cwd)
     if (branch && now - statAt >= GIT_STAT_MS) {
@@ -252,6 +275,7 @@ const draw = async ($: EngineInterface) => {
           cacheRead,
           cacheCreate,
           lastStepAt,
+          taxWarm,
           rateLimits: usage.rateLimits,
         },
         now,
@@ -295,6 +319,15 @@ export const register: Register = on => {
         cacheCreate = r.usage.cache_creation_input_tokens
         lastStepAt = await $.clock.now()
       }
+      void refresh($)
+    }
+    return r
+  })
+
+  on('model.fork', async ($, e, next) => {
+    const r = await next(e)
+    if (forkRenews(r)) {
+      lastStepAt = await $.clock.now()
       void refresh($)
     }
     return r

@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { fmtTokens, line, prettyModel, windowFor } from '../hooks/register'
+import { fmtTokens, forkRenews, line, prettyModel, windowFor } from '../hooks/register'
 
 const plain = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, '')
 const NOW = Date.UTC(2026, 9, 8, 12, 0, 0)
@@ -40,6 +40,23 @@ test('compone la riga con tutti i segmenti', async () => {
   expect(out).toBe(
     `Opus 5.5 1M XHigh ⚡ | Trinity@master (+12 -3) | Session: una sessione con un titolo mol… | 50k/200k (25%) | cache 90k↓/10k↑ (90%) ⏳30m | 5h 43% @${hhmm} | 7d -`,
   )
+})
+
+test('TTL scaduto: "calda" se cache-tax la tiene calda, altrimenti "scaduta"', async () => {
+  const d = {
+    model: 'Opus 5.5', modelId: '', fast: false, cwd: '/home/x/repo', tokens: 0, window: 200_000,
+    cacheRead: 90_000, cacheCreate: 10_000, lastStepAt: NOW - 2 * 3_600_000, rateLimits: [],
+  }
+  expect(plain(line(d, NOW))).toContain('(90%) ⏳scaduta |')
+  expect(plain(line({ ...d, taxWarm: true }, NOW))).toContain('(90%) ⏳calda |')
+})
+
+test('solo un fork risposto che tocca la cache fa ripartire il TTL', async () => {
+  const usage = (read: number, write: number) => ({ input_tokens: 5, output_tokens: 1, cache_read_input_tokens: read, cache_creation_input_tokens: write })
+  expect(forkRenews({ value: { isAnswered: true, text: 'warm', usage: usage(90_000, 10) } } as never)).toBe(true)
+  expect(forkRenews({ value: { isAnswered: true, text: 'warm', usage: usage(0, 0) } } as never)).toBe(false)
+  expect(forkRenews({ value: { isAnswered: false, reason: 'nothing-to-fork' } } as never)).toBe(false)
+  expect(forkRenews({ deny: 'no' } as never)).toBe(false)
 })
 
 test('senza cache: niente segmento cache', async () => {
