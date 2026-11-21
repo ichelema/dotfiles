@@ -134,21 +134,14 @@
 {{- if index . "vps" }}
   "hooks": {
     "SessionStart": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh" }] }],
-    "UserPromptSubmit": [{ "hooks": [
-      { "type": "command", "command": "~/.local/bin/claude-notifica annulla" },
-      { "type": "command", "command": "~/.claude/hooks/kitty-status.sh working" }] }],
-    "PreToolUse": [{ "matcher": "AskUserQuestion", "hooks": [
-      { "type": "command", "command": "~/.local/bin/claude-notifica domanda" },
-      { "type": "command", "command": "~/.claude/hooks/kitty-status.sh question" }] }],
+    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh working" }] }],
+    "PreToolUse": [{ "matcher": "AskUserQuestion", "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh question" }] }],
     "PostToolUse": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh working" }] }],
     "Notification": [
       { "matcher": "permission_prompt", "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh permission" }] },
       { "matcher": "elicitation_dialog", "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh question" }] }],
-    "Stop": [{ "hooks": [
-      { "type": "command", "command": "~/.local/bin/claude-notifica fine" },
-      { "type": "command", "command": "~/.claude/hooks/kitty-status.sh done" }] }],
-    "StopFailure": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh error" }] }],
-    "SessionEnd": [{ "hooks": [{ "type": "command", "command": "~/.local/bin/claude-notifica annulla" }] }]
+    "Stop": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh done" }] }],
+    "StopFailure": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/kitty-status.sh error" }] }]
   },
 {{- end }}
   "disableClaudeAiConnectors": true,
