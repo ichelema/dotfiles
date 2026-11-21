@@ -203,7 +203,6 @@
     "replay@inline": false,
     "filetree@claude-code-filetree": true,
     "cache-tax@claude-code-mods": true,
-    "prompt-rail@oikon48": true,
     "scratchpad@scratchpad": true
   },
   "extraKnownMarketplaces": {
@@ -217,12 +216,6 @@
       "source": {
         "source": "github",
         "repo": "karanb192/claude-code-mods"
-      }
-    },
-    "oikon48": {
-      "source": {
-        "source": "github",
-        "repo": "oikon48/prompt-rail"
       }
     },
     "scratchpad": {
@@ -252,7 +245,6 @@
   "pluginConfigs": {
     "prismantis@inline": { "options": { "theme": "nord", "tableStyle": "box", "toolStyle": "hide", "toolRows": true, "toolOutput": "quiet", "promptStyle": "framed", "headingStyle": "banner", "diffStyle": "bar", "codeStyle": "framed", "listMarker": "dash", "maxColumns": "180", "promptMaxColumns": "180", "statusMatrix": "summary", "testMatrix": "report", "benchTable": "trend", "schemaTable": "full"{{ if eq .chezmoi.os "darwin" }}, "latex": true{{ end }} } },
     "aside@inline": { "options": { "maxHistory": 20 } },
-    "prompt-rail@oikon48": { "options": { "mode": "horizontal" } },
     "filetree@claude-code-filetree": { "options": {
       "start": "off",
       "column": "size",
