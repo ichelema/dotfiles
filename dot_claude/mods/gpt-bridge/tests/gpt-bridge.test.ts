@@ -161,7 +161,7 @@ test('registra gpt-bridge:<nome> per ogni agente Trinity con gpt-model nel front
   on('env.get', (_, e) => ({ value: e.name === 'TRINITY_PLUGIN_DIR' ? 'E:/trinity' : undefined }) as never)
   on('process.run', (_, e) => {
     if (e.argv[0] === 'bash' && String(e.argv[2]).includes('agents/*.md')) return { value: { exitCode: 0, stderr: '', stdout: [
-      '', '===agent:reviewer', '---', 'name: reviewer', 'description: >-', '  Review avversaria', '  in sola lettura.', 'model: fable', 'gpt-model: claude-gpt-6-2-sol-xhigh', 'tools: Read, Grep, Glob, Bash, Skill, mcp__context7__query-docs, mcp__linear__get_issue', 'color: red', '---', '', 'Sei un reviewer avversario.', '',
+      '', '===agent:reviewer', '---', 'name: reviewer', 'description: >-', '  Review avversaria', '  in sola lettura.', 'model: fable', 'gpt-model: claude-gpt-6-2-sol-xhigh', 'tools: Read, Grep, Glob, Bash, Skill, Agent, mcp__context7__query-docs, mcp__linear__get_issue', 'color: red', '---', '', 'Sei un reviewer avversario.', '',
       '', '===agent:deep-reasoner', '---', 'name: deep-reasoner', 'description: Analisi.', 'model: fable', 'gpt-model: claude-gpt-6-2-sol-max', 'effort: max', '---', 'Ragiona a fondo.', '',
       '', '===agent:scoper', '---', 'name: scoper', 'model: haiku', '---', 'Solo Claude.',
     ].join('\n') } } as never
@@ -176,7 +176,8 @@ test('registra gpt-bridge:<nome> per ogni agente Trinity con gpt-model nel front
   expect(r.description).toContain('[GPT claude-gpt-6-2-sol-xhigh] Review avversaria in sola lettura.')
   expect(r.description).toContain('[gpt-model: <alias LiteLLM>]') // come chiedere un altro modello
   expect(registered.find(a => a.name === 'worker').description).toContain('[gpt-model: <alias LiteLLM>]')
-  expect(r.tools).toEqual(['Read', 'Grep', 'Glob', 'Bash', 'Skill', 'mcp__context7__query-docs', 'SubagentHandback']) // MCP senza schema nella mod: scartato
+  expect(r.tools).toEqual(['Read', 'Grep', 'Glob', 'Bash', 'Skill', 'Agent', 'mcp__context7__query-docs', 'SubagentHandback']) // MCP senza schema nella mod: scartato; Agent elencato: tenuto
+  expect(registered.find(a => a.name === 'worker').tools).not.toContain('Agent') // Agent solo a chi lo elenca
   expect(r.prompt).toBe('Sei un reviewer avversario.')
   const d = registered.find(a => a.name === 'deep-reasoner')
   expect(d.model).toBe('claude-gpt-6-2-sol-max') // qualsiasi livello di effort nell'alias

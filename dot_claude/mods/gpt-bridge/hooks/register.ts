@@ -25,15 +25,21 @@ const TOOLS = [
   { name: 'Edit', description: 'Sostituisce old_string (unica nel file) con new_string.', input_schema: { type: 'object', properties: { file_path: str, old_string: str, new_string: str, replace_all: { type: 'boolean' } }, required: ['file_path', 'old_string', 'new_string'] } },
   { name: 'Write', description: 'Scrive un file, sovrascrivendolo se esiste.', input_schema: { type: 'object', properties: { file_path: str, content: str }, required: ['file_path'] } },
   { name: 'Skill', description: "Invoca una skill dell'elenco delle skill disponibili, per nome esatto (plugin:skill per quelle dei plugin): il contenuto della skill arriva come messaggio successivo. Usala quando il task rientra in una skill elencata.", input_schema: { type: 'object', properties: { skill: { type: 'string', description: "Nome esatto della skill dall'elenco." }, args: { type: 'string', description: 'Argomenti facoltativi per la skill.' } }, required: ['skill'] } },
+  // Solo per i gemelli che lo elencano in `tools:` (vedi OPT_IN): il motore lancia il subagente e
+  // il suo report torna come messaggio successivo.
+  { name: 'Agent', description: 'Lancia un subagente di Claude Code e ne restituisce il report. Il subagente parte senza il tuo contesto: nel prompt metti tutto ciò che gli serve. Usalo solo quando le tue istruzioni lo chiedono.', input_schema: { type: 'object', properties: { description: { type: 'string', description: 'Etichetta breve del compito (3-5 parole).' }, prompt: { type: 'string', description: 'Il compito completo per il subagente.' }, subagent_type: { type: 'string', description: 'Tipo di agente, es. trinity:reviewer.' }, model: { type: 'string', enum: ['sonnet', 'opus', 'haiku', 'fable'], description: 'Modello del subagente; assente: quello del tipo di agente.' }, effort: { type: 'string', enum: ['low', 'medium', 'high', 'xhigh', 'max'], description: 'Effort del subagente; assente: quello del tipo di agente.' } }, required: ['description', 'prompt'] } },
   // Tool MCP (schemi da tools/list del server, ridotti): GPT li riceve solo se la sessione li ha (vedi `present`).
   { name: 'mcp__context7__resolve-library-id', description: "Context7: risolve il nome di una libreria in un ID Context7 (/org/project). Chiamalo prima di query-docs, salvo un ID già noto. Al massimo 3 chiamate per domanda.", input_schema: { type: 'object', properties: { libraryName: { type: 'string', description: "Nome ufficiale della libreria (es. 'Next.js')." }, query: { type: 'string', description: 'Cosa cercare nella documentazione; serve a ordinare i risultati. Niente dati riservati.' } }, required: ['query', 'libraryName'] } },
   { name: 'mcp__context7__query-docs', description: 'Context7: documentazione ed esempi aggiornati di una libreria, per ID Context7. Al massimo 3 chiamate per domanda.', input_schema: { type: 'object', properties: { libraryId: { type: 'string', description: "ID Context7 esatto (es. '/vercel/next.js' o '/org/project/version')." }, query: { type: 'string', description: 'Un solo concetto, specifico. Niente dati riservati.' }, language: { type: 'string', description: "Linguaggio del codice (es. 'Ruby', 'C'): ordina gli esempi in quel linguaggio." } }, required: ['libraryId', 'query'] } },
   // Il motore (2.1.295) consegna il report del subagente solo tramite questa chiamata: è l'ultima azione del run.
   { name: 'SubagentHandback', description: 'Consegna il report finale al chiamante e termina il run. Chiamalo come ultima azione, con il report completo in message.', input_schema: { type: 'object', properties: { message: str }, required: ['message'] } },
 ]
+// Tool che un gemello riceve solo se li elenca: senza `tools:` (e per il worker) valgono gli altri.
+const OPT_IN = ['Agent']
+const DEFAULT = TOOLS.map(t => t.name).filter(t => !OPT_IN.includes(t))
 
 
-type Call = { id: string; name: string; json: string }
+type Call ={ id: string; name: string; json: string }
 type Chunk = { kind: 'text' | 'thinking'; index: number; text: string }
 const ERR = (text: string) => `[gpt-bridge] ${text}`
 const EMPTY = /^\s*(\{\s*\})?\s*$/ // argomenti assenti: '' oppure '{}'
@@ -50,7 +56,7 @@ const promptText = (m: any): string =>
 
 type Spec = { prompt: string; tools: string[] }
 // Agenti serviti dalla mod, per tipo: il worker interno più i gemelli letti da agents/*.md di Trinity.
-const AGENTS: Record<string, Spec> = { 'gpt-bridge:worker': { prompt: PROMPT, tools: TOOLS.map(t => t.name) } }
+const AGENTS: Record<string, Spec> = { 'gpt-bridge:worker': { prompt: PROMPT, tools: DEFAULT } }
 
 // Frontmatter YAML minimo: `chiave: valore`, blocchi `>-` e `|` ripiegati su una riga. Basta per agents/*.md.
 const parseFrontmatter = (text: string) => {
@@ -79,11 +85,11 @@ export const register: Register = on => {
       description: 'Subagente generico su GPT-6.2 Sol (xhigh) via LiteLLM: secondo parere indipendente, review avversaria, analisi e implementazione con un modello non-Claude.' + HINT,
       prompt: PROMPT,
       model: MODEL,
-      tools: TOOLS.map(t => t.name),
+      tools: DEFAULT,
     })
     // Agenti Trinity con `gpt-model:` nel frontmatter → gemello gpt-bridge:<nome>: stesso prompt,
     // descrizione e tool, modello GPT (l'effort viene dal suffisso dell'alias, es. -sol-xhigh).
-    // Tool senza schema nella mod (Agent, MCP fuori da TOOLS) vengono scartati: GPT non potrebbe chiamarli.
+    // Tool senza schema nella mod (MCP fuori da TOOLS) vengono scartati: GPT non potrebbe chiamarli.
     const dir = await $.env.get('TRINITY_PLUGIN_DIR')
     if (dir) {
       const out = (await $.process.run(['bash', '-c', 'for f in "$0"/agents/*.md; do printf "\\n===agent:%s\\n" "$(basename "$f" .md)"; cat "$f"; done', dir])).stdout
@@ -93,7 +99,7 @@ export const register: Register = on => {
         const { fields, body } = parseFrontmatter(chunk.slice(nl + 1))
         const model = fields['gpt-model']
         if (!model) continue
-        const wanted = fields.tools ? fields.tools.split(',').map(s => s.trim()) : TOOLS.map(t => t.name)
+        const wanted = fields.tools ? fields.tools.split(',').map(s => s.trim()) : DEFAULT
         const tools = TOOLS.map(t => t.name).filter(t => wanted.includes(t) || t === 'SubagentHandback')
         AGENTS[`gpt-bridge:${name}`] = { prompt: body, tools }
         await $.agent.register({
