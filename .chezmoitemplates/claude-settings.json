@@ -15,6 +15,8 @@
     "MCP_TIMEOUT": "60000",
     "ENABLE_CLAUDEAI_MCP_SERVERS": "false",
     "CLAUDE_CODE_PLUGIN_DIRS": "~/.claude/mods",
+{{- /* zellij e SSH nascondono TERM_PROGRAM: senza, prismantis scrive i link delle tabelle come "testo (url)" */}}
+    "FORCE_HYPERLINK": "1",
 {{- /* sul VPS la root è piccola: i temporanei vanno sul disco dati, come ~/.cache e ~/.npm */}}
 {{- if index . "vps" }}
     "CLAUDE_CODE_TMPDIR": "/mnt/data/home-offload/claude-tmp",
