@@ -1,0 +1,39 @@
+{
+  "name": "prompt-rail",
+  "version": "0.11.0-local.1",
+  "description": "A rail of your session's prompts beside the transcript, above or below the prompt; hover to read one, click to jump to it. Local copy: also lists /trinity:workflow:* commands.",
+  "author": {
+    "name": "oikon48"
+  },
+  "homepage": "https://github.com/oikon48/prompt-rail",
+  "repository": "https://github.com/oikon48/prompt-rail",
+  "privacyPolicyUrl": "https://github.com/oikon48/prompt-rail/blob/main/plugins/prompt-rail/README.md#privacy",
+  "license": "MIT",
+  "keywords": [
+    "navigation",
+    "transcript",
+    "prompts",
+    "function-hooks"
+  ],
+  "types": "./types/prompt-rail.d.ts",
+  "userConfig": {
+    "mode": {
+      "type": "string",
+      "title": "Rail mode",
+      "description": "off: no rail. vertical: a pane beside the transcript, one row per prompt. horizontal: a row of bars above the prompt input (terminal only). below: a row of bars under the hint line below the prompt input (terminal only; the desktop app keeps it above). /prompt-rail off|vertical|horizontal|below changes it too and shows where the rail sits.",
+      "default": "horizontal",
+      "options": [
+        "off",
+        "vertical",
+        "horizontal",
+        "below"
+      ]
+    },
+    "classicHooks": {
+      "type": "boolean",
+      "title": "Classic hooks",
+      "description": "Register the classic.SessionStart and classic.Stop hooks, which name the transcript exactly. Off silences Claude Code's notes about the security default skipping them on a machine with managed settings or in a Team or Enterprise organization, where they never ran anyway; elsewhere, off leaves a session resumed from another directory, or an install loaded with --plugin-dir, with no transcript to read.",
+      "default": true
+    }
+  }
+}
