@@ -14,10 +14,10 @@ from litellm.completion_extras.litellm_responses_transformation.handler import (
 from litellm.completion_extras.litellm_responses_transformation.transformation import (
     LiteLLMResponsesTransformationHandler,
 )
-from litellm.llms.anthropic.experimental_pass_through.adapters.transformation import (
+from litellm.llms.anthropic.messages.adapters.transformation import (
     LiteLLMAnthropicMessagesAdapter,
 )
-from litellm.llms.anthropic.experimental_pass_through.responses_adapters.transformation import (
+from litellm.llms.anthropic.messages.responses_adapters.transformation import (
     LiteLLMAnthropicToResponsesAPIAdapter,
 )
 from litellm.types.llms.openai import ResponsesAPIResponse
@@ -108,7 +108,11 @@ class CallbackTests(unittest.TestCase):
         }
         request = LiteLLMAnthropicToResponsesAPIAdapter().translate_request(hook(data))
         self.assertNotIn("system", [item.get("role") for item in request["input"]])
-        self.assertEqual(request["instructions"], "\n\n".join(b["text"] for b in SYSTEM))
+        # Da LiteLLM 1.110 il system arriva come item role=developer in testa all'input, non in
+        # `instructions`: è la forma della Codex CLI, che il backend ChatGPT accetta.
+        self.assertNotIn("instructions", request)
+        self.assertEqual(request["input"][0]["role"], "developer")
+        self.assertEqual(request["input"][0]["content"][0]["text"], "\n\n".join(b["text"] for b in SYSTEM))
         self.assertEqual(request["input"][-1]["role"], "user")
 
     def test_typingmind_tools_merge_idempotent_preserve_options(self):
