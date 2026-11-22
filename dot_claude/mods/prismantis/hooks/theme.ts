@@ -78,6 +78,7 @@ export type Style = {
   nativeCode?: boolean
   gridFace?: boolean
   monoFace?: boolean
+  svgArt?: boolean
   smallDot?: boolean
   httpLinks: boolean
   editorLinks: boolean
