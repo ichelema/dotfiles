@@ -560,6 +560,12 @@
       "description": "Put a copy button on each heading that copies its section as markdown: every block under it up to the next heading of the same or a higher level. A heading whose section is empty, or is one block that has its own button, gets none. Needs copyButtons on.",
       "default": false
     },
+    "keyPointHint": {
+      "type": "boolean",
+      "title": "Key point hint",
+      "description": "Attach a short note, read by the model and never shown, to the first prompt of a conversation (again after /clear, a resume or a compaction), asking for each reply's key points in bold. Set strongColor too if bold looks close to the body text. About 80 tokens each time.",
+      "default": false
+    },
     "diagramHints": {
       "type": "boolean",
       "title": "Diagram hints",

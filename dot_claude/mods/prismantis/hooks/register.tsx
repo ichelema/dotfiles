@@ -13,7 +13,7 @@ import { drawDiagrams } from './mermaid'
 import type { CopyButton, DrawPaste, Fold, Hues, TerminalEnv } from './render'
 import { MARK, bashEdits, lineCount, drawMath, drawsHyperlinks, editNotes, fileLinkRoot, fileRoot, hasShellOutput, instanceKey, isReadOnlyCall, leftToEngine, markerRoom, mirrored, noteTip, pasteLang, pathsToProbe, toolPathsToProbe, remember, rememberCall, renderBashEdits, renderBlocks, renderDiffCard, renderExpandedCall, renderFailure, renderReply, renderShellResult, renderToolGroup, renderToolRow, renderTurnDuration, renderUserPrompt, replyRoom, replyStyleFor, takesClickableMarks, takesEditorLinks, takesHttpLinks, takesMonoText, withoutBashEdits } from './render'
 import type { SetupStep } from './help'
-import { ESSENTIAL_STEPS, HINT, ISSUE_HINT, NARROW_PANE, narrowHint, SETUP_DONE, SETUP_ESSENTIALS_DONE, SETUP_MORE, SETUP_PANE_KEYS, SETUP_PANE_OPENED, THEME_PREVIEW, findSetup, helpText, languageShowcase, rtlShowcaseText, setupParts, setupSteps, setupText, showcaseText } from './help'
+import { ESSENTIAL_STEPS, HINT, ISSUE_HINT, KEY_POINT_HINT, NARROW_PANE, narrowHint, SETUP_DONE, SETUP_ESSENTIALS_DONE, SETUP_MORE, SETUP_PANE_KEYS, SETUP_PANE_OPENED, THEME_PREVIEW, findSetup, helpText, languageShowcase, rtlShowcaseText, setupParts, setupSteps, setupText, showcaseText } from './help'
 import { PRESET_NAMES } from './presets'
 import { desktopLook } from './desktop'
 import { textRows } from './layout'
@@ -815,6 +815,7 @@ const drawSetup = ($: EngineInterface, el: ReturnType<EngineInterface['ui']['res
 // "issueHint: tolto" in tests/local-patches.test.tsx).
 const hintsFor = (style: Style, latex: LatexSession, pane?: number): string[] => [
   ...(style.diagramHints ? [HINT, FIGURE_HINT, ...(pane !== undefined && pane < NARROW_PANE ? [narrowHint(pane)] : []), ...(latex.ready && !latex.stopped ? [LATEX_HINT] : [])] : []),
+  ...(style.keyPointHint ? [KEY_POINT_HINT] : []),
 ]
 
 const localeOf = async ($: EngineInterface, asked?: string): Promise<string> => asked ?? (await $.env.get('LC_ALL').catch(() => undefined)) ?? (await $.env.get('LANG').catch(() => undefined)) ?? ''
@@ -1024,11 +1025,13 @@ export const register: Register = (on, options) => {
   // in the transcript, so it is re-sent only after /clear, a resume or a compaction.
   // LATEX_HINT goes in once too, on the first prompt after the engine is ready.
   // The narrow pane hint (upstream 0.38.2) goes in once per pane width.
+  // KEY_POINT_HINT (upstream 0.49.0) goes in once too, also with diagram hints off.
   let hinted = false
   let latexHinted = false
+  let keyPointHinted = false
   let narrowHinted: number | undefined
   const forgetHints = () => {
-    hinted = latexHinted = false
+    hinted = latexHinted = keyPointHinted = false
     narrowHinted = undefined
   }
   on('session.end', (_, e, next) => {
@@ -1064,9 +1067,10 @@ export const register: Register = (on, options) => {
     if (style.diagramHints) void latexEngine($, latex)
     // local: ISSUE_HINT non esce mai, anche se un merge futuro lo rimette in hintsFor (issueHint tolto, da non reimplementare)
     const narrow = pane === undefined ? undefined : narrowHint(pane)
-    const hints = hintsFor(style, latex, pane).filter(h => h !== ISSUE_HINT && (h === HINT || h === FIGURE_HINT ? !hinted : h === LATEX_HINT ? !latexHinted : h === narrow ? pane !== narrowHinted : true))
+    const hints = hintsFor(style, latex, pane).filter(h => h !== ISSUE_HINT && (h === HINT || h === FIGURE_HINT ? !hinted : h === LATEX_HINT ? !latexHinted : h === KEY_POINT_HINT ? !keyPointHinted : h === narrow ? pane !== narrowHinted : true))
     if (hints.includes(HINT)) hinted = true
     if (hints.includes(LATEX_HINT)) latexHinted = true
+    if (hints.includes(KEY_POINT_HINT)) keyPointHinted = true
     if (narrow !== undefined && hints.includes(narrow)) narrowHinted = pane
     return hints.length ? next({ ...e, context: [...(e.context ?? []), ...hints] }) : next(e)
   })

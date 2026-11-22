@@ -4,7 +4,7 @@ import type { Engine } from 'claude-code/testing'
 import { expect, mock, test } from 'claude-code/testing'
 
 import { FIGURE_HINT } from '../hooks/figure'
-import { HINT, ISSUE_HINT, setupParts, setupSteps, setupText } from '../hooks/help'
+import { HINT, ISSUE_HINT, KEY_POINT_HINT, setupParts, setupSteps, setupText } from '../hooks/help'
 import { fileHref, fileTarget } from '../hooks/filelink'
 import { PRESET_NAMES } from '../hooks/presets'
 import { width } from '../hooks/layout'
@@ -244,6 +244,19 @@ test('issueHint: tolto, anche con diagramHints spento nessuna nota arriva al mod
   const seen = await contextsOf($, on, 11)
   expect(seen).toHaveLength(11)
   for (const context of seen) expect(context ?? []).toEqual([])
+})
+
+// local: keyPointHint (upstream 0.49.0) segue la regola delle altre note: una volta per conversazione, con un flag suo
+test('keyPointHint: the key point hint goes with the first prompt only', { options: { keyPointHint: true } }, async ($, on) => {
+  const seen = await contextsOf($, on, 3)
+  expect(seen[0]).toEqual(expect.arrayContaining([HINT, FIGURE_HINT, KEY_POINT_HINT]))
+  for (const context of seen.slice(1)) expect(context ?? []).toEqual([])
+})
+
+test('keyPointHint: with diagram hints off the key point hint still goes once', { options: { keyPointHint: true, diagramHints: false } }, async ($, on) => {
+  const seen = await contextsOf($, on, 3)
+  expect(seen[0]).toEqual([KEY_POINT_HINT])
+  for (const context of seen.slice(1)) expect(context ?? []).toEqual([])
 })
 
 test('lists get no copy button', async $ => {

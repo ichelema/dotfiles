@@ -89,6 +89,7 @@ export type Style = {
   editorPaths?: Map<string, string>
   diagramHints: boolean
   issueHint: boolean
+  keyPointHint: boolean
   rtl: 'auto' | Terminal | 'off'
   reorder: boolean
   shape: Shape
@@ -186,6 +187,7 @@ export const resolveStyle = (options: PluginOptions): Style => {
     diagramHints: options.diagramHints !== false && options.mermaid !== false,
     // local: issueHint tolto per scelta, sempre spento; da non reimplementare (vedi register.tsx hintsFor e UPSTREAM)
     issueHint: false,
+    keyPointHint: options.keyPointHint === true,
     rtl,
     reorder: rtl !== 'auto' && rtl !== 'off',
     shape: rtl === 'auto' || rtl === 'off' ? 'visual' : TERMINALS[rtl],
