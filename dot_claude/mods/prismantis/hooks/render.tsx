@@ -21,6 +21,7 @@ import type { Group } from './group-table'
 import { testReport } from './test-report'
 import type { PrismToken } from './vendor/prism.js'
 import { languages, tokenize } from './vendor/prism.js'
+import { fileTarget } from './filelink' // local: fullPaths sugli href vscode:// di editorPaths
 import { DEFAULT_COLUMNS, cells, clusters, columnWidths, graphemes, longestWord, mostLines, textRows, widestLine, width, wrapRanges } from './layout'
 
 const sliceInline = (nodes: Inline[], from: number, to: number): Inline[] => {
@@ -104,7 +105,8 @@ export const drawsHyperlinks = (env: TerminalEnv): boolean => {
     || env.TERMINAL_EMULATOR === 'JetBrains-JediTerm'
 }
 
-type Reach = Pick<Style, 'httpLinks' | 'editorLinks' | 'obsidianLinks' | 'fileLinks' | 'pathLinks' | 'hyperlinks' | 'cwd' | 'home' | 'found' | 'editorPaths'>
+type Reach = Pick<Style, 'httpLinks' | 'editorLinks' | 'obsidianLinks' | 'fileLinks' | 'pathLinks' | 'fullPaths' | 'hyperlinks' | 'cwd' | 'home' | 'found' | 'editorPaths'>
+
 
 const LAUNCHERS = new Set([
   'app', 'command', 'tool', 'terminal', 'pkg', 'mpkg', 'mobileconfig', 'prefpane', 'workflow', 'action', 'fileloc', 'inetloc', 'webloc',
@@ -274,14 +276,29 @@ const drawnLink = (n: Extract<Inline, { kind: 'link' }>, reach: Reach): Inline =
 
 const linksAsPath = (path: string): boolean => !path.startsWith('/') || /^\/[^/]+\/+[^/]/.test(path.replace(/\.+$/, ''))
 
+const shownPath = (reach: Reach, written: string, href: string): string => {
+  if (!reach.fullPaths || /^([a-z]:)?[\\/]/i.test(written)) return written
+  const tail = /[\\/]$/.test(written) ? '/' : (/(?<=[^/.])\.+$/.exec(written)?.[0] ?? '')
+  const full = `${hrefPath(reach, href)}${tail}`
+  return /^[a-z]:/i.test(reach.cwd) ? full.replace(/\//g, '\\') : full
+}
+
+// local: con fullPaths un percorso con l'href vscode:// di hooks/filelink.ts si mostra, come in shownPath, con il percorso assoluto che apre, riga e colonna comprese
+const editorShown = (reach: Reach, written: string): string => {
+  const t = reach.fullPaths && !/^([a-z]:)?[\\/]/i.test(written) ? fileTarget(written, reach.cwd, reach.home) : undefined
+  if (t === undefined) return written
+  const full = `${t.path}${t.line ? `:${t.line}${t.col ? `:${t.col}` : ''}` : ''}`
+  return /^[a-z]:/i.test(reach.cwd) ? full.replace(/\//g, '\\') : full
+}
+
 const drawnPath = (n: Extract<Inline, { kind: 'path' }>, reach: Reach): Inline => {
   const href = reach.pathLinks && linksAsPath(n.text) ? pathHref(reach, n.text) : undefined
-  return href === undefined || !opens(reach, href) ? n : { ...n, href }
+  return href === undefined || !opens(reach, href) ? n : { ...n, text: shownPath(reach, n.text, href), href }
 }
 
 const drawnCode = (n: Extract<Inline, { kind: 'code' }>, reach: Reach): Inline => {
   const drawn = isPathSpelling(n.text) ? drawnPath({ kind: 'path', text: n.text }, reach) : undefined
-  return drawn?.kind === 'path' && drawn.href !== undefined ? { ...n, href: drawn.href } : n
+  return drawn?.kind === 'path' && drawn.href !== undefined ? { ...n, text: drawn.text, href: drawn.href } : n
 }
 
 const PART = String.raw`[\p{L}\p{N}_@+-]+`
@@ -312,7 +329,7 @@ const loosePaths = (n: Extract<Inline, { kind: 'text' }>, reach: Reach): Inline[
     const probe = foundProbe(reach, m[0])
     if (!probe) continue
     if (m.index > at) out.push({ kind: 'text', text: n.text.slice(at, m.index) })
-    out.push({ kind: 'path', text: m[0], href: probe.href })
+    out.push({ kind: 'path', text: shownPath(reach, m[0], probe.href), href: probe.href })
     at = m.index + m[0].length
   }
   if (at === 0) return [n]
@@ -322,7 +339,7 @@ const loosePaths = (n: Extract<Inline, { kind: 'text' }>, reach: Reach): Inline[
 
 const looseCode = (n: Extract<Inline, { kind: 'code' }>, reach: Reach): Inline => {
   const probe = isWholePath(n.text) ? foundProbe(reach, n.text) : undefined
-  return probe ? { ...n, href: probe.href } : n
+  return probe ? { ...n, text: shownPath(reach, n.text, probe.href), href: probe.href } : n
 }
 
 const isWholePath = (text: string): boolean => looseSpellings(text).some(m => m[0] === text)
@@ -336,7 +353,7 @@ const looseNode = (n: Inline, reach: Reach): Inline | Inline[] => {
 const linked = (node: Inline, reach: Reach): Inline => {
   const n: Inline = node.kind === 'image' && isWebLink(node.src) ? { kind: 'link', text: node.text, href: node.src } : node
   // local: editorPaths porta gli href vscode:// di hooks/filelink.ts e vince sul file:// di upstream; qui, prima del ritorno a capo, così ogni pezzo di una cella resta cliccabile
-  if ((n.kind === 'code' || n.kind === 'path') && reach.editorPaths?.has(n.text)) return { ...n, href: reach.editorPaths.get(n.text) }
+  if ((n.kind === 'code' || n.kind === 'path') && reach.editorPaths?.has(n.text)) return { ...n, text: editorShown(reach, n.text), href: reach.editorPaths.get(n.text) }
   if (n.kind === 'link') return drawnLink(n, reach)
   if (n.kind === 'path') return drawnPath(n, reach)
   if (n.kind === 'code') return drawnCode(n, reach)
@@ -418,7 +435,7 @@ const drawable = (block: Block, reach: Reach): Block => {
   if (reach.editorPaths?.size) return hyperlinkBlock(block, reach)
   const cached = hyperlinked.get(block) ?? {}
   hyperlinked.set(block, cached)
-  const key = `${+reach.httpLinks}${+reach.editorLinks}${+reach.obsidianLinks}${+reach.hyperlinks}${reach.fileLinks ?? ''}\0${reach.found?.size ?? 0}${reach.pathLinks ? `\0${reach.home}\0${reach.cwd}` : ''}`
+  const key = `${+reach.httpLinks}${+reach.editorLinks}${+reach.obsidianLinks}${+reach.hyperlinks}${+reach.fullPaths}${reach.fileLinks ?? ''}\0${reach.found?.size ?? 0}${reach.pathLinks ? `\0${reach.home}\0${reach.cwd}` : ''}`
   return (cached[key] ??= hyperlinkBlock(block, reach))
 }
 

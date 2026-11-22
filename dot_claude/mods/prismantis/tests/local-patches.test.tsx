@@ -431,6 +431,19 @@ test('filelink: in prosa un percorso a un file esistente prende vscode://, uno m
   await ui.unmount()
 })
 
+// local: fullPaths (upstream 0.49.0, #562) vale anche per gli href vscode://, con riga e colonna
+test('filelink: con fullPaths un percorso con vscode:// si mostra assoluto come quelli con file://', { options: { fullPaths: true } }, async ($, on) => {
+  mergedLinks(on, path => path.endsWith('E:/AI/proj/utils/open-file.lua'))
+  const ui = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'AssistantMessage', props: { text: 'Vedi `utils/open-file.lua:12`, ./utils/missing.lua e `E:\\AI\\proj\\utils\\open-file.lua` ora', isFirstOfReply: true }, viewport: { columns: 120, rows: 20 } })
+  const links = (await ui.findAll({ type: 'Link' })).map(l => [l.props.label, l.props.href])
+  expect(links).toEqual([
+    ['E:\\AI\\proj\\utils\\open-file.lua:12', 'vscode://file/E:/AI/proj/utils/open-file.lua:12'],
+    ['E:\\AI\\proj\\utils\\missing.lua', 'file:///E:/AI/proj/utils/missing.lua'],
+    ['E:\\AI\\proj\\utils\\open-file.lua', 'vscode://file/E:/AI/proj/utils/open-file.lua'],
+  ])
+  await ui.unmount()
+})
+
 test('folded: una riga di tool ha il link file:// di upstream al suo file', { options: { toolStyle: 'folded' } }, async ($, on) => {
   mergedLinks(on, () => false)
   const ui = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'ToolUse', props: call('Read', { file_path: 'E:\\AI\\proj\\src\\main.ts' }, 't1') })

@@ -65,6 +65,7 @@ export type Style = {
   maxColumns?: number // local: larghezza massima del testo, vedi renderBlocks
   promptMaxColumns?: number // local: larghezza massima del riquadro di promptStyle framed
   highlightPaths: boolean
+  fullPaths: boolean
   mermaid: boolean
   mermaidAscii: boolean
   copyButtons: boolean
@@ -169,6 +170,7 @@ export const resolveStyle = (options: PluginOptions): Style => {
     maxColumns: maxColumnsOf(options.maxColumns),
     promptMaxColumns: maxColumnsOf(options.promptMaxColumns),
     highlightPaths: options.highlightPaths !== false,
+    fullPaths: options.fullPaths === true,
     mermaid: options.mermaid !== false,
     mermaidAscii: options.mermaidAscii === true,
     copyButtons: options.copyButtons !== false,
