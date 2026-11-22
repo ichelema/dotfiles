@@ -72,6 +72,19 @@ test('folded: an expanded shell call that failed shows its error text in red', {
   await ui.unmount()
 })
 
+// local: dalla #596 l'errore di una chiamata fallita tiene i colori propri del comando; con folded solo il testo senza colore è rosso
+test('folded: an expanded shell call that failed keeps the colors the command printed, the rest in red', { options: { toolStyle: 'folded' } }, async ($, on) => {
+  engine(on)
+  const failed = { ...call('Bash', { command: 'make' }, 'f-6', true), output: 'Exit code 2\n\x1b[33mwarning\x1b[0m make: *** No rule' }
+  const group = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'ToolGroup', props: { calls: [failed], isActive: false, isExpanded: true } })
+  await group.unmount()
+  const ui = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'ToolUse', props: failed })
+  expect((await ui.find({ type: 'Text', text: /^warning$/ }))?.props.color).toBe('yellow')
+  expect((await ui.find({ type: 'Text', text: /^ make: \*\*\* No rule$/ }))?.props.color).toBe('red')
+  expect((await ui.findAll({ type: 'Text' })).some(t => /\[\d+(;\d+)*m/.test(t.text))).toBe(false)
+  await ui.unmount()
+})
+
 test('folded con quiet: l\'output Bash di un gruppo resta chiuso finché il clic non lo apre', { options: { toolStyle: 'folded', toolOutput: 'quiet' } }, async $ => {
   const ran = { ...call('Bash', { command: 'make' }, 'q-1'), output: { stdout: 'built', stderr: '' } }
   const group = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'ToolGroup', props: { calls: [call('Read', { file_path: '/tmp/a' }, 'q-0'), ran], isActive: false, isExpanded: false } })
