@@ -195,8 +195,7 @@
     "prismantis@inline": true,
     "replay@inline": false,
     "filetree@claude-code-filetree": true,
-    "cache-tax@claude-code-mods": true,
-    "scratchpad@scratchpad": true
+    "cache-tax@claude-code-mods": true
   },
   "extraKnownMarketplaces": {
     "claude-code-filetree": {
@@ -209,12 +208,6 @@
       "source": {
         "source": "github",
         "repo": "karanb192/claude-code-mods"
-      }
-    },
-    "scratchpad": {
-      "source": {
-        "source": "directory",
-        "path": "{{ .chezmoi.homeDir }}/.claude/mods/scratchpad"
       }
     }
   },
