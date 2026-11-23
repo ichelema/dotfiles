@@ -58,6 +58,7 @@ export type Style = {
   noteKey?: string
   pressPreview?: boolean
   diffStyle: 'card' | 'full' | 'marks' | 'bar'
+  diffLayout?: 'auto' | 'split' | 'unified' // local: blocchi ```diff affiancati, vedi hooks/diffsplit.tsx
   codeStyle: 'plain' | 'framed' | 'filled' | 'card'
   pieStyle: 'round' | 'bars'
   highlightNumbers: boolean
@@ -164,6 +165,7 @@ export const resolveStyle = (options: PluginOptions): Style => {
     runningDot: pick(options.runningDot, ['ring', 'blink'] as const, 'ring'),
     unreadPrompts: options.unreadPrompts === true,
     diffStyle: pick(options.diffStyle, ['card', 'full', 'marks', 'bar'] as const, 'card'),
+    diffLayout: pick(options.diffLayout, ['auto', 'split', 'unified'] as const, 'auto'), // local: diffLayout
     codeStyle: pick(options.codeStyle, ['plain', 'framed', 'filled', 'card'] as const, 'plain'),
     pieStyle: pick(options.pieStyle, ['round', 'bars'] as const, 'round'),
     highlightNumbers: options.highlightNumbers !== false,

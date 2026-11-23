@@ -9,6 +9,7 @@ import { fileHref, fileTarget } from '../hooks/filelink'
 import { PRESET_NAMES } from '../hooks/presets'
 import { width } from '../hooks/layout'
 import { resolveStyle } from '../hooks/theme'
+import { parsePatch } from '../hooks/diffsplit' // local: diffLayout
 
 const call = (tool: string, input: unknown, id: string, isErrored = false) => ({ tool_use_id: id, tool, input, isRunning: false, isErrored, isInterrupted: false })
 const toolResult = (tool: string, output: unknown, id: string, isErrored = false) =>
@@ -479,5 +480,93 @@ test('table numbers: a cell colored by benchTable keeps its color on the number,
   expect(change.length).toBeGreaterThan(0)
   expect(change.every(n => n.props.color !== t.number)).toBe(true)
   expect(change.some(n => n.props.color !== undefined)).toBe(true)
+  await ui.unmount()
+})
+
+// local: diffLayout (hooks/diffsplit.tsx), i blocchi ```diff delle risposte affiancati
+const DIFF_REPLY = [
+  'Ecco la modifica:',
+  '',
+  '```diff',
+  'diff --git a/src/app.ts b/src/app.ts',
+  'index 1111111..2222222 100644',
+  '--- a/src/app.ts',
+  '+++ b/src/app.ts',
+  '@@ -4,3 +4,4 @@ export const x = 1',
+  ' const a = 1',
+  '-const b = 2',
+  '+const b = 3',
+  '+const c = 4',
+  ' const d = 5',
+  '```',
+].join('\n')
+const mountDiff = ($: Engine, columns: number, text = DIFF_REPLY) =>
+  $.ui.mount({ plugin: 'prismantis', surface: 'terminal', component: 'AssistantMessage', props: { text, isFirstOfReply: true }, viewport: { columns, rows: 40 } })
+// le righe affiancate del primo file del blocco 1 (il blocco 0 è il paragrafo), prima riga visiva di ogni coppia
+const pairRows = async (ui: Awaited<ReturnType<typeof mountDiff>>, file = 0) =>
+  (await ui.findAll({ type: 'Box' })).filter(n => new RegExp(`^ds1\\.f${file}\\.p\\d+\\.0$`).test(n.key ?? ''))
+
+test('diffLayout: a ```diff block in a reply draws the old lines left and the new lines right', async $ => {
+  const ui = await mountDiff($, 160)
+  const rows = await pairRows(ui)
+  expect(rows).toHaveLength(4)
+  expect(rows[0]!.text).toMatch(/4 {3}const a = 1 +│ 4 {3}const a = 1/)
+  expect(rows[1]!.text).toMatch(/5 - const b = 2 +│ 5 \+ const b = 3/)
+  expect(rows[2]!.text).toMatch(/^ +│ 6 \+ const c = 4/)
+  expect(rows[3]!.text).toMatch(/6 {3}const d = 5 +│ 7 {3}const d = 5/)
+  // il separatore sta nella stessa colonna in ogni riga, anche con il lato sinistro vuoto
+  expect(new Set(rows.map(r => r.text!.indexOf('│'))).size).toBe(1)
+  // intestazione: solo il percorso e i conteggi, niente righe diff --git, index o @@
+  expect(await ui.find({ type: 'Text', text: /^src\/app\.ts $/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /@@|^diff --git|^index / })).toBeUndefined()
+  await ui.unmount()
+})
+
+test('diffLayout: unified keeps the code block, auto falls back to it when the terminal is narrow', { options: { diffLayout: 'unified' } }, async $ => {
+  const ui = await mountDiff($, 160)
+  expect(await pairRows(ui)).toHaveLength(0)
+  expect(await ui.find({ type: 'Text', text: /── diff/ })).toBeDefined()
+  await ui.unmount()
+  expect(resolveStyle({}).diffLayout).toBe('auto')
+  expect(resolveStyle({ diffLayout: 'boh' }).diffLayout).toBe('auto')
+})
+
+test('diffLayout: auto needs room for both sides, split draws side by side in a narrower terminal', async $ => {
+  const narrow = await mountDiff($, 80)
+  expect(await pairRows(narrow)).toHaveLength(0)
+  expect(await narrow.find({ type: 'Text', text: /── diff/ })).toBeDefined()
+  await narrow.unmount()
+})
+
+test('diffLayout: split draws side by side at 80 columns', { options: { diffLayout: 'split' } }, async $ => {
+  const ui = await mountDiff($, 80)
+  expect(await pairRows(ui)).toHaveLength(4)
+  await ui.unmount()
+})
+
+test('diffLayout: several files in one block, plain diff -u headers, a new file and blank context lines', async $ => {
+  const text = [
+    '```diff',
+    '--- a/one.md',
+    '+++ b/one.md',
+    '@@ -1,3 +1,3 @@',
+    ' # Titolo',
+    '',
+    '-vecchia riga',
+    '+nuova riga',
+    '--- /dev/null',
+    '+++ b/two.md',
+    '@@ -0,0 +1,2 @@',
+    '+prima',
+    '+seconda',
+    '```',
+  ].join('\n')
+  const files = parsePatch(text.split('\n').slice(1, -1))
+  expect(files.map(f => f.path)).toEqual(['one.md', 'two.md'])
+  expect(files[0]!.hunks[0]!.lines).toEqual([' # Titolo', ' ', '-vecchia riga', '+nuova riga'])
+  const ui = await mountDiff($, 160, `Due file:\n\n${text}`)
+  expect(await pairRows(ui, 0)).toHaveLength(3)
+  expect(await pairRows(ui, 1)).toHaveLength(2)
+  expect(await ui.find({ type: 'Text', text: /^two\.md $/ })).toBeDefined()
   await ui.unmount()
 })

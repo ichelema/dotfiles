@@ -3327,3 +3327,8 @@ export const renderReply = (el: ElementTable, style: Style, drawn: RenderElement
     </el.Box>
   )
 }
+
+// local: diffLayout. Le funzioni dei diff che hooks/diffsplit.tsx riusa per i blocchi ```diff
+// affiancati; un solo blocco in fondo al file, così i merge con upstream non toccano il resto.
+export type { DiffLine, DiffPaint, Piece }
+export const splitDiffKit = { DIFF_EXTRA, DIFF_MAX, diffPaint, diffSegments, lineCost, lineText, markColors, plainParts, spend, tabbed, visualRows, wordFlags, wordPieces }

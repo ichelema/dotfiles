@@ -10,6 +10,7 @@ import type { ClipboardBackend, HelperCommand } from './clipboard'
 import { artColors, clipboardCommand, drawsImages, imageCommand } from './clipboard'
 import { FIGURE_HINT } from './figure'
 import { drawDiagrams } from './mermaid'
+import { drawDiffs } from './diffsplit' // local: diffLayout
 import type { CopyButton, DrawPaste, Fold, Hues, TerminalEnv } from './render'
 import { MARK, bashEdits, lineCount, drawMath, drawsHyperlinks, editNotes, fileRoot, hasShellOutput, instanceKey, isReadOnlyCall, leftToEngine, markerRoom, mirrored, noteTip, pasteLang, pathsToProbe, toolPathsToProbe, remember, rememberCall, renderBashEdits, renderBlocks, renderDiffCard, renderExpandedCall, renderFailure, renderReply, renderShellResult, renderToolGroup, renderToolRow, renderTurnDuration, renderUserPrompt, replyRoom, replyStyleFor, takesClickableMarks, takesEditorLinks, takesHttpLinks, takesMonoText, withoutBashEdits } from './render'
 import type { SetupStep } from './help'
@@ -517,6 +518,7 @@ const drawMarkdown = ($: EngineInterface, el: ReturnType<EngineInterface['ui']['
     ) : null
   }
   const drawn = drawDiagrams(el, style, blocks, columns - markerRoom(style))
+  drawDiffs(el, style, blocks, columns - markerRoom(style), drawn) // local: diffLayout
   const Image = 'Image' in el ? el.Image : null
   if (Image) {
     for (const [i, formula] of math) {

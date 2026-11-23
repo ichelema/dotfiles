@@ -514,6 +514,13 @@
       "default": "card",
       "options": ["card", "full", "marks", "bar"]
     },
+    "diffLayout": {
+      "type": "string",
+      "title": "Diff layout in replies",
+      "description": "How ```diff and ```patch blocks in replies draw. auto: the old version on the left and the new one on the right when each side has room for 36 columns of code, otherwise as a code block. split: side by side whenever it fits at all. unified: always as a code block. Each file gets its own card in diffStyle, headed by its path.",
+      "default": "auto",
+      "options": ["auto", "split", "unified"]
+    },
     "codeStyle": {
       "type": "string",
       "title": "Code block style",
