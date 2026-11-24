@@ -45,12 +45,12 @@ type Chunk = { kind: 'text' | 'thinking'; index: number; text: string }
 const ERR = (text: string) => `[gpt-bridge] ${text}`
 const EMPTY = /^\s*(\{\s*\})?\s*$/ // argomenti assenti: '' oppure '{}'
 
-// Override per chiamata: riga `[gpt-model: claude-gpt-…]` nel prompt del subagente (il tool Agent
-// accetta solo alias Claude in `model`). Solo alias claude-gpt-*: un alias inesistente dà un errore
-// LiteLLM visibile, mai un ripiego su Claude. Cercata in tutto il primo messaggio, che può portare
-// anche promemoria del motore oltre al prompt.
-const OVERRIDE = /^\s*\[gpt-model:\s*(claude-gpt-[\w.-]+)\s*\]/m
-const HINT = ' Per un altro modello o effort GPT metti nel prompt la riga [gpt-model: <alias LiteLLM>], es. [gpt-model: claude-gpt-6-2-astra-high].'
+// Override per chiamata: riga `[gpt-model: claude-gpt-…]` o `[gpt-model: claude-gemini-…]` nel prompt
+// del subagente (il tool Agent accetta solo alias Claude in `model`). Solo alias claude-gpt-* e
+// claude-gemini-*: un alias inesistente dà un errore LiteLLM visibile, mai un ripiego su Claude.
+// Cercata in tutto il primo messaggio, che può portare anche promemoria del motore oltre al prompt.
+const OVERRIDE = /^\s*\[gpt-model:\s*(claude-(?:gpt|gemini)-[\w.-]+)\s*\]/m
+const HINT = ' Per un altro modello o effort metti nel prompt la riga [gpt-model: <alias LiteLLM>], es. [gpt-model: claude-gpt-6-2-astra-high] o, per Gemini 4 Neon, [gpt-model: claude-gemini-4-neon].'
 const promptText = (m: any): string =>
   typeof m?.content === 'string' ? m.content
     : (Array.isArray(m?.content) ? m.content : []).filter((b: any) => b?.type === 'text').map((b: any) => b.text).join('\n')

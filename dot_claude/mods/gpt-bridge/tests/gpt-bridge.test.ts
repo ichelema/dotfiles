@@ -91,11 +91,21 @@ test('[gpt-model: …] nel prompt cambia modello ed effort della chiamata', asyn
   expect(sent.output_config).toEqual({ effort: 'high' })
 })
 
-test('[gpt-model: …] con un alias non claude-gpt-* viene ignorato', async ($, on) => {
-  const sent = await sentFor($, on, '[gpt-model: fable]\nAnalizza.')
-  expect(sent.model).toBe('claude-gpt-6-2-sol-xhigh')
-  expect(sent.output_config).toEqual({ effort: 'xhigh' })
+test('[gpt-model: claude-gemini-…] cambia modello e, senza livello di effort nell\'alias, non manda thinking', async ($, on) => {
+  const sent = await sentFor($, on, '[gpt-model: claude-gemini-4-neon]\nAnalizza il deadlock.')
+  expect(sent.model).toBe('claude-gemini-4-neon')
+  expect(sent.thinking).toBeUndefined()
+  expect(sent.output_config).toBeUndefined()
 })
+
+// Un test per alias: `on(...)` si può registrare una sola volta per test.
+for (const alias of ['fable', 'claude-opus', 'claude-gemini']) {
+  test(`[gpt-model: ${alias}] con un alias non claude-gpt-* né claude-gemini-* viene ignorato`, async ($, on) => {
+    const sent = await sentFor($, on, `[gpt-model: ${alias}]\nAnalizza.`)
+    expect(sent.model).toBe('claude-gpt-6-2-sol-xhigh')
+    expect(sent.output_config).toEqual({ effort: 'xhigh' })
+  })
+}
 
 test('manda a GPT un tool MCP solo se la sessione lo ha', async ($, on) => {
   on('tool.list', () => ({ value: [{ name: 'Read', description: '', mcp: false }, { name: 'mcp__context7__query-docs', description: '', mcp: true }] }) as never)
@@ -161,7 +171,7 @@ test('registra gpt-bridge:<nome> per ogni agente Trinity con gpt-model nel front
   on('env.get', (_, e) => ({ value: e.name === 'TRINITY_PLUGIN_DIR' ? 'E:/trinity' : undefined }) as never)
   on('process.run', (_, e) => {
     if (e.argv[0] === 'bash' && String(e.argv[2]).includes('agents/*.md')) return { value: { exitCode: 0, stderr: '', stdout: [
-      '', '===agent:reviewer', '---', 'name: reviewer', 'description: >-', '  Review avversaria', '  in sola lettura.', 'model: fable', 'gpt-model: claude-gpt-6-2-sol-xhigh', 'tools: Read, Grep, Glob, LSP, Bash, Skill, Agent, mcp__context7__query-docs, mcp__linear__get_issue', 'color: red', '---', '', 'Sei un reviewer avversario.', '',
+      '', '===agent:reviewer', '---', 'name: reviewer', 'description: >-', '  Review avversaria', '  in sola lettura.', 'model: fable', '# commento YAML: il parser lo ignora', '# gpt-model: claude-gemini-4-neon', 'gpt-model: claude-gpt-6-2-sol-xhigh', 'tools: Read, Grep, Glob, LSP, Bash, Skill, Agent, mcp__context7__query-docs, mcp__linear__get_issue', 'color: red', '---', '', 'Sei un reviewer avversario.', '',
       '', '===agent:deep-reasoner', '---', 'name: deep-reasoner', 'description: Analisi.', 'model: fable', 'gpt-model: claude-gpt-6-2-sol-max', 'effort: max', '---', 'Ragiona a fondo.', '',
       '', '===agent:scoper', '---', 'name: scoper', 'model: haiku', '---', 'Solo Claude.',
     ].join('\n') } } as never
