@@ -141,6 +141,14 @@ test('framed: the prompt draws in a square box with the mascot', { options: { pr
   await ui.unmount()
 })
 
+test('framed con promptCopyButtons (#609): riquadro con la mascotte e un solo bottone copy sotto', { options: { promptStyle: 'framed', promptCopyButtons: true } }, async $ => {
+  const ui = await $.ui.mount({ plugin: 'prismantis', component: 'UserMessage', props: { text: 'ciao', origin: { kind: 'composer' } as never, isExpanded: true }, viewport: { columns: 80, rows: 10 }, surface: 'terminal' })
+  expect((await ui.findAll({ type: 'Box' })).some(b => b.props.borderStyle === 'single')).toBe(true)
+  expect(await ui.find({ type: 'Text', text: /^⠀⡖⣶⣶⢲⠀$/ })).toBeDefined()
+  expect((await ui.findAll({ type: 'Button' })).filter(b => b.props.label === '⧉ copy')).toHaveLength(1)
+  await ui.unmount()
+})
+
 // local: con hide le righe dei tool hanno altezza zero, quindi ogni messaggio ha una riga vuota sopra
 for (const [toolStyle, gap] of [['hide', 1], ['chat', undefined]] as const) {
   test(`hide: a reply has a blank row above it (toolStyle ${toolStyle})`, { options: { toolStyle } }, async $ => {
