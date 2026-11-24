@@ -31,7 +31,7 @@ Code-shaped prose stays as written: f(*args, **kwargs), a link with parentheses 
 | \`/prismantis\` | This screen |
 | \`/prismantis theme <name>\` | Switch theme on the spot (\`/prismantis <name>\` works too), \`random\` for a new dark one now and each time the mod loads |
 | \`/prismantis copy\` | Copy the last reply, or \`copy code\` for its last code block |
-| \`/prismantis setup\` | Pick a theme and how prompts, replies, tables, code blocks and tool output look, from drawn samples; \`/prismantis setup more\` goes on to diffs, tool rows, headings, tasks, bubble labels, times, pie charts, the table extras and desktop app colors |
+| \`/prismantis setup\` | Pick a theme and how prompts, replies, tables, code blocks and tool output look, from drawn samples; \`/prismantis setup more\` goes on to diffs, tool rows, headings, tasks, bubble labels, times, pie charts, the table extras, desktop app colors and plans |
 | \`/config\` | Edit any option |
 
 > [!NOTE]
@@ -230,6 +230,30 @@ Tool calls draw as one line, dimmed on the right by default, and the file each o
 Each edit draws as a diff card headed \`+N −M\`: code highlighted in the file's language, added and removed lines on a tint of the theme's own green and red with the changed words in a deeper tint, kept readable in every theme, long lines wrapped, the first 20 lines and a \`+K more lines\` button that opens the rest, as does a click anywhere on the card. Files a shell command changes (\`sed -i\`, a script) get the same card, one per file, headed by its path. Set \`diffStyle\` in \`/config\` for the look: \`card\`, \`full\`, \`marks\` or \`bar\`.
 
 A file Write creates shows its first 10 lines as numbered code in the theme's colors with no diff marks, and a click on it or on \`+K more lines\` opens the rest. A file an Edit or a shell command creates shows its first 10 lines as added lines under \`Created\`. A file a shell command removes is one \`Deleted\` line that opens to its removed lines on a click, and a file moved unchanged is one \`Renamed old → new\` line.
+
+### Plans
+
+Set \`planStyle\` in \`/config\` to \`bare\` or \`card\` and a plan you approve in plan mode draws like a reply under Claude Code's own header, tables, code and diagrams included, with a \`copy plan\` button. \`card\` frames it. A \`plan\` block in a reply draws the same way, and stays code with \`planStyle: off\`:
+
+\`\`\`\`plan
+## Plan: retry failed uploads
+
+| File | Change |
+|:-----|:-------|
+| src/upload.ts | retry 3 times with backoff |
+| src/upload.test.ts | cover the retry |
+
+\`\`\`ts
+const retries = 3
+\`\`\`
+
+\`\`\`mermaid
+flowchart LR
+    U[Upload] --> F{Failed?}
+    F -->|yes| R[Retry]
+    F -->|no| D[Done]
+\`\`\`
+\`\`\`\`
 
 ### Quotes and rules
 
@@ -522,7 +546,7 @@ export const helpText = (themes: readonly string[]): string => `
 |---------|------|
 | \`/prismantis theme <name>\` | Switch theme on the spot (\`/prismantis <name>\` works too), \`random\` for a new dark one now and each time the mod loads |
 | \`/prismantis copy\` | Copy the last reply, or \`copy code\` for its last code block |
-| \`/prismantis setup\` | Pick a theme and how prompts, replies, tables, code blocks and tool output look, from drawn samples; \`/prismantis setup more\` goes on to diffs, tool rows, headings, tasks, bubble labels, times, pie charts, the table extras and desktop app colors |
+| \`/prismantis setup\` | Pick a theme and how prompts, replies, tables, code blocks and tool output look, from drawn samples; \`/prismantis setup more\` goes on to diffs, tool rows, headings, tasks, bubble labels, times, pie charts, the table extras, desktop app colors and plans |
 | \`/prismantis demo\` | Full showcase, every element and diagram, plus a section in your language (Korean so far, or \`demo ko\`) |
 | \`/prismantis demo-rtl\` | Hebrew right-to-left showcase |
 
@@ -643,7 +667,7 @@ flowchart LR
 
 export const languageShowcase = (lang: string): string => (/^ko/i.test(lang) ? KOREAN_SHOWCASE : '')
 
-export type SetupStep = { name: string; key: 'theme' | 'tableStyle' | 'tableLayout' | 'statusMatrix' | 'testMatrix' | 'benchTable' | 'schemaTable' | 'compareTable' | 'apiTable' | 'kvTable' | 'groupTable' | 'heatTable' | 'treeTable' | 'pivotTable' | 'taskStyle' | 'listMarker' | 'headingStyle' | 'copyButtonStyle' | 'promptStyle' | 'replyStyle' | 'bubbleLabels' | 'clock' | 'toolStyle' | 'toolOutput' | 'diffStyle' | 'codeStyle' | 'pieStyle' | 'desktopColors'; title: string; note: string; options: readonly string[]; sample: string }
+export type SetupStep = { name: string; key: 'theme' | 'tableStyle' | 'tableLayout' | 'statusMatrix' | 'testMatrix' | 'benchTable' | 'schemaTable' | 'compareTable' | 'apiTable' | 'kvTable' | 'groupTable' | 'heatTable' | 'treeTable' | 'pivotTable' | 'taskStyle' | 'listMarker' | 'headingStyle' | 'copyButtonStyle' | 'promptStyle' | 'replyStyle' | 'bubbleLabels' | 'clock' | 'toolStyle' | 'toolOutput' | 'diffStyle' | 'codeStyle' | 'planStyle' | 'pieStyle' | 'desktopColors'; title: string; note: string; options: readonly string[]; sample: string }
 
 export const setupSteps = (themes: readonly string[]): SetupStep[] => [
   { name: 'theme', key: 'theme', title: 'Theme', note: 'Each theme draws the same line. `random` picks a new dark one each time the mod loads.', options: themes, sample: '**Bold**, `inline code`, 250ms and ~/src/app.ts.' },
@@ -674,6 +698,7 @@ export const setupSteps = (themes: readonly string[]): SetupStep[] => [
   { name: 'tree-table', key: 'treeTable', title: 'Tree', note: 'How a table that nests its rows draws: a column of areas beside a column of services and their tasks. `off` keeps tables as written. `branch` labels each run once in the accent color and prefixes the rows under it with `├─` or `└─`, the last row taking the corner; when the next column repeats too it merges the same way and carries one `│` per continuing parent, so three levels draw as a tree. `full` also draws a heavy rule where one top-level group ends and the next begins.', options: ['full', 'branch', 'off'], sample: '| Area | Service | Task |\n|:-----|:--------|:-----|\n| core | api | boot |\n| core | api | sync |\n| core | worker | draw |\n| web | ui | paint |\n| web | ui | route |' },
   { name: 'pivot-table', key: 'pivotTable', title: 'Pivot', note: 'How a table of metrics and periods draws. `off` keeps tables as written. `transpose` swaps its rows and columns: a first column of metric labels beside a header of period labels, with at least 60% numbers and fewer rows than periods, draws with the periods as rows and the metrics as columns. It adds no totals and no averages, so a table copied as markdown keeps exactly what was written.', options: ['transpose', 'off'], sample: '| Metric | Q1 | Q2 | Q3 | Q4 |\n|:-------|----:|----:|----:|----:|\n| Revenue | 120 | 148 | 162 | 190 |\n| Cost | 80 | 96 | 101 | 118 |\n| Margin | 40 | 52 | 61 | 72 |' },
   { name: 'desktop', key: 'desktopColors', title: 'Desktop app colors', note: 'Whether the Claude Code desktop app (Code tab) takes the theme too: its background, text, borders and accent. `match` paints it in the theme you picked, in light mode for a light theme, and needs Claude Code 2.1.324 or later. `off` leaves the app as it is, and going back to it restores the app\'s own look. The terminal and VS Code keep their colors either way.', options: ['match', 'off'], sample: '**Bold**, `inline code` and a [link](https://example.com).' },
+  { name: 'plans', key: 'planStyle', title: 'Plans', note: 'How a plan you approve in plan mode draws in the transcript. `off` keeps Claude Code\'s own plain text. `bare` draws it like a reply under Claude Code\'s header and saved-path line, with tables, code and diagrams, and a `copy plan` button for the whole markdown. `card` draws the same in a rounded frame, so a plan stands apart from replies. The approval dialog keeps Claude Code\'s look.', options: ['off', 'bare', 'card'], sample: '````plan\n## Plan: retry failed uploads\n\n| File | Change |\n|:-----|:-------|\n| src/upload.ts | retry 3 times |\n\n```ts\nconst retries = 3\n```\n````' },
 ]
 
 export const ESSENTIAL_STEPS = 6

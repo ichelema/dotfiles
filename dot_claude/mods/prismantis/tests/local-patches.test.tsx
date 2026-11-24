@@ -116,6 +116,23 @@ test('hide: riga, gruppo e risultato di un tool non disegnano niente; con ctrl+o
   await expanded.unmount()
 })
 
+// Il gestore dei piani di upstream (#611) è registrato prima dei gestori di hide, quindi è il più esterno.
+const plan = toolResult('ExitPlanMode', { plan: '## Plan: retry\n\n| File | Change |\n|:--|:--|\n| src/upload.ts | retry 3 times |', isAgent: false }, 'h-plan')
+
+test('hide: con planStyle acceso il piano approvato resta visibile', { options: { toolStyle: 'hide', planStyle: 'card' } }, async ($, on) => {
+  engine(on)
+  const ui = await $.ui.mount({ ...plan, viewport: { columns: 100, rows: 40 } })
+  expect(await ui.find({ type: 'Text', text: /^Approved Claude's plan$/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /src\/upload\.ts/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /^engine$/ })).toBeUndefined()
+})
+
+test('hide: con planStyle off il piano approvato resta nascosto', { options: { toolStyle: 'hide', planStyle: 'off' } }, async ($, on) => {
+  engine(on)
+  const ui = await $.ui.mount({ ...plan, viewport: { columns: 100, rows: 40 } })
+  expect(await ui.find({ type: 'Text' })).toBeUndefined()
+})
+
 test('framed: the prompt draws in a square box with the mascot', { options: { promptStyle: 'framed' } }, async $ => {
   const ui = await $.ui.mount({ plugin: 'prismantis', component: 'UserMessage', props: { text: 'ciao', origin: { kind: 'composer' } as never, isExpanded: true }, viewport: { columns: 80, rows: 10 }, surface: 'terminal' })
   expect((await ui.findAll({ type: 'Box' })).some(b => b.props.borderStyle === 'single')).toBe(true)
