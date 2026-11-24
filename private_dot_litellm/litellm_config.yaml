@@ -350,6 +350,35 @@ model_list:
       api_key: os.environ/DEEPSEEK_API_KEY
 
   # =========================
+  # Gemini 4 Neon via Gemini API
+  # =========================
+  # ID API gemini-4-neon (annunciato 2026-11-18). Chiave GEMINI_API_KEY in
+  # ~/.config/litellm/providers.env (piano a pagamento).
+  # Prezzi Standard per MTok: input 3, output 15, cache read 0.15
+  # (aistudio.google.com/docs/models/gemini-4-neon).
+  # supports_xhigh_reasoning_effort serve alla LiteLLM 1.110.2 per accettare
+  # xhigh: la sua cost map non conosce gemini-4-neon.
+  # Neon non supporta la cache esplicita: se Claude Code risponde 400 (issue
+  # BerriAI/litellm#46470) lanciarlo con DISABLE_PROMPT_CACHING=1.
+
+  - model_name: claude-gemini-4-neon
+    model_info:
+      supports_vision: true
+      supports_pdf_input: true
+      supports_function_calling: true
+      supports_reasoning: true
+      supports_xhigh_reasoning_effort: true
+      max_input_tokens: 1048576
+      max_output_tokens: 1048576
+      input_cost_per_token: 0.000003
+      output_cost_per_token: 0.000015
+      cache_creation_input_token_cost: 0
+      cache_read_input_token_cost: 0.00000015
+    litellm_params:
+      model: gemini/gemini-4-neon
+      api_key: os.environ/GEMINI_API_KEY
+
+  # =========================
   # Anthropic via Claude Max OAuth
   # =========================
 
