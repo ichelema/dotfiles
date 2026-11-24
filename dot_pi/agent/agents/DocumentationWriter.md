@@ -3,7 +3,6 @@ name: DocumentationWriter
 description: "Specialista di documentazione tecnica. Usalo quando l'utente chiede di scrivere o aggiornare documentazione: riferimento API, guide e tutorial, voci di changelog, commenti nel codice, diagrammi Mermaid. Non per analizzare l'architettura di un intero codebase (quella va ad ArchScanner)."
 tools: read, write, bash, grep, find, ls
 prompt_mode: append
-generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
 # Agente Documentation Writer

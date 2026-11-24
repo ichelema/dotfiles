@@ -7,7 +7,6 @@ tools: read, write, bash, grep, find, ls
 allowed_subagents: general-purpose
 prompt_mode: append
 color: purple
-generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
 # ArchScanner

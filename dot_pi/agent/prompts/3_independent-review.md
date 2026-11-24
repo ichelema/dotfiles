@@ -1,7 +1,6 @@
 ---
 description: "Review avversaria indipendente e read-only dell'implementazione di una o più issue Linear"
 argument-hint: "<issue-id...> <model> [hard|soft] [<review-path>]"
-generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
 <!-- pi:cmd /3_independent-review $ARGUMENTS -->

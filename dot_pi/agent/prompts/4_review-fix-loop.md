@@ -1,7 +1,6 @@
 ---
 description: "Due review indipendenti in parallelo (ReviewerOpus su Opus, Reviewer su GPT) su worktree isolati, loop di fix minimi e report finale"
 argument-hint: "<issue-id...> <model>"
-generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
 <!-- pi:cmd /4_review-fix-loop $ARGUMENTS -->

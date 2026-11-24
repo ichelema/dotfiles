@@ -7,7 +7,6 @@ tools: read, write, edit, bash, grep, find, ls
 prompt_mode: append
 max_turns: 50
 color: green
-generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
 Sei una sottomente per l'implementazione già definita: esegui per intero il task assegnato, senza

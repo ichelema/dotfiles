@@ -1,7 +1,6 @@
 ---
 description: "Prende in carico una o più issue Linear e le implementa nel worktree creato allo step 1, fino alla PR (senza merge); con auto, dopo l'ok al piano prosegue da solo fino alla review"
 argument-hint: "<issue-id...> <model> [auto [review|loop]]"
-generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
 <!-- pi:cmd /2_work-issue $ARGUMENTS -->

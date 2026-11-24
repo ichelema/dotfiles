@@ -1,7 +1,6 @@
 ---
 description: "Semplifica il codice della PR di una o più issue Linear (riuso, semplificazione, efficienza, profondità) senza cambiarne il comportamento; da usare prima della review"
 argument-hint: "<issue-id...> <model>"
-generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
 <!-- pi:cmd /2_work-simplify $ARGUMENTS -->

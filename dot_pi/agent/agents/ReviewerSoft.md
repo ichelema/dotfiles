@@ -9,7 +9,6 @@ allowed_subagents: none
 prompt_mode: append
 max_turns: 40
 color: red
-generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
 # ReviewerSoft

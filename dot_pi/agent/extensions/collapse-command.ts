@@ -1,7 +1,7 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-// Un prompt template espanso arriva come messaggio utente di migliaia di righe. pi-sync mette
-// come prima riga `<!-- pi:cmd /comando args -->`: qui il messaggio mostrato diventa `▸ /comando args`.
+// Un prompt template espanso arriva come messaggio utente di migliaia di righe. I prompt in
+// prompts/ hanno come prima riga `<!-- pi:cmd /comando args -->`: qui il messaggio mostrato diventa `▸ /comando args`.
 // Si cambia `text` del componente prima di rebuild(): vale sia per il render di pi sia per quello
 // compatto di pi-tool-renderer (che rilegge `text`). Il contesto del modello non cambia.
 const MARKER = /^<!-- pi:cmd (.+?) -->/;

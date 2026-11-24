@@ -6,7 +6,6 @@ thinking: high
 tools: read, write, edit, bash, grep, find, ls
 prompt_mode: append
 color: cyan
-generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
 Sei una sottomente per il lavoro ripetitivo in volume. Applichi una regola esatta a molti elementi,

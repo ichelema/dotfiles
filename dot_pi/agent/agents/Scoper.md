@@ -8,7 +8,6 @@ extensions: false
 prompt_mode: append
 max_turns: 60
 color: yellow
-generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
 Sei uno specialista nella definizione dello scope dei task software, al servizio di un

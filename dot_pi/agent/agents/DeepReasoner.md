@@ -7,7 +7,6 @@ tools: read, write, edit, bash, grep, find, ls
 prompt_mode: append
 max_turns: 50
 color: purple
-generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
 # DeepReasoner

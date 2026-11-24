@@ -1,7 +1,6 @@
 ---
 description: "Rimuove un worktree finito (dopo il merge), il suo branch e fa pulizia, evitando le trappole note su Windows/MSYS2"
 argument-hint: "<worktree-name>"
-generated: trinity scripts/pi-sync (modifica il sorgente Trinity)
 ---
 
 <!-- pi:cmd /5_remove-worktree $ARGUMENTS -->
