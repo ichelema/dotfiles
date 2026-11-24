@@ -165,10 +165,12 @@ export const register: Register = on => {
       // SubagentHandback esiste solo quando il motore lo annuncia nel primo messaggio del subagente
       // (modalità auto); altrove GPT sprecherebbe chiamate su un tool assente.
       const handback = JSON.stringify(messages[0]).includes('SubagentHandback(')
-      // Un tool MCP va a GPT solo se il suo server è connesso in questa sessione: altrove la chiamata fallirebbe.
-      const mcp = spec.tools.filter(t => t.startsWith('mcp__'))
-      const present = new Set(mcp.length ? (await $.tool.list().catch(() => [])).map(t => t.name) : [])
-      const tools = TOOLS.filter(t => spec.tools.includes(t.name) && (t.name !== 'SubagentHandback' || handback) && (!t.name.startsWith('mcp__') || present.has(t.name)))
+      // Il modello riceve solo i tool che il motore può eseguire (pool della sessione). Un MCP con il server
+      // non connesso fallirebbe; un built-in assente (Grep e Glob in una build che li toglie) farebbe
+      // rispondere "No such tool" e costerebbe una chiamata. Lista non leggibile: restano i built-in, cadono gli MCP.
+      const pool = await $.tool.list().then(l => new Set(l.map(t => t.name)), () => null)
+      const tools = TOOLS.filter(t => spec.tools.includes(t.name) && (t.name !== 'SubagentHandback' || handback)
+        && (t.name.startsWith('mcp__') ? pool?.has(t.name) : t.name === 'SubagentHandback' || !pool || pool.has(t.name)))
       // Riassunto del ragionamento in streaming (chunk `thinking` nel pannello). Con `thinking` nella
       // richiesta LiteLLM ignora il reasoning_effort della config: l'effort va ripetuto qui, letto dal
       // suffisso dell'alias (claude-gpt-…-xhigh). Suffisso sconosciuto: niente thinking, resta la config.

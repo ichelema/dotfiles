@@ -117,6 +117,23 @@ test('manda a GPT un tool MCP solo se la sessione lo ha', async ($, on) => {
   expect(sent.tools.find((t: any) => t.name === 'mcp__context7__query-docs').input_schema.required).toEqual(['libraryId', 'query'])
 })
 
+test('un built-in assente dal pool del motore non va a GPT', async ($, on) => {
+  on('tool.list', () => ({ value: [{ name: 'Read', description: '', mcp: false }, { name: 'Bash', description: '', mcp: false }] }) as never)
+  const names = (await sentFor($, on, 'Cerca.')).tools.map((t: any) => t.name)
+  expect(names).toContain('Read')
+  expect(names).toContain('Bash')
+  expect(names).not.toContain('Grep')
+  expect(names).not.toContain('Glob')
+})
+
+test('se il pool dei tool non si legge, restano i built-in e cadono gli MCP', async ($, on) => {
+  on('tool.list', () => { throw new Error('lista non disponibile') })
+  const names = (await sentFor($, on, 'Cerca.')).tools.map((t: any) => t.name)
+  expect(names).toContain('Read')
+  expect(names).toContain('Grep')
+  expect(names.filter((n: string) => n.startsWith('mcp__'))).toEqual([])
+})
+
 test('senza server MCP connessi GPT non riceve tool MCP', async ($, on) => {
   on('tool.list', () => ({ value: [{ name: 'Read', description: '', mcp: false }] }) as never)
   const sent = await sentFor($, on, 'Analizza.')
