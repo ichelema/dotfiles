@@ -79,6 +79,7 @@
       "Bash(git diff *)",
       "Bash(python *)",
       "Bash(ruby *)",
+      "Bash(mise x python -- python scripts/linear.py mutation:*)",
       "Bash(ls*)",
       "Bash(sleep *)",
       "Bash(echo *)",
