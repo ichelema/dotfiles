@@ -67,6 +67,7 @@ export type Style = {
   diffLayout?: 'auto' | 'split' | 'unified' // local: blocchi ```diff affiancati, vedi hooks/diffsplit.tsx
   codeStyle: 'plain' | 'framed' | 'filled' | 'card'
   planStyle: 'off' | 'bare' | 'card'
+  scriptStyle: 'frame' | 'rail' | 'bar' | 'chip'
   pieStyle: 'round' | 'bars'
   highlightNumbers: boolean
   surfaces?: RenderSurface[]
@@ -179,6 +180,7 @@ export const resolveStyle = (options: PluginOptions): Style => {
     diffLayout: pick(options.diffLayout, ['auto', 'split', 'unified'] as const, 'auto'), // local: diffLayout
     codeStyle: pick(options.codeStyle, ['plain', 'framed', 'filled', 'card'] as const, 'plain'),
     planStyle: pick(options.planStyle, ['off', 'bare', 'card'] as const, 'off'),
+    scriptStyle: pick(options.scriptStyle, ['frame', 'rail', 'bar', 'chip'] as const, 'frame'),
     pieStyle: pick(options.pieStyle, ['round', 'bars'] as const, 'round'),
     highlightNumbers: options.highlightNumbers !== false,
     surfaces: surfacesOf(options.surfaces),

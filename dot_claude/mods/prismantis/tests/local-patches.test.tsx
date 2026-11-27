@@ -133,6 +133,48 @@ test('hide: con planStyle off il piano approvato resta nascosto', { options: { t
   expect(await ui.find({ type: 'Text' })).toBeUndefined()
 })
 
+// Dalla #590 il reset dei percorsi mancati sta in watchRuns, nei gestori ToolUse/ToolGroup di upstream,
+// che con hide non girano: i gestori di hide lo chiamano da sé. Versione per hide del test upstream
+// "a finished call drops path misses once, from its row draws alone".
+test('hide: una chiamata finita e nascosta fa ricontrollare i percorsi mancati, una volta sola', { options: { toolStyle: 'hide' } }, async ($, on) => {
+  on('session.version', () => ({ value: { version: '2.1.289', base: '2.1.289' } }))
+  mock.env(on, { FORCE_HYPERLINK: '1', HOME: '/home/me' })
+  on('session.root', () => ({ value: '/work/app' }))
+  const clock = mock.clock(on)
+  engine(on)
+  let stats = 0
+  on('fs.stat', (_, e, next) => (e.path.replace(/\\/g, '/').endsWith('/work/app/src/gone.ts') ? (stats++, { deny: 'no such file' }) : next(e)))
+  const reply = (text: string) => ({ plugin: 'prismantis', component: 'AssistantMessage' as const, props: { text, isFirstOfReply: true }, viewport: { columns: 120, rows: 40 }, surface: 'terminal' as const })
+  const links = await $.ui.mount(reply('[/x.md](file:///x.md)')).then(async ui => (await ui.unmount(), true), () => false)
+  if (!links) return
+  const draw = async () => {
+    const ui = await $.ui.mount(reply('See src/gone.ts.'))
+    await clock.settle()
+    await ui.unmount()
+  }
+  const row = async (id: string, isRunning: boolean, component: 'ToolUse' | 'ToolGroup' = 'ToolUse') => {
+    const props = { ...call('Bash', { command: 'make docs' }, id), isRunning }
+    const ui = await $.ui.mount({ plugin: 'prismantis', surface: 'terminal', ...(component === 'ToolUse' ? { component, props } : { component, props: { calls: [props], isActive: isRunning, isExpanded: false } }) } as never)
+    expect(await ui.find({ type: 'Text' })).toBeUndefined()
+    await ui.unmount()
+  }
+  await draw()
+  expect(stats).toBe(1)
+  await row('hm-1', false)
+  await draw()
+  expect(stats).toBe(2)
+  await row('hm-1', false)
+  await row('hm-1', false, 'ToolGroup')
+  await draw()
+  expect(stats).toBe(2)
+  await row('hm-2', true)
+  await draw()
+  expect(stats).toBe(2)
+  await row('hm-2', false, 'ToolGroup')
+  await draw()
+  expect(stats).toBe(3)
+})
+
 test('framed: the prompt draws in a square box with the mascot', { options: { promptStyle: 'framed' } }, async $ => {
   const ui = await $.ui.mount({ plugin: 'prismantis', component: 'UserMessage', props: { text: 'ciao', origin: { kind: 'composer' } as never, isExpanded: true }, viewport: { columns: 80, rows: 10 }, surface: 'terminal' })
   expect((await ui.findAll({ type: 'Box' })).some(b => b.props.borderStyle === 'single')).toBe(true)
