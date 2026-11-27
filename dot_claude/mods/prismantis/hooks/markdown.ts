@@ -22,7 +22,7 @@ export type Block = { raw: string } & (
   | { kind: 'heading'; level: number; inline: Inline[] }
   | { kind: 'paragraph'; inline: Inline[] }
   | { kind: 'list'; ordered: boolean; items: ListItem[] }
-  | { kind: 'code'; lang: string; lines: string[]; isOpen?: true }
+  | { kind: 'code'; lang: string; lines: string[]; isOpen?: true; hrefs?: readonly (string | undefined)[] }
   | { kind: 'quote'; blocks: Block[] }
   | { kind: 'alert'; level: AlertLevel; blocks: Block[] }
   | { kind: 'rule' }
@@ -56,13 +56,26 @@ const TAG_LINE = /^\s*<\/?(?!br\b(?!>))[a-z][\w-]*(?:\s[^<>]*)?>\s*$/i
 const SETEXT = /^ {0,3}(?:=+|-+)\s*$/
 const SUPERSCRIPT = '⁰¹²³⁴⁵⁶⁷⁸⁹'
 
+const codeSpanAt = (text: string, at: number): string => {
+  if (text[at - 1] === '`') return ''
+  const fence = /^`+/.exec(text.slice(at))![0]
+  const close = new RegExp(`(?<!\`)${fence}(?!\`)`, 'g')
+  close.lastIndex = at + fence.length
+  const end = close.exec(text)
+  return end ? text.slice(at, end.index + fence.length) : ''
+}
+
 const splitRow = (line: string): string[] => {
   const trimmed = line.trim().replace(/^\|/, '').replace(/(?<!\\)\|$/, '')
   const cells: string[] = []
   let cell = ''
   for (let i = 0; i < trimmed.length; i++) {
     const ch = trimmed[i]
-    if (ch === '\\' && trimmed[i + 1] === '|') {
+    const span = ch === '`' ? codeSpanAt(trimmed, i) : ''
+    if (span) {
+      cell += span.replace(/\\\|/g, '|')
+      i += span.length - 1
+    } else if (ch === '\\' && trimmed[i + 1] === '|') {
       cell += '|'
       i++
     } else if (ch === '|') {
@@ -91,10 +104,14 @@ const parseCell = (text: string, hl: Highlight): Inline[] => {
 }
 
 const INLINE = /(`+)(?!`)(.+?)(?<!`)\1(?!`)|\[([^\]]+)\]\(((?:[^()\s]|\([^()\s]*\))+)(?:\s+(?:"[^"\n]*"|'[^'\n]*'))?\)|\*\*(?!\s)((?:[^*]|\*[^*\s][^*]*?(?<!\s)\*)+?)(?<!\s)\*\*|(?<![\w_])__(?!\s)([^_]+?)(?<!\s)__(?![\w_])|~~([^~]+?)~~|(?<![\w*])\*([^*\s][^*]*?)(?<!\s)\*(?!\w)|(?<![\w_])_([^_\s][^_]*?)(?<!\s)_(?!\w)|(https?:\/\/(?:[^\s<>()　-〿！-／：-＠［-｀｛-･]|\([^\s<>()]*\))*(?:[^\s<>().,;:!?'"　-〿！-／：-＠［-｀｛-･]|\([^\s<>()]*\)))|(?<![\\$\w])\$(?=\S)((?:\\.|[^$\n\\])+?)(?<=\S)\$(?![\w$])|\[\^([^\]\s]+)\]|!\[([^\]]*)\]\(((?:[^()\s]|\([^()\s]*\))+)(?:\s+(?:"[^"\n]*"|'[^'\n]*'))?\)|<(https?:\/\/[^\s<>]+)>|\\([!-/:-@[-`{-~])/g
-const NUMBER = /(?<![\w.#/-]|\d[.,:])((?:(?<!\p{L})-(?=\d))?v?\d+(?:[.,:]\d+)*(?:%|ms|s|m|h|d|Gi|Mi|GB|MB|KB|x)?)(?![\w/])/gu
+const NUMBER = /(?<![\w.#/-]|\d[.,:])((?:(?<!\p{L})-(?=\d))?v?\d+(?:[.,:]\d+)*(?:%|ms|s|m|h|d|Gi|Mi|GB|MB|KB|x)?)(?![\w/]|[.,:]\d)/gu
 const PATH = /(?<![\p{L}\p{M}\p{N}_/.:])((?:~|\.{1,2})?\/[\p{L}\p{M}\p{N}_.@+-]+(?:\/[\p{L}\p{M}\p{N}_.@+-]*)*)/gu
 const WHOLE_PATH = new RegExp(`^(?:${PATH.source})$`, PATH.flags.replace('g', ''))
 export const isPathSpelling = (text: string): boolean => WHOLE_PATH.test(text)
+export const PART = String.raw`[\p{L}\p{N}_@+-]+`
+export const NAME = String.raw`\.?${PART}(?:\.${PART})*`
+export const DRIVE_PATH = new RegExp(String.raw`[A-Za-z]:[\\/](?:${NAME}[\\/])*(?:${NAME})?`, 'gu')
+const driveSpans = (text: string) => (text.includes(':') ? Array.from(text.matchAll(DRIVE_PATH), m => ({ start: m.index, end: m.index + m[0].length })) : [])
 
 const NAMED: Record<string, string> = {
   amp: '&', AMP: '&', lt: '<', LT: '<', gt: '>', GT: '>', quot: '"', QUOT: '"', apos: "'", nbsp: '\u00a0', COPY: '©', REG: '®', copy: '©', reg: '®', trade: '™', mdash: '—', ndash: '–', hellip: '…', minus: '−',
@@ -114,9 +131,10 @@ const decorate = (raw: string, hl: Highlight): Inline[] => {
   const marks: { start: number; end: number; kind: 'number' | 'path' }[] = []
   if (hl.paths) for (const m of text.matchAll(PATH)) marks.push({ start: m.index, end: m.index + m[0].length, kind: 'path' })
   if (hl.numbers) {
+    const taken = [...marks, ...driveSpans(text)]
     for (const m of text.matchAll(NUMBER)) {
       const start = m.index
-      if (!marks.some(p => start < p.end && start + m[0].length > p.start)) {
+      if (!taken.some(p => start < p.end && start + m[0].length > p.start)) {
         marks.push({ start, end: start + m[0].length, kind: 'number' })
       }
     }
